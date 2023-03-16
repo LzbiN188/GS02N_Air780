@@ -144,6 +144,7 @@ void ledStatusUpdate(uint8_t status, uint8_t onoff);
 void gpsRequestSet(uint32_t flag);
 void gpsRequestClear(uint32_t flag);
 uint32_t gpsRequestGet(uint32_t flag);
+uint8_t gpsRequestOtherGet(uint32_t flag);
 void gpsTcpSendRequest(void);
 
 

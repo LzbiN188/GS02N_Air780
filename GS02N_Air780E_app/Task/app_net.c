@@ -340,6 +340,7 @@ void modulePowerOn(void)
 {
     LogMessage(DEBUG_ALL, "modulePowerOn");
     moduleInit();
+    sysinfo.moduleRstFlag = 1;
     portUartCfg(APPUSART0, 1, 115200, moduleRecvParser);
     POWER_ON;
     PWRKEY_HIGH;
@@ -347,6 +348,7 @@ void modulePowerOn(void)
     startTimer(6, modulePressPowerKey, 0);
     moduleState.gpsFileHandle = 1;
     moduleCtrl.scanMode = 0;
+    
     socketDelAll();
 }
 /**************************************************
@@ -358,6 +360,7 @@ void modulePowerOn(void)
 static void modulePowerOffProcess(void)
 {
     PWRKEY_HIGH;
+    RSTKEY_HIGH;
     LogMessage(DEBUG_ALL, "modulePowerOff Done");
 }
 /**************************************************
@@ -375,7 +378,8 @@ void modulePowerOff(void)
     POWER_OFF;
     RSTKEY_LOW;
     PWRKEY_HIGH;
-    //startTimer(15, modulePowerOffProcess, 0);
+    startTimer(15, modulePowerOffProcess, 0);
+    sysinfo.moduleRstFlag = 1;
     socketDelAll();
 }
 
@@ -2019,6 +2023,20 @@ void cipackParser(uint8_t *buf, uint16_t len)
     int16_t relen;
     rebuf = buf;
     relen = len;
+	static uint8_t cnt;
+
+	index = my_getstrindex(rebuf, "ERROR", relen);
+	if (index >= 0)
+	{
+		cnt++;
+		if (cnt >= 5)
+		{
+			moduleReset();
+			cnt = 0;
+		}
+	}
+	
+    
     index = my_getstrindex(rebuf, "+CIPACK:", relen);
     if (index < 0)
     {
@@ -2032,6 +2050,7 @@ void cipackParser(uint8_t *buf, uint16_t len)
     {
         return;
     }
+    cnt = 0;
     stringToItem(&item, rebuf, relen);
     moduleState.tcpTotal = atoi(item.item_data[0]);
     moduleState.tcpAck = atoi(item.item_data[1]);
@@ -2118,6 +2137,36 @@ void cipstatusParser(uint8_t *buf, uint16_t len)
 
 }
 
+/**************************************************
+@bref		模组异常复位检测
+@param
+@return
+@note
+**************************************************/
+static void moduleRstDetector(uint8_t * buf, uint16_t len)
+{
+	int index;
+	if (moduleState.powerState != 1)
+	{
+		return;
+	}
+
+	index = my_getstrindex((char *)buf, "RDY", len);
+	if (index >= 0)
+	{
+		if (sysinfo.moduleRstFlag == 1)
+		{
+			sysinfo.moduleRstFlag = 0;
+			LogMessage(DEBUG_ALL, "ignore module abnormal reset");
+			return;
+		}
+
+		sysinfo.moduleRstCnt++;
+		LogPrintf(DEBUG_ALL, "module abnormal reset %d", sysinfo.moduleRstCnt);
+
+	}
+}
+
 
 /**************************************************
 @bref		模组端数据接收解析器
@@ -2152,6 +2201,8 @@ void moduleRecvParser(uint8_t *buf, uint16_t bufsize)
     LogMessageWL(DEBUG_ALL, (char *)dataRestore, len);
     LogMessage(DEBUG_ALL, "---<<<---");
     /*****************************************/
+
+    moduleRstDetector(dataRestore, len);
     moduleRspSuccess();
     cmtiParser(dataRestore, len);
     cmgrParser(dataRestore, len);
@@ -2215,6 +2266,30 @@ void moduleRecvParser(uint8_t *buf, uint16_t bufsize)
         case CIPSEND_CMD:
             cipsendParser(dataRestore, len);
             break;
+        case CIPRXGET_CMD:
+        	if (my_strstr((char *)dataRestore, "+CME ERROR: 3", len))
+            {
+                switch (moduleState.curQirdId)
+                {
+                    case NORMAL_LINK:
+                        moduleState.normalLinkQird = 0;
+                        break;
+                    case BLE_LINK:
+                        moduleState.bleLinkQird = 0;
+                        break;
+                    case JT808_LINK:
+                        moduleState.jt808LinkQird = 0;
+                        break;
+                    case HIDDEN_LINK:
+                        moduleState.hideLinkQird = 0;
+                        break;
+                    case AGPS_LINK:
+                        moduleState.agpsLinkQird = 0;
+                        break;
+                }
+                LogPrintf(DEBUG_ALL, "Link[%d] recv err", moduleState.curQirdId);
+            }
+        	break;
         default:
             break;
     }

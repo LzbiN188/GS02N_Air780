@@ -14,6 +14,7 @@
 #include "app_server.h"
 #include "app_jt808.h"
 #include "app_bleRelay.h"
+#include "app_peripheral.h"
 
 #define SYS_LED1_ON       LED1_ON
 #define SYS_LED1_OFF      LED1_OFF
@@ -307,6 +308,27 @@ uint32_t gpsRequestGet(uint32_t flag)
 }
 
 /**************************************************
+@bref		gps是否存在除了flag以外的其他请求
+@param
+@return
+@note
+**************************************************/
+uint8_t gpsRequestOtherGet(uint32_t flag)
+{
+	uint32_t req;
+	req = sysinfo.gpsRequest;
+	req &= ~flag;
+	if ((req & GPS_REQUEST_ALL))
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}	
+}
+
+/**************************************************
 @bref		gps任务状态机切换
 @param
 @return
@@ -365,9 +387,7 @@ static void gpsCfg(void)
     //sprintf(param, "$CCMSG,GSV,1,0,*1A\r\n");
     sprintf(param, "$PCAS03,1,0,1,0,1,0,0,0,0,0,0,0,0,0*03\r\n");
     portUartSend(&usart3_ctl, (uint8_t *)param, strlen(param));
-	//关闭GSA
-//    sprintf(param, "$CCMSG,GSA,1,0,*0D\r\n");
-//    portUartSend(&usart3_ctl, (uint8_t *)param, strlen(param));
+
     LogMessage(DEBUG_ALL, "gps config nmea output");
 }
 /**************************************************
@@ -387,7 +407,22 @@ static void changeGPSBaudRate(void)
     LogMessage(DEBUG_ALL, "gps config baudrate to 115200");
     startTimer(10, gpsCfg, 0);
 }
+/**************************************************
+@bref		中科微热启动配置
+@param
+@return
+@note
+**************************************************/
 
+static void gpsWarmStart(void)
+{
+	char param[50];
+	//热启动
+	sprintf(param, "$PCAS10,0*1C\r\n");
+	portUartSend(&usart3_ctl, (uint8_t *)param, strlen(param));
+	LogMessage(DEBUG_ALL, "Gps config warm start");
+    startTimer(10, changeGPSBaudRate, 0);
+}
 /**************************************************
 @bref		开启gps
 @param
@@ -397,10 +432,10 @@ static void changeGPSBaudRate(void)
 
 static void gpsOpen(void)
 {
-    GPSPWR_ON;
+	GPSPWR_ON;
     GPSLNA_ON;
     portUartCfg(APPUSART3, 1, 9600, gpsUartRead);
-    startTimer(20, changeGPSBaudRate, 0);
+    startTimer(10, gpsWarmStart, 0);
     sysinfo.gpsUpdatetick = sysinfo.sysTick;
     sysinfo.gpsOnoff = 1;
     gpsChangeFsmState(GPSWATISTATUS);
@@ -472,7 +507,10 @@ static void gpsRequestTask(void)
             if (sysinfo.gpsRequest != 0)
             {
                 gpsOpen();
-                agpsRequestSet();
+                if (gpsRequestOtherGet(GPS_REQUEST_BLE))
+                {
+					agpsRequestSet();
+                }
             }
             break;
         case GPSWATISTATUS:
@@ -1290,6 +1328,16 @@ static void modeStart(void)
     ledStatusUpdate(SYSTEM_LED_RUN, 1);
     modulePowerOn();
     netResetCsqSearch();
+    if (sysparam.bleen == 1)
+    {	
+    	char broadCastNmae[30];
+		sprintf(broadCastNmae, "%s-%s", "AUTO", sysparam.SN + 9);
+    	appPeripheralBroadcastInfoCfg(broadCastNmae);
+    }
+    else if (sysparam.bleen == 0)
+    {
+		appPeripheralCancel();
+    }
     changeModeFsm(MODE_RUNING);
 }
 
@@ -1952,7 +2000,7 @@ void doDebugRecvPoll(uint8_t *msg, uint16_t len)
 void myTaskPreInit(void)
 {
     tmos_memset(&sysinfo, 0, sizeof(sysinfo));
-	sysinfo.logLevel = DEBUG_ALL;
+	//sysinfo.logLevel = DEBUG_ALL;
 
     SetSysClock(CLK_SOURCE_PLL_60MHz);
     portGpioSetDefCfg();

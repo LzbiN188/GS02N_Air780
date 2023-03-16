@@ -32,6 +32,23 @@ typedef enum
     CFUN_CMD,
     QICLOSE_CMD,
     CGDCONT_CMD,
+
+    //∫œ÷Ê
+    CSTT_CMD,
+    CFGRI_CMD,
+    CIPMUX_CMD,
+    CIPSHUT_CMD,
+    CIICR_CMD,
+    CIFSR_CMD,
+    CIPSTART_CMD,
+    CIPSEND_CMD,
+    CIPCLOSE_CMD,
+    CIPRXF_CMD,
+    CIPRXGET_CMD,
+    CSCLK_CMD,
+    CIPACK_CMD,
+    COPS_CMD,
+    WIFISCAN_CMD,
 } atCmdType_e;
 
 

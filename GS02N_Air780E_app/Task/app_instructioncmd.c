@@ -56,6 +56,7 @@ const instruction_s insCmdTable[] =
     {MOTIONDET_INS, "MOTIONDET"},
     {FCG_INS, "FCG"},
     {QFOTA_INS, "QFOTA"},
+    {BLEEN_INS, "BLEEN"},
     {SN_INS, "*"},
 };
 
@@ -715,6 +716,7 @@ void doDebugInstrucion(ITEM *item, char *message)
             sysinfo.sysTick / 3600, sysinfo.sysTick % 3600 / 60, sysinfo.sysTick % 60, sysinfo.gpsRequest,
             sysinfo.gpsUpdatetick / 3600, sysinfo.gpsUpdatetick % 3600 / 60, sysinfo.gpsUpdatetick % 60);
     sprintf(message + strlen(message), "hideLogin:%s;", hiddenServerIsReady() ? "Yes" : "No");
+    sprintf(message + strlen(message), "moduleRstCnt:%d", sysinfo.moduleRstCnt);
 }
 
 void doACCCTLGNSSInstrucion(ITEM *item, char *message)
@@ -1523,6 +1525,30 @@ static void doFcgInstruction(ITEM *item, char *message)
     }
 }
 
+static void doBleenInstruction(ITEM *item, char *message)
+{
+	if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+	{
+		sprintf(message, "Bleen is %s", sysparam.bleen ? "On" : "Off");
+	}
+	else
+	{
+		sysparam.bleen = atoi(item->item_data[1]);
+		if (sysparam.bleen == 1)
+		{	
+			char broadCastNmae[30];
+			sprintf(broadCastNmae, "%s-%s", "AUTO", sysparam.SN + 9);
+			appPeripheralBroadcastInfoCfg(broadCastNmae);
+		}
+		else if (sysparam.bleen == 0)
+		{
+			appPeripheralCancel();
+		}
+
+		sprintf(message, "Bleen is %s", sysparam.bleen ? "On" : "Off");
+		paramSaveAll();
+	}
+}
 /*--------------------------------------------------------------------------------------*/
 static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param)
 {
@@ -1659,6 +1685,9 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
         case FCG_INS:
             doFcgInstruction(item, message);
             break;
+        case BLEEN_INS:
+        	doBleenInstruction(item, message);
+        	break;
         default:
             if (mode == SMS_MODE)
             {

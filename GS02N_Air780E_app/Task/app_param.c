@@ -88,7 +88,7 @@ void paramDefaultInit(uint8_t level)
     sysparam.relaySpeed = 20;
     sysparam.protectVoltage = 0;
     sysparam.bf = 0;
-    sysparam.gsdettime=7;
+    sysparam.gsdettime=15;
     sysparam.gsValidCnt=7;
     sysparam.gsInvalidCnt=0;
 

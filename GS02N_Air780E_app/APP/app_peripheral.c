@@ -319,6 +319,16 @@ void appPeripheralBroadcastInfoCfg(uint8 *broadcastnmae)
     tmos_memcpy(advertData + advLen, broadcastnmae, len);
     advLen += len;
     GAPRole_SetParameter(GAPROLE_ADVERT_DATA, advLen, advertData);
+    	uint8_t u8Value;
+	u8Value = TRUE;
+    GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8), &u8Value);
+}
+
+void appPeripheralCancel(void)
+{
+	uint8_t u8Value;
+	u8Value = FALSE;
+    GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8), &u8Value);
 }
 /*
  * 外设程序初始化

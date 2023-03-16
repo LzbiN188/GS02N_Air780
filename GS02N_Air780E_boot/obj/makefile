@@ -1,4 +1,5 @@
 ################################################################################
+# MRS Version: {"version":"1.8.4","date":"2023/02/15"}
 # Automatically-generated file. Do not edit!
 ################################################################################
 
@@ -37,34 +38,34 @@ endif
 
 # Add inputs and outputs from these tool invocations to the build variables 
 SECONDARY_FLASH += \
-G3N_boot.hex \
+GS02N_boot.hex \
 
 SECONDARY_LIST += \
-G3N_boot.lst \
+GS02N_boot.lst \
 
 SECONDARY_SIZE += \
-G3N_boot.siz \
+GS02N_boot.siz \
 
 
 # All Target
-all: G3N_boot.elf secondary-outputs
+all: GS02N_boot.elf secondary-outputs
 
 # Tool invocations
-G3N_boot.elf: $(OBJS) $(USER_OBJS)
-	@	@	riscv-none-embed-gcc -march=rv32imac -mabi=ilp32 -mcmodel=medany -msmall-data-limit=8 -mno-save-restore -Os -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections  -g -T "../Ld/Link.ld" -nostartfiles -Xlinker --gc-sections -L"../" -L"../StdPeriphDriver" -Xlinker --print-memory-usage -Wl,-Map,"G3N_boot.map" --specs=nano.specs -u _printf_float --specs=nosys.specs -o "G3N_boot.elf" $(OBJS) $(USER_OBJS) $(LIBS)
+GS02N_boot.elf: $(OBJS) $(USER_OBJS)
+	@	@	riscv-none-embed-gcc -march=rv32imac -mabi=ilp32 -mcmodel=medany -msmall-data-limit=8 -mno-save-restore -Os -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections  -g -T "../Ld/Link.ld" -nostartfiles -Xlinker --gc-sections -L"../" -L"../StdPeriphDriver" -Xlinker --print-memory-usage -Wl,-Map,"GS02N_boot.map" --specs=nano.specs -u _printf_float --specs=nosys.specs -o "GS02N_boot.elf" $(OBJS) $(USER_OBJS) $(LIBS)
 	@	@
-G3N_boot.hex: G3N_boot.elf
-	@	riscv-none-embed-objcopy -O ihex "G3N_boot.elf"  "G3N_boot.hex"
+GS02N_boot.hex: GS02N_boot.elf
+	@	riscv-none-embed-objcopy -O ihex "GS02N_boot.elf"  "GS02N_boot.hex"
 	@	@
-G3N_boot.lst: G3N_boot.elf
-	@	riscv-none-embed-objdump --all-headers --demangle --disassemble "G3N_boot.elf" > "G3N_boot.lst"
+GS02N_boot.lst: GS02N_boot.elf
+	@	riscv-none-embed-objdump --all-headers --demangle --disassemble "GS02N_boot.elf" > "GS02N_boot.lst"
 	@	@
-G3N_boot.siz: G3N_boot.elf
-	@	riscv-none-embed-size --format=berkeley "G3N_boot.elf"
+GS02N_boot.siz: GS02N_boot.elf
+	@	riscv-none-embed-size --format=berkeley "GS02N_boot.elf"
 	@	@
 # Other Targets
 clean:
-	-$(RM) $(ASM_UPPER_DEPS)$(OBJS)$(SECONDARY_FLASH)$(SECONDARY_LIST)$(SECONDARY_SIZE)$(ASM_DEPS)$(S_DEPS)$(S_UPPER_DEPS)$(C_DEPS) G3N_boot.elf
+	-$(RM) $(ASM_UPPER_DEPS)$(OBJS)$(SECONDARY_FLASH)$(SECONDARY_LIST)$(SECONDARY_SIZE)$(ASM_DEPS)$(S_DEPS)$(S_UPPER_DEPS)$(C_DEPS) GS02N_boot.elf
 	-@
 secondary-outputs: $(SECONDARY_FLASH) $(SECONDARY_LIST) $(SECONDARY_SIZE)
 

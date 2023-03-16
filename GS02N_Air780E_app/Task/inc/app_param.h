@@ -10,7 +10,7 @@
 #define APP_PARAM_FLAG          0x1A
 #define BOOT_PARAM_FLAG         0xB0
 
-#define EEPROM_VERSION									"GS02N_Air780_V1.1.6"
+#define EEPROM_VERSION									"GS02N_Air780_V1.1.7"
 
 
 #define JT808_PROTOCOL_TYPE			8
@@ -103,6 +103,9 @@ typedef struct
     uint8_t gsdettime;
     uint8_t gsValidCnt;
     uint8_t gsInvalidCnt;
+
+    uint8_t moduleRstCnt;
+    uint8_t bleen;
 } systemParam_s;
 
 typedef enum{

@@ -55,6 +55,7 @@ typedef enum{
     MOTIONDET_INS,
     FCG_INS,
     QFOTA_INS,
+    BLEEN_INS,
 
 }INSTRUCTIONID;
 

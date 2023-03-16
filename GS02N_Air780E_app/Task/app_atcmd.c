@@ -150,6 +150,14 @@ static void doAtdebugCmd(uint8_t *buf, uint16_t len)
     {
 		bleCentralStartDiscover();
     }
+    else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"AA"))
+    {
+		sysinfo.debugflag = 1;
+    }
+    else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"BB"))
+    {
+		sysinfo.debugflag = 0;
+    }
     else
     {
         if (item.item_data[0][0] >= '0' && item.item_data[0][0] <= '9')
@@ -185,13 +193,20 @@ static void atCmdFmpcAdccalParser(void)
 
 static void atCmdNmeaParser(uint8_t *buf, uint16_t len)
 {
+	 char buff[80];
     if (my_strstr((char *)buf, "ON", len))
     {
         sysinfo.nmeaOutPutCtl = 1;
+        //开启AGPS有效性检测
+   		sprintf(buff, "$PCAS03,,,,,,,,,,,1*1F\r\n");
+    	portUartSend(&usart3_ctl, (uint8_t *)buff, strlen(buff));
         LogMessage(DEBUG_FACTORY, "NMEA OPEN");
     }
     else
     {
+//    	//关闭AGPS有效性检测
+   		sprintf(buff, "$PCAS03,,,,,,,,,,,0*1E\r\n");
+    	portUartSend(&usart3_ctl, (uint8_t *)buff, strlen(buff));
         sysinfo.nmeaOutPutCtl = 0;
         LogMessage(DEBUG_FACTORY, "NMEA CLOSE");
     }
@@ -278,13 +293,8 @@ static void atCmdFmpcNmeaParser(uint8_t *buf, uint16_t len)
     char buff[80];
     if (my_strstr((char *)buf, "ON", len))
     {
-    	//打开GSV
-        strcpy(buff, "$CCMSG,GSV,1,1*37\r\n");
+        strcpy(buff, "$PCAS03,0,0,0,1,1,0,0,0,0,0,0,0,0,0*02\r\n");
         portUartSend(&usart3_ctl, buff, strlen(buff));
-		
-        strcpy(buff, "$CCMSG,GSA,1,0,*0D\r\n");
-        portUartSend(&usart3_ctl, buff, strlen(buff));
-		
         LogMessage(DEBUG_FACTORY, "NMEA ON OK");
         sysinfo.nmeaOutPutCtl = 1;
         gpsRequestSet(GPS_REQUEST_DEBUG);

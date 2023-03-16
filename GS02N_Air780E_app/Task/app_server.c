@@ -943,7 +943,7 @@ static void agpsServerConnTask(void)
 {
     static uint8_t agpsFsm = 0;
     static uint8_t runTick = 0;
-    //char agpsBuff[150];
+    char agpsBuff[150];
     int ret;
     gpsinfo_s *gpsinfo;
     if (sysinfo.agpsRequest == 0)
@@ -957,12 +957,12 @@ static void agpsServerConnTask(void)
     {
         return ;
     }
-    //    if (gpsinfo->fixstatus || sysinfo.gpsOnoff == 0)
-    //    {
-    //        socketDel(AGPS_LINK);
-    //        agpsRequestClear();
-    //        return;
-    //    }
+    if (gpsinfo->fixstatus || sysinfo.gpsOnoff == 0)
+    {
+        socketDel(AGPS_LINK);
+        agpsRequestClear();
+        return;
+    }
     if (socketGetUsedFlag(AGPS_LINK) != 1)
     {
         agpsFsm = 0;
@@ -984,8 +984,8 @@ static void agpsServerConnTask(void)
         case 0:
             if (gpsinfo->fixstatus == 0)
             {
-                //sprintf(agpsBuff, "user=%s;pwd=%s;cmd=full;", sysparam.agpsUser, sysparam.agpsPswd);
-                //socketSendData(AGPS_LINK, (uint8_t *) agpsBuff, strlen(agpsBuff));
+                sprintf(agpsBuff, "user=%s;pwd=%s;cmd=full;", sysparam.agpsUser, sysparam.agpsPswd);
+                socketSendData(AGPS_LINK, (uint8_t *) agpsBuff, strlen(agpsBuff));
             }
             agpsFsm = 1;
             runTick = 0;

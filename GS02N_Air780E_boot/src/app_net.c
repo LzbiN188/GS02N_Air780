@@ -28,6 +28,22 @@ const atCmd_s cmdtable[] =
     {CFUN_CMD, "AT+CFUN"},
     {QICLOSE_CMD, "AT+QICLOSE"},
     {CGDCONT_CMD, "AT+CGDCONT"},
+    //合宙
+     {CSTT_CMD, "AT+CSTT"},
+     {CFGRI_CMD, "AT+CFGRI"},
+     {CIPMUX_CMD, "AT+CIPMUX"},
+     {CIPSHUT_CMD, "AT+CIPSHUT"},
+     {CIICR_CMD, "AT+CIICR"},
+     {CIFSR_CMD, "AT+CIFSR"},
+     {CIPSTART_CMD, "AT+CIPSTART"},
+     {CIPCLOSE_CMD, "AT+CIPCLOSE"},
+     {CIPSEND_CMD, "AT+CIPSEND"},
+     {CIPRXF_CMD, "AT+CIPRXF"},
+     {CIPRXGET_CMD, "AT+CIPRXGET"},
+     {CSCLK_CMD, "AT+CSCLK"},
+     {CIPACK_CMD, "AT+CIPACK"},
+     {COPS_CMD, "AT+COPS"},
+     {WIFISCAN_CMD, "AT+WIFISCAN"},
 };
 
 /**************************************************
@@ -268,6 +284,7 @@ void modulePowerOff(void)
     POWER_OFF;
     RSTKEY_HIGH;
     PWRKEY_HIGH;
+    socketDelAll();
 }
 
 /**************************************************
@@ -295,8 +312,8 @@ void moduleReset(void)
     moduleInit();
     POWER_OFF;
     PWRKEY_HIGH;
-    RSTKEY_LOW;
-    startTimer(1000, moduleReleaseRstkey, 0);
+    RSTKEY_HIGH;
+    startTimer(1000, modulePowerOn, 0);
     socketDelAll();
 }
 
@@ -322,9 +339,9 @@ static void changeProcess(uint8_t fsm)
 void openSocket(uint8_t link, char *server, uint16_t port)
 {
     char param[100];
-    sprintf(param, "1,%d,\"TCP\",\"%s\",%d,0,1", link, server, port);
+    sprintf(param, "%d,\"TCP\",\"%s\",%d", link, server, port);
     sendModuleCmd(AT_CMD, NULL);
-    sendModuleCmd(QIOPEN_CMD, param);
+    sendModuleCmd(CIPSTART_CMD, param);
 }
 /**************************************************
 @bref		关闭socket
@@ -336,9 +353,8 @@ void openSocket(uint8_t link, char *server, uint16_t port)
 void closeSocket(uint8_t link)
 {
     char param[10];
-    sprintf(param, "%d", link);
-    sendModuleCmd(AT_CMD, NULL);
-    sendModuleCmd(QICLOSE_CMD, param);
+    sprintf(param, "%d,0", link);
+    sendModuleCmd(CIPCLOSE_CMD, param);
 
 }
 /**************************************************
@@ -366,8 +382,8 @@ static void netSetCgdcong(char *apn)
 static void netSetApn(char *apn, char *apnname, char *apnpassword)
 {
     char param[100];
-    sprintf(param, "1,1,\"%s\",\"%s\",\"%s\"", apn, apnname, apnpassword);
-    sendModuleCmd(QICSGP_CMD, param);
+    sprintf(param, "\"%s\",\"%s\",\"%s\"", apn, apnname, apnpassword);
+    sendModuleCmd(CSTT_CMD, param);
 }
 
 /**************************************************
@@ -379,7 +395,7 @@ static void netSetApn(char *apn, char *apnname, char *apnpassword)
 
 static void moduleEnterFly(void)
 {
-    sendModuleCmd(CFUN_CMD, "4,0");
+    sendModuleCmd(CFUN_CMD, "0");
 }
 
 /**************************************************
@@ -391,7 +407,7 @@ static void moduleEnterFly(void)
 
 static void moduleExitFly(void)
 {
-    sendModuleCmd(CFUN_CMD, "1,0");
+    sendModuleCmd(CFUN_CMD, "1");
 }
 
 /**************************************************
@@ -432,7 +448,9 @@ void netConnectTask(void)
                     {
                         moduleCtrl.atCount = 0;
                         modulePowerOn();
-                    }else{
+                    }
+                    else
+                    {
                         moduleReset();
                     }
                 }
@@ -443,7 +461,7 @@ void netConnectTask(void)
             {
                 moduleState.cpinResponOk = 0;
                 sendModuleCmd(AT_CMD, NULL);
-                netSetCgdcong((char *)sysparam.apn);
+
                 changeProcess(CSQ_STATUS);
 
             }
@@ -518,8 +536,10 @@ void netConnectTask(void)
                 break;
             }
         case CONFIG_STATUS:
+            sendModuleCmd(CIPMUX_CMD, "1");
             netSetApn((char *)sysparam.apn, (char *)sysparam.apnuser, (char *)sysparam.apnpassword);
             changeProcess(QIACT_STATUS);
+
             break;
         case QIACT_STATUS:
             if (moduleState.qipactOk)
@@ -527,18 +547,16 @@ void netConnectTask(void)
                 moduleState.qipactOk = 0;
                 moduleCtrl.qipactCount = 0;
                 changeProcess(NORMAL_STATUS);
+                sendModuleCmd(CIFSR_CMD, NULL);
             }
             else
             {
                 if (moduleState.qipactSet == 0)
                 {
                     moduleState.qipactSet = 1;
-                    sendModuleCmd(QIACT_CMD, "1");
+                    sendModuleCmd(CIICR_CMD, NULL);
                 }
-                else
-                {
-                    sendModuleCmd(QIACT_CMD, "?");
-                }
+
                 if (moduleState.fsmtick >= 45)
                 {
                     LogMessage(DEBUG_ALL, "try QIPACT again");
@@ -683,242 +701,173 @@ static void cgregParser(uint8_t *buf, uint16_t len)
     }
 }
 
+
+
+
+
+
+
+/*------------------------------------合宙----------------------------------------*/
 /**************************************************
-@bref		AT+QIACT	指令解析
+@bref       +CIICR    指令解析
 @param
 @return
 @note
+
+**************************************************/
+static void ciicrParser(uint8_t *buf, uint16_t len)
+{
+    if (distinguishOK((char *)buf))
+    {
+        moduleState.qipactOk = 1;
+    }
+
+}
+
+/**************************************************
+@bref       +RECEIVE    指令解析
+@param
+@return
+@note
++RECEIVE,0,10:
+xx\0佘
+
 **************************************************/
 
-static void qipactParser(uint8_t *buf, uint16_t len)
+uint8_t receiveParser(uint8_t *buf, uint16_t len)
 {
-    int index, datalen;
     uint8_t *rebuf;
-    uint16_t  relen, i;
-    char restore[50];
-    uint8_t   cnt;
-
-    index = my_getstrindex((char *)buf, "+QIACT:", len);
-    if (index >= 0)
-    {
-        rebuf = buf + index;
-        relen = len - index;
-        datalen = 0;
-        cnt = 0;
-        restore[0] = 0;
-        for (i = 0; i < relen; i++)
-        {
-            if (rebuf[i] == ',' || rebuf[i] == '\r' || rebuf[i] == '\n')
-            {
-                if (restore[0] != 0)
-                {
-                    restore[datalen] = 0;
-                    cnt++;
-                    datalen = 0;
-                    switch (cnt)
-                    {
-                        case 4:
-                            if (my_strpach(restore, "\"0.0.0.0\"") == 1)
-                            {
-                                moduleState.qipactOk = 0;
-
-                            }
-                            else if (restore[0] == '"')
-                            {
-                                moduleState.qipactOk = 1;
-                            }
-                            else
-                            {
-                                moduleState.qipactOk = 0;
-
-                            }
-                            break;
-                    }
-                    restore[0] = 0;
-
-                }
-            }
-            else
-            {
-                restore[datalen] = rebuf[i];
-                datalen++;
-                if (datalen >= 50)
-                {
-                    return ;
-                }
-
-            }
-        }
-    }
-}
-
-/**************************************************
-@bref		socket数据接收解析
-@param
-@return
-@note
-+QIURC: "closed",0
-+QIURC: "pdpdeact",1
-+QIURC: "recv",1,10
-xx\0\0萓
-
-**************************************************/
-
-static void qiurcParser(uint8_t *buf, uint16_t len)
-{
-    char *rebuf;
-    char resbuf[513];
-    int index, relen, recvLen;
-    int sockId, debugLen;
-    rebuf = buf;
-    relen = len;
-    index = my_getstrindex((char *)rebuf, "+QIURC:", relen);
-    if (index < 0)
-        return;
-    while (index >= 0)
-    {
-        index += 9;
-        rebuf += index;
-        relen -= index;
-        if (my_strpach(rebuf, "closed"))
-        {
-            rebuf += 8;
-            relen -= 8;
-            index = getCharIndex(rebuf, relen, '\r');
-            if (index >= 1 && index <= 2)
-            {
-                memcpy(resbuf, rebuf, index);
-                resbuf[index] = 0;
-                sockId = atoi(resbuf);
-                LogPrintf(DEBUG_ALL, "Socket[%d] Close", sockId);
-                socketSetConnState(sockId, SOCKET_CONN_IDLE);
-            }
-            rebuf += index;
-            relen -= index;
-        }
-        else if (my_strpach(rebuf, "pdpdeact"))
-        {
-            rebuf += 8;
-            relen -= 8;
-            LogMessage(DEBUG_ALL, "Socket all closed");
-            socketResetConnState();
-            changeProcess(AT_STATUS);
-        }
-        else if (my_strpach(rebuf, "recv"))
-        {
-            rebuf += 6;
-            relen -= 6;
-            index = getCharIndex(rebuf, relen, ',');
-            if (index >= 1 && index <= 2)
-            {
-                memcpy(resbuf, rebuf, index);
-                resbuf[index] = 0;
-                sockId = atoi(resbuf);
-                LogPrintf(DEBUG_ALL, "Socket[%d] recv data", sockId);
-                rebuf += index + 1;
-                relen -= index + 1;
-
-                index = getCharIndex(rebuf, relen, '\r');
-                if (index >= 0 && index <= 5)
-                {
-                    memcpy(resbuf, rebuf, index);
-                    resbuf[index] = 0;
-                    recvLen = atoi(resbuf);
-                    rebuf += index + 2;
-                    relen -= index + 2;
-                    if (relen >= recvLen)
-                    {
-                        debugLen = recvLen > 256 ? 256 : recvLen;
-                        byteToHexString(rebuf, resbuf, debugLen);
-                        resbuf[debugLen * 2] = 0;
-                        LogPrintf(DEBUG_ALL, "TCP RECV (%d)[%d]:%s", sockId, recvLen, resbuf);
-                        socketRecv(sockId, rebuf, recvLen);
-                        rebuf += recvLen;
-                        relen -= recvLen;
-                    }
-
-                }
-            }
-        }
-        index = my_getstrindex((char *)rebuf, "+QIURC:", relen);
-    }
-}
-
-/**************************************************
-@bref		AT+QISEND	指令解析
-@param
-@return
-@note
-+QISEND: 212,212,0
-
-**************************************************/
-
-static void qisendParser(uint8_t *buf, uint16_t len)
-{
+    uint16_t relen;
     int index;
-
-    index = my_getstrindex((char *)buf, "ERROR", len);
-    if (index >= 0)
-    {
-        //不能很好区分到底是哪条链路出现错误
-        socketResetConnState();
-        changeProcess(QIACT_STATUS);
-        return ;
-    }
-
-}
-/**************************************************
-@bref		QIOPEN	指令解析
-@param
-@return
-@note
-**************************************************/
-
-static void qipopenParser(uint8_t *buf, uint16_t len)
-{
-    int index;
-    uint8_t *rebuf;
     uint8_t sockId;
-    int16_t relen;
-    uint16_t result;
-    char restore[10];
+    char restore[513];
+    uint16_t recvLen;
     rebuf = buf;
     relen = len;
-    index = my_getstrindex((char *)rebuf, "+QIOPEN:", relen);
+
+    index = my_getstrindex((char *)rebuf, "+RECEIVE", relen);
+    if (index < 0)
+        return 0;
     while (index >= 0)
     {
         rebuf += index + 9;
-        relen -= index + 9;
+        relen -= index - 9;
 
-        index = getCharIndex(rebuf, relen, ',');
-        if (index >= 1 && index <= 2)
+
+        index = getCharIndex((char *)rebuf, relen, ',');
+        if (index >= 1)
         {
             memcpy(restore, rebuf, index);
             restore[index] = 0;
             sockId = atoi(restore);
-
             rebuf += index + 1;
-            relen -= index + 1;
-
-            index = getCharIndex(rebuf, relen, '\r');
-            if (index > 0 && index < 9)
+            relen -= index - 1;
+            index = my_getstrindex((char *)rebuf, ":", relen);
+            if (index >= 0)
             {
                 memcpy(restore, rebuf, index);
                 restore[index] = 0;
-                result = atoi(restore);
-                if (result == 0)
-                {
-                    socketSetConnState(sockId, SOCKET_CONN_SUCCESS);
-                }
-                else
-                {
-                    socketSetConnState(sockId, SOCKET_CONN_ERR);
-                }
+                recvLen = atoi(restore);
+                rebuf += index + 3;
+                relen -= index - 3;
+                LogPrintf(DEBUG_ALL, "recvlen:%d", recvLen);
+                socketRecv(sockId, rebuf, recvLen);
             }
         }
-        index = my_getstrindex((char *)rebuf, "+QIOPEN:", relen);
+        index = my_getstrindex((char *)rebuf, "+RECEIVE", relen);
+    }
+    return 0;
+
+}
+
+/**************************************************
+@bref       CIPSTATRT  指令解析
+@param
+@return
+@note
+    0, CONNECT OK
+**************************************************/
+static void cipstartParser(uint8_t *buf, uint16_t len)
+{
+    int index;
+    uint8_t *rebuf;
+    uint16_t relen;
+    uint8_t sockId;
+    char restore[10];
+    rebuf = buf;
+    relen = len;
+
+    index = my_getstrindex((char *)rebuf, "CONNECT FAIL", len);
+    if (index >= 0 && len < 30)
+    {
+        rebuf += index - 3;
+        relen -= index + 3;
+        index = getCharIndex(rebuf, relen, ',');
+        if (index > 0)
+        {
+            memcpy(restore, rebuf, index);
+            restore[index] = 0;
+            sockId = atoi(restore);
+            socketSetConnState(sockId, SOCKET_CONN_ERR);
+        }
+    }
+
+    index = my_getstrindex((char *)rebuf, "CONNECT OK", relen);
+    if (index >= 0 && len < 30)
+    {
+        rebuf += index - 3;
+        relen -= index + 3;
+        index = getCharIndex(rebuf, relen, ',');
+        if (index > 0)
+        {
+            memcpy(restore, rebuf, index);
+            restore[index] = 0;
+            sockId = atoi(restore);
+            socketSetConnState(sockId, SOCKET_CONN_SUCCESS);
+        }
+    }
+
+}
+
+/**************************************************
+@bref      closed 指令解析
+@param
+@return
+@note
+0, CLOSED
+
+**************************************************/
+
+static void closedParser(uint8_t *buf, uint16_t len)
+{
+    int index;
+    uint8_t *rebuf;
+    uint16_t relen;
+    uint8_t sockId;
+    char restore[10];
+    rebuf = buf;
+    relen = len;
+
+    index = my_getstrindex(rebuf, "CLOSED", relen);
+    if (index < 0)
+        return;
+    if (index >= 0 && len < 30)
+    {
+        rebuf += index - 3;
+        relen -= index + 3;
+        index = getCharIndex(rebuf, relen, ',');
+        if (index > 0)
+        {
+            memcpy(restore, rebuf, index);
+            restore[index] = 0;
+            sockId = atoi(restore);
+            socketSetConnState(sockId, SOCKET_CONN_IDLE);
+        }
     }
 }
+
+
+
 
 /**************************************************
 @bref		模组端数据接收解析器
@@ -931,18 +880,20 @@ void moduleRecvParser(uint8_t *buf, uint16_t bufsize)
 {
     static uint16_t len = 0;
     static uint8_t dataRestore[MODULE_RX_BUFF_SIZE + 1];
+
     if (bufsize == 0)
         return;
     if (len + bufsize > MODULE_RX_BUFF_SIZE)
     {
         len = 0;
         bufsize %= MODULE_RX_BUFF_SIZE;
+        LogMessage(DEBUG_ALL, "UartRecv Full!!!");
     }
     memcpy(dataRestore + len, buf, bufsize);
     len += bufsize;
     dataRestore[len] = 0;
 
-    if(len<=2)
+    if(len <= 2)
     {
         return;
     }
@@ -959,9 +910,10 @@ void moduleRecvParser(uint8_t *buf, uint16_t bufsize)
     LogMessage(DEBUG_ALL, "---<<<---");
     /*****************************************/
     moduleRspSuccess();
-    qiurcParser(dataRestore, len);
-    qipactParser(dataRestore, len);
-    qipopenParser(dataRestore, len);
+    receiveParser(dataRestore, len);
+    cipstartParser(dataRestore, len);
+    closedParser(dataRestore, len);
+
     /*****************************************/
     switch (moduleState.cmd)
     {
@@ -984,12 +936,13 @@ void moduleRecvParser(uint8_t *buf, uint16_t bufsize)
         case CEREG_CMD:
             cgregParser(dataRestore, len);
             break;
-        case QISEND_CMD:
-            qisendParser(dataRestore, len);
+        case CIICR_CMD:
+            ciicrParser(dataRestore, len);
             break;
         default:
             break;
     }
+
     moduleState.cmd = 0;
     len = 0;
 }
@@ -1027,8 +980,8 @@ int socketSendData(uint8_t link, uint8_t *data, uint16_t len)
 
     sprintf(param, "%d,%d", link, len);
     sendModuleCmd(AT_CMD, NULL);
-    sendModuleCmd(QISEND_CMD, param);
-    createNode((char *)data, len, 0);
+    sendModuleCmd(CIPSEND_CMD, param);
+    createNode((char *)data, len, QISEND_CMD);
 
     return len;
 }

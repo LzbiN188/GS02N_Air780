@@ -53,6 +53,8 @@ typedef struct
     uint8_t agpsRequest				: 1;
     uint8_t doRelayFlag             : 1;
 	uint8_t doSosFlag				: 1;
+	uint8_t moduleRstFlag			: 1;
+	uint8_t debugflag				: 1;
     uint8_t lbsExtendEvt;
     uint8_t wifiExtendEvt;
     uint8_t ringWakeUpTick;
@@ -86,7 +88,7 @@ typedef struct
 	float insidevoltage;
     float lowvoltage;
 
-
+	uint8_t moduleRstCnt;
 } SystemInfoTypedef;
 
 extern SystemInfoTypedef sysinfo;
