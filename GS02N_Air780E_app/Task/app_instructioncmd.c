@@ -7,7 +7,7 @@
 #include "app_kernal.h"
 #include "app_net.h"
 #include "app_param.h"
-#include "app_sn.h"
+
 #include "app_sys.h"
 #include "app_task.h"
 #include "app_server.h"
@@ -948,260 +948,260 @@ static void doBleServerInstruction(ITEM *item, char *message)
 
 static void doRelayInstrucion(ITEM *item, char *message)
 {
-    if (item->item_data[1][0] == '1')
-    {
-        sysparam.relayCtl = 1;
-        paramSaveAll();
-        relayAutoRequest();
-        strcpy(message, "Relay on success");
-    }
-    else if (item->item_data[1][0] == '0')
-    {
-        sysparam.relayCtl = 0;
-        paramSaveAll();
-        bleRelaySetAllReq(BLE_EVENT_SET_DEVOFF | BLE_EVENT_CLR_CNT);
-        bleRelayClearAllReq(BLE_EVENT_SET_DEVON);
-        strcpy(message, "Relay off success");
-    }
-    else
-    {
-        sprintf(message, "Relay status %s", sysparam.relayCtl == 1 ? "relay on" : "relay off");
-    }
+//    if (item->item_data[1][0] == '1')
+//    {
+//        sysparam.relayCtl = 1;
+//        paramSaveAll();
+//        relayAutoRequest();
+//        strcpy(message, "Relay on success");
+//    }
+//    else if (item->item_data[1][0] == '0')
+//    {
+//        sysparam.relayCtl = 0;
+//        paramSaveAll();
+//        bleRelaySetAllReq(BLE_EVENT_SET_DEVOFF | BLE_EVENT_CLR_CNT);
+//        bleRelayClearAllReq(BLE_EVENT_SET_DEVON);
+//        strcpy(message, "Relay off success");
+//    }
+//    else
+//    {
+//        sprintf(message, "Relay status %s", sysparam.relayCtl == 1 ? "relay on" : "relay off");
+//    }
 }
 
 static void doReadParamInstruction(ITEM *item, char *message)
 {
-    uint8_t i, cnt;
-    bleRelayInfo_s *bleinfo;
-    cnt = 0;
-    for (i = 0; i < BLE_CONNECT_LIST_SIZE; i++)
-    {
-        bleinfo = bleRelayGeInfo(i);
-        if (bleinfo != NULL)
-        {
-            cnt++;
-            sprintf(message + strlen(message), "[T:%ld,V:(%.2fV,%.2fV)] ", sysinfo.sysTick - bleinfo->updateTick, bleinfo->rfV,
-                    bleinfo->outV);
-        }
-    }
-    if (cnt == 0)
-    {
-        sprintf(message, "no ble info");
-    }
+//    uint8_t i, cnt;
+//    bleRelayInfo_s *bleinfo;
+//    cnt = 0;
+//    for (i = 0; i < BLE_CONNECT_LIST_SIZE; i++)
+//    {
+//        bleinfo = bleRelayGeInfo(i);
+//        if (bleinfo != NULL)
+//        {
+//            cnt++;
+//            sprintf(message + strlen(message), "[T:%ld,V:(%.2fV,%.2fV)] ", sysinfo.sysTick - bleinfo->updateTick, bleinfo->rfV,
+//                    bleinfo->outV);
+//        }
+//    }
+//    if (cnt == 0)
+//    {
+//        sprintf(message, "no ble info");
+//    }
 }
 static void doSetBleParamInstruction(ITEM *item, char *message)
 {
-    uint8_t i, cnt;
-    bleRelayInfo_s *bleinfo;
-    if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
-    {
-        cnt = 0;
-
-        for (i = 0; i < BLE_CONNECT_LIST_SIZE; i++)
-        {
-            bleinfo = bleRelayGeInfo(i);
-            if (bleinfo != NULL)
-            {
-                cnt++;
-                sprintf(message + strlen(message), "(%d:[%.2f,%.2f,%d]) ", i, bleinfo->rf_threshold, bleinfo->out_threshold,
-                        bleinfo->disc_threshold);
-            }
-        }
-        if (cnt == 0)
-        {
-            sprintf(message, "no ble info");
-        }
-        else
-        {
-            sprintf(message + strlen(message), "DISC:%dm", sysparam.bleAutoDisc);
-        }
-    }
-    else
-    {
-        for (i = 0; i < BLE_CONNECT_LIST_SIZE; i++)
-        {
-            bleinfo = bleRelayGeInfo(i);
-            if (bleinfo != NULL)
-            {
-                bleinfo->rf_threshold = 0;
-                bleinfo->out_threshold = 0;
-            }
-        }
-        sysparam.bleRfThreshold = atoi(item->item_data[1]);
-        sysparam.bleOutThreshold = atoi(item->item_data[2]);
-        sysparam.bleAutoDisc = atoi(item->item_data[3]);
-        paramSaveAll();
-        sprintf(message, "Update new ble param to %.2fv,%.2fv,%d", sysparam.bleRfThreshold / 100.0,
-                sysparam.bleOutThreshold / 100.0, sysparam.bleAutoDisc);
-        bleRelaySetAllReq(BLE_EVENT_SET_RF_THRE | BLE_EVENT_SET_OUTV_THRE | BLE_EVENT_SET_AD_THRE | BLE_EVENT_GET_RF_THRE |
-                          BLE_EVENT_GET_OUT_THRE | BLE_EVENT_GET_AD_THRE);
-    }
+//    uint8_t i, cnt;
+//    bleRelayInfo_s *bleinfo;
+//    if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+//    {
+//        cnt = 0;
+//
+//        for (i = 0; i < BLE_CONNECT_LIST_SIZE; i++)
+//        {
+//            bleinfo = bleRelayGeInfo(i);
+//            if (bleinfo != NULL)
+//            {
+//                cnt++;
+//                sprintf(message + strlen(message), "(%d:[%.2f,%.2f,%d]) ", i, bleinfo->rf_threshold, bleinfo->out_threshold,
+//                        bleinfo->disc_threshold);
+//            }
+//        }
+//        if (cnt == 0)
+//        {
+//            sprintf(message, "no ble info");
+//        }
+//        else
+//        {
+//            sprintf(message + strlen(message), "DISC:%dm", sysparam.bleAutoDisc);
+//        }
+//    }
+//    else
+//    {
+//        for (i = 0; i < BLE_CONNECT_LIST_SIZE; i++)
+//        {
+//            bleinfo = bleRelayGeInfo(i);
+//            if (bleinfo != NULL)
+//            {
+//                bleinfo->rf_threshold = 0;
+//                bleinfo->out_threshold = 0;
+//            }
+//        }
+//        sysparam.bleRfThreshold = atoi(item->item_data[1]);
+//        sysparam.bleOutThreshold = atoi(item->item_data[2]);
+//        sysparam.bleAutoDisc = atoi(item->item_data[3]);
+//        paramSaveAll();
+//        sprintf(message, "Update new ble param to %.2fv,%.2fv,%d", sysparam.bleRfThreshold / 100.0,
+//                sysparam.bleOutThreshold / 100.0, sysparam.bleAutoDisc);
+//        bleRelaySetAllReq(BLE_EVENT_SET_RF_THRE | BLE_EVENT_SET_OUTV_THRE | BLE_EVENT_SET_AD_THRE | BLE_EVENT_GET_RF_THRE |
+//                          BLE_EVENT_GET_OUT_THRE | BLE_EVENT_GET_AD_THRE);
+//    }
 }
 static void doSetBleWarnParamInstruction(ITEM *item, char *message)
 {
-    uint8_t i, cnt;
-    bleRelayInfo_s *bleinfo;
-
-    if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
-    {
-        cnt = 0;
-        for (i = 0; i < BLE_CONNECT_LIST_SIZE; i++)
-        {
-            bleinfo = bleRelayGeInfo(i);
-            if (bleinfo != NULL)
-            {
-                cnt++;
-                sprintf(message + strlen(message), "(%d:[%.2f,%d,%d]) ", i, bleinfo->preV_threshold / 100.0,
-                        bleinfo->preDetCnt_threshold,
-                        bleinfo->preHold_threshold);
-            }
-        }
-        if (cnt == 0)
-        {
-            sprintf(message, "no ble info");
-        }
-    }
-    else
-    {
-        sysparam.blePreShieldVoltage = atoi(item->item_data[1]);
-        sysparam.blePreShieldDetCnt = atoi(item->item_data[2]);
-        sysparam.blePreShieldHoldTime = atoi(item->item_data[3]);
-        if (sysparam.blePreShieldDetCnt >= 60)
-        {
-            sysparam.blePreShieldDetCnt = 30;
-        }
-        else if (sysparam.blePreShieldDetCnt == 0)
-        {
-            sysparam.blePreShieldDetCnt = 10;
-        }
-        if (sysparam.blePreShieldHoldTime == 0)
-        {
-            sysparam.blePreShieldHoldTime = 1;
-        }
-        paramSaveAll();
-        sprintf(message, "Update ble warnning param to %d,%d,%d", sysparam.blePreShieldVoltage, sysparam.blePreShieldDetCnt,
-                sysparam.blePreShieldHoldTime);
-        for (i = 0; i < BLE_CONNECT_LIST_SIZE; i++)
-        {
-            bleinfo = bleRelayGeInfo(i);
-            if (bleinfo != NULL)
-            {
-                bleinfo->preV_threshold = 0;
-                bleinfo->preDetCnt_threshold = 0;
-                bleinfo->preHold_threshold = 0;
-            }
-        }
-        bleRelaySetAllReq(BLE_EVENT_SET_PRE_PARAM | BLE_EVENT_GET_PRE_PARAM);
-    }
+//    uint8_t i, cnt;
+//    bleRelayInfo_s *bleinfo;
+//
+//    if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+//    {
+//        cnt = 0;
+//        for (i = 0; i < BLE_CONNECT_LIST_SIZE; i++)
+//        {
+//            bleinfo = bleRelayGeInfo(i);
+//            if (bleinfo != NULL)
+//            {
+//                cnt++;
+//                sprintf(message + strlen(message), "(%d:[%.2f,%d,%d]) ", i, bleinfo->preV_threshold / 100.0,
+//                        bleinfo->preDetCnt_threshold,
+//                        bleinfo->preHold_threshold);
+//            }
+//        }
+//        if (cnt == 0)
+//        {
+//            sprintf(message, "no ble info");
+//        }
+//    }
+//    else
+//    {
+//        sysparam.blePreShieldVoltage = atoi(item->item_data[1]);
+//        sysparam.blePreShieldDetCnt = atoi(item->item_data[2]);
+//        sysparam.blePreShieldHoldTime = atoi(item->item_data[3]);
+//        if (sysparam.blePreShieldDetCnt >= 60)
+//        {
+//            sysparam.blePreShieldDetCnt = 30;
+//        }
+//        else if (sysparam.blePreShieldDetCnt == 0)
+//        {
+//            sysparam.blePreShieldDetCnt = 10;
+//        }
+//        if (sysparam.blePreShieldHoldTime == 0)
+//        {
+//            sysparam.blePreShieldHoldTime = 1;
+//        }
+//        paramSaveAll();
+//        sprintf(message, "Update ble warnning param to %d,%d,%d", sysparam.blePreShieldVoltage, sysparam.blePreShieldDetCnt,
+//                sysparam.blePreShieldHoldTime);
+//        for (i = 0; i < BLE_CONNECT_LIST_SIZE; i++)
+//        {
+//            bleinfo = bleRelayGeInfo(i);
+//            if (bleinfo != NULL)
+//            {
+//                bleinfo->preV_threshold = 0;
+//                bleinfo->preDetCnt_threshold = 0;
+//                bleinfo->preHold_threshold = 0;
+//            }
+//        }
+//        bleRelaySetAllReq(BLE_EVENT_SET_PRE_PARAM | BLE_EVENT_GET_PRE_PARAM);
+//    }
 }
 
 static void doSetBleMacInstruction(ITEM *item, char *message)
 {
-    uint8_t i, j, l, ind;
-    char mac[20];
-    if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
-    {
-        strcpy(message, "BLELIST:");
-        for (i = 0; i < sizeof(sysparam.bleConnMac) / sizeof(sysparam.bleConnMac[0]); i++)
-        {
-            byteToHexString(sysparam.bleConnMac[i], (uint8_t *)mac, 6);
-            mac[12] = 0;
-            sprintf(message + strlen(message), " %s", mac);
-
-        }
-        strcat(message, ";");
-    }
-    else
-    {
-        bleRelayDeleteAll();
-        tmos_memset(sysparam.bleConnMac, 0, sizeof(sysparam.bleConnMac));
-        ind = 0;
-        strcpy(message, "Enable ble function,Update MAC: ");
-        for (i = 1; i < item->item_cnt; i++)
-        {
-            if (strlen(item->item_data[i]) != 12)
-            {
-                continue;
-            }
-            //aa bb cc dd ee ff
-            //ff ee dd cc bb aa
-            if (ind < 2)
-            {
-                changeHexStringToByteArray(sysparam.bleConnMac[ind], item->item_data[i], 6);
-                bleRelayInsert(sysparam.bleConnMac[ind], 0);
-                ind++;
-            }
-            l = 5;
-            for (j = 0; j < 3; j++)
-            {
-                tmos_memcpy(mac, &item->item_data[i][j * 2], 2);
-                tmos_memcpy(&item->item_data[i][j * 2], &item->item_data[i][l * 2], 2);
-                tmos_memcpy(&item->item_data[i][l * 2], mac, 2);
-                l--;
-            }
-
-
-            l = 0;
-            for (j = 0; j < 12; j += 2)
-            {
-                tmos_memcpy(mac + l, item->item_data[i] + j, 2);
-                l += 2;
-                if (j % 2 == 0 && (j + 2 < 12))
-                {
-                    mac[l++] = ':';
-                }
-            }
-            mac[l] = 0;
-            sprintf(message + strlen(message), " %s", mac);
-        }
-        paramSaveAll();
-        if (ind == 0)
-        {
-            strcpy(message, "Disable the ble function,and the ble mac was clear");
-        }
-    }
+//    uint8_t i, j, l, ind;
+//    char mac[20];
+//    if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+//    {
+//        strcpy(message, "BLELIST:");
+//        for (i = 0; i < sizeof(sysparam.bleConnMac) / sizeof(sysparam.bleConnMac[0]); i++)
+//        {
+//            byteToHexString(sysparam.bleConnMac[i], (uint8_t *)mac, 6);
+//            mac[12] = 0;
+//            sprintf(message + strlen(message), " %s", mac);
+//
+//        }
+//        strcat(message, ";");
+//    }
+//    else
+//    {
+//        bleRelayDeleteAll();
+//        tmos_memset(sysparam.bleConnMac, 0, sizeof(sysparam.bleConnMac));
+//        ind = 0;
+//        strcpy(message, "Enable ble function,Update MAC: ");
+//        for (i = 1; i < item->item_cnt; i++)
+//        {
+//            if (strlen(item->item_data[i]) != 12)
+//            {
+//                continue;
+//            }
+//            //aa bb cc dd ee ff
+//            //ff ee dd cc bb aa
+//            if (ind < 2)
+//            {
+//                changeHexStringToByteArray(sysparam.bleConnMac[ind], item->item_data[i], 6);
+//                bleRelayInsert(sysparam.bleConnMac[ind], 0);
+//                ind++;
+//            }
+//            l = 5;
+//            for (j = 0; j < 3; j++)
+//            {
+//                tmos_memcpy(mac, &item->item_data[i][j * 2], 2);
+//                tmos_memcpy(&item->item_data[i][j * 2], &item->item_data[i][l * 2], 2);
+//                tmos_memcpy(&item->item_data[i][l * 2], mac, 2);
+//                l--;
+//            }
+//
+//
+//            l = 0;
+//            for (j = 0; j < 12; j += 2)
+//            {
+//                tmos_memcpy(mac + l, item->item_data[i] + j, 2);
+//                l += 2;
+//                if (j % 2 == 0 && (j + 2 < 12))
+//                {
+//                    mac[l++] = ':';
+//                }
+//            }
+//            mac[l] = 0;
+//            sprintf(message + strlen(message), " %s", mac);
+//        }
+//        paramSaveAll();
+//        if (ind == 0)
+//        {
+//            strcpy(message, "Disable the ble function,and the ble mac was clear");
+//        }
+//    }
 }
 
 static void doRelaySpeedInstruction(ITEM *item, char *message)
 {
-    if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
-    {
-        sprintf(message, "Current relaySpeed %d km/h", sysparam.relaySpeed);
-    }
-    else
-    {
-        sysparam.relaySpeed = atoi(item->item_data[1]);
-        paramSaveAll();
-        sprintf(message, "Update relaySpeed %d km/h", sysparam.relaySpeed);
-    }
+//    if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+//    {
+//        sprintf(message, "Current relaySpeed %d km/h", sysparam.relaySpeed);
+//    }
+//    else
+//    {
+//        sysparam.relaySpeed = atoi(item->item_data[1]);
+//        paramSaveAll();
+//        sprintf(message, "Update relaySpeed %d km/h", sysparam.relaySpeed);
+//    }
 }
 
 
 static void doRelayForceInstrucion(ITEM *item, char *message)
 {
-    if (item->item_data[1][0] == '1')
-    {
-        sysparam.relayCtl = 1;
-        paramSaveAll();
-        relayAutoClear();
-        bleRelaySetAllReq(BLE_EVENT_SET_DEVON);
-        bleRelayClearAllReq(BLE_EVENT_SET_DEVOFF);
-
-        strcpy(message, "Relay force on");
-    }
-    else if (item->item_data[1][0] == '0')
-    {
-        sysparam.relayCtl = 0;
-        paramSaveAll();
-        relayAutoClear();
-        bleRelaySetAllReq(BLE_EVENT_SET_DEVOFF | BLE_EVENT_CLR_CNT);
-        bleRelayClearAllReq(BLE_EVENT_SET_DEVON);
-        strcpy(message, "Relay force offf");
-    }
-    else
-    {
-        sprintf(message, "Relay status was %s", sysparam.relayCtl == 1 ? "relay on" : "relay off");
-    }
+//    if (item->item_data[1][0] == '1')
+//    {
+//        sysparam.relayCtl = 1;
+//        paramSaveAll();
+//        relayAutoClear();
+//        bleRelaySetAllReq(BLE_EVENT_SET_DEVON);
+//        bleRelayClearAllReq(BLE_EVENT_SET_DEVOFF);
+//
+//        strcpy(message, "Relay force on");
+//    }
+//    else if (item->item_data[1][0] == '0')
+//    {
+//        sysparam.relayCtl = 0;
+//        paramSaveAll();
+//        relayAutoClear();
+//        bleRelaySetAllReq(BLE_EVENT_SET_DEVOFF | BLE_EVENT_CLR_CNT);
+//        bleRelayClearAllReq(BLE_EVENT_SET_DEVON);
+//        strcpy(message, "Relay force offf");
+//    }
+//    else
+//    {
+//        sprintf(message, "Relay status was %s", sysparam.relayCtl == 1 ? "relay on" : "relay off");
+//    }
 }
 
 void doBFInstruction(ITEM *item, char *message)

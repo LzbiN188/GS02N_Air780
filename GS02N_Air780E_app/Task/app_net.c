@@ -95,7 +95,7 @@ uint8_t createNode(char *data, uint16_t datalen, uint8_t currentcmd)
     cmdNode_s *currentnode;
     //如果链表头未创建，则创建链表头。
     WAKEMODULE;
-    wakeUpByInt(1, 10);
+    wakeUpByInt(1, 15);
     if (headNode == NULL)
     {
         headNode = malloc(sizeof(cmdNode_s));

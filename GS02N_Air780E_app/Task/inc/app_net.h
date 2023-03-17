@@ -25,7 +25,7 @@
 
 
 
-#define MODULE_RX_BUFF_SIZE		1024
+#define MODULE_RX_BUFF_SIZE		768
 
 typedef enum
 {

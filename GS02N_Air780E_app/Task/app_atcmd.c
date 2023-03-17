@@ -12,7 +12,7 @@
 #include "app_socket.h"
 #include "app_server.h"
 #include "aes.h"
-#include "app_sn.h"
+
 #include "app_jt808.h"
 #include "app_task.h"
 #include "app_central.h"
@@ -145,18 +145,6 @@ static void doAtdebugCmd(uint8_t *buf, uint16_t len)
     else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"AGPS"))
     {
         agpsRequestSet();
-    }
-    else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"BLESCAN"))
-    {
-		bleCentralStartDiscover();
-    }
-    else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"AA"))
-    {
-		sysinfo.debugflag = 1;
-    }
-    else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"BB"))
-    {
-		sysinfo.debugflag = 0;
     }
     else
     {

@@ -1715,10 +1715,10 @@ void relayAutoClear(void)
 **************************************************/
 static void doRelayOn(void)
 {
-    relayAutoClear();
-    bleRelayClearAllReq(BLE_EVENT_SET_DEVOFF);
-    bleRelaySetAllReq(BLE_EVENT_SET_DEVON);
-    LogMessage(DEBUG_ALL, "do relay on");
+//    relayAutoClear();
+//    bleRelayClearAllReq(BLE_EVENT_SET_DEVOFF);
+//    bleRelaySetAllReq(BLE_EVENT_SET_DEVON);
+//    LogMessage(DEBUG_ALL, "do relay on");
 }
 
 void relayAutoCtrlTask(void)
