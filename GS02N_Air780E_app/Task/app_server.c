@@ -993,10 +993,13 @@ static void agpsServerConnTask(void)
         case 1:
             if (++runTick >= 15)
             {
-                agpsFsm = 0;
-                runTick = 0;
-                socketDel(AGPS_LINK);
-                agpsRequestClear();
+            	if (isAgpsDataRecvComplete() == 0)
+            	{
+	                agpsFsm = 0;
+	                runTick = 0;
+	                socketDel(AGPS_LINK);
+	                agpsRequestClear();
+                }
             }
             break;
         default:

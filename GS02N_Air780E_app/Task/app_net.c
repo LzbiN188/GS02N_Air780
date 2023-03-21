@@ -95,7 +95,14 @@ uint8_t createNode(char *data, uint16_t datalen, uint8_t currentcmd)
     cmdNode_s *currentnode;
     //如果链表头未创建，则创建链表头。
     WAKEMODULE;
-    wakeUpByInt(1, 10);
+    if (currentcmd == WIFISCAN_CMD)
+    {
+		wakeUpByInt(1, 20);
+    }
+    else 
+    {
+    	wakeUpByInt(1, 15);
+    }
     if (headNode == NULL)
     {
         headNode = malloc(sizeof(cmdNode_s));
@@ -1891,7 +1898,10 @@ void cipstartParser(uint8_t *buf, uint16_t len)
     sendModuleCmd(CIPSHUT_CMD, NULL);
 }
 
-
+uint8_t isAgpsDataRecvComplete(void)
+{
+	return moduleState.agpsLinkQird;
+}
 
 /**************************************************
 @bref		模组端数据接收解析器
@@ -1968,7 +1978,14 @@ uint8_t ciprxgetParser(uint8_t *buf, uint16_t len)
                         byteToHexString(rebuf, restore, debugLen);
                         restore[debugLen * 2] = 0;
                         LogPrintf(DEBUG_ALL, "TCP RECV (%d)[%d]:%s", link, readLen, restore);
-                        socketRecv(link, rebuf, readLen);
+                        if (link == 4)
+                        {
+                        	socketRecv(link, rebuf, readLen);
+                        }
+                        else 
+                        {
+							socketRecv(link, rebuf, relen);//relen替代readLen
+                        }
                     }
                 }
                 else

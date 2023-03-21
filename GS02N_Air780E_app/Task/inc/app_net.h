@@ -211,6 +211,7 @@ void deleteMessage(void);
 void querySendData(uint8_t link);
 void queryBatVoltage(void);
 
+uint8_t isAgpsDataRecvComplete(void);
 
 
 uint8_t getModuleRssi(void);
