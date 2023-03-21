@@ -25,7 +25,7 @@
 
 
 
-#define MODULE_RX_BUFF_SIZE		768
+#define MODULE_RX_BUFF_SIZE		1024
 
 typedef enum
 {
@@ -210,6 +210,9 @@ void sendMessage(uint8_t *buf, uint16_t len, char *telnum);
 void deleteMessage(void);
 void querySendData(uint8_t link);
 void queryBatVoltage(void);
+
+uint8_t isAgpsDataRecvComplete(void);
+
 
 
 

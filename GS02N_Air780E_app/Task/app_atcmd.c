@@ -146,6 +146,27 @@ static void doAtdebugCmd(uint8_t *buf, uint16_t len)
     {
         agpsRequestSet();
     }
+    else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"GPSRST"))
+    {
+		uint8_t bufff[50]={0};
+		uint16_t lennn = 0;
+		bufff[lennn++] = 0xBA;
+		bufff[lennn++] = 0xCE;
+		bufff[lennn++] = 0x00;
+		bufff[lennn++] = 0x04;
+		bufff[lennn++] = 0x06;
+		bufff[lennn++] = 0x02;
+		bufff[lennn++] = 0x00;
+		bufff[lennn++] = 0x00;
+		bufff[lennn++] = 0x00;
+		bufff[lennn++] = 0x00;
+		bufff[lennn++] = 0x02;
+		bufff[lennn++] = 0x06;
+		bufff[lennn++] = 0x04;
+		bufff[lennn++] = 0x00;
+		
+		portUartSend(&usart3_ctl, bufff, lennn);
+    }
     else
     {
         if (item.item_data[0][0] >= '0' && item.item_data[0][0] <= '9')
@@ -527,7 +548,7 @@ void atCmdParserFunction(uint8_t *buf, uint16_t len)
     }
     else
     {
-        createNode(buf, len, 0);
-       	//portUartSend(&usart0_ctl, buf, len);
+        //createNode(buf, len, 0);
+       	portUartSend(&usart0_ctl, buf, len);
     }
 }

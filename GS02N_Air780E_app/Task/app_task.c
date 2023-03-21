@@ -435,7 +435,7 @@ static void gpsOpen(void)
 	GPSPWR_ON;
     GPSLNA_ON;
     portUartCfg(APPUSART3, 1, 9600, gpsUartRead);
-    startTimer(10, gpsWarmStart, 0);
+    startTimer(10, changeGPSBaudRate, 0);
     sysinfo.gpsUpdatetick = sysinfo.sysTick;
     sysinfo.gpsOnoff = 1;
     gpsChangeFsmState(GPSWATISTATUS);
