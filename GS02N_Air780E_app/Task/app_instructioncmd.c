@@ -173,16 +173,20 @@ static void doParamInstruction(ITEM *item, char *message)
             break;
         case MODE23:
             sprintf(message + strlen(message), "Mode23: %dM %dS;", sysparam.gapMinutes, sysparam.gpsuploadgap);
+        case MODE24:
+        	sprintf(message + strlen(message), "Mode24: %dstep;", sysparam.step);
             break;
     }
 
     sprintf(message + strlen(message), "StartUp:%u;RunTime:%u;", sysparam.startUpCnt, sysparam.runTime);
 
 }
+
 static void doStatusInstruction(ITEM *item, char *message)
 {
     gpsinfo_s *gpsinfo;
     moduleGetCsq();
+    portUpdateStep();
     sprintf(message, "OUT-V=%.2fV;", sysinfo.outsidevoltage);
     //sprintf(message + strlen(message), "BAT-V=%.2fV;", sysinfo.insidevoltage);
     if (sysinfo.gpsOnoff)
@@ -199,7 +203,8 @@ static void doStatusInstruction(ITEM *item, char *message)
     sprintf(message + strlen(message), "ACC=%s;", getTerminalAccState() > 0 ? "On" : "Off");
     sprintf(message + strlen(message), "SIGNAL=%d;", getModuleRssi());
     sprintf(message + strlen(message), "BATTERY=%s;", getTerminalChargeState() > 0 ? "Charging" : "Uncharged");
-    sprintf(message + strlen(message), "LOGIN=%s;", primaryServerIsReady() > 0 ? "Yes" : "No");
+    sprintf(message + strlen(message), "LOGIN=%s;", multiConnServerIsReady() > 0 ? "Yes" : "No");
+    sprintf(message + strlen(message), "STEP=%d", sysinfo.step);
 }
 
 static void doSNInstruction(ITEM *item, char *message)
@@ -297,7 +302,7 @@ static void doModeInstruction(ITEM *item, char *message)
     uint16_t valueofminute;
     if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
     {
-    	switch(sysparam.MODE)
+    	switch (sysparam.MODE)
     	{
 			case MODE1:
 				workmode = 1;
@@ -314,8 +319,18 @@ static void doModeInstruction(ITEM *item, char *message)
 			case MODE23:
 				workmode = 23;
 				break;
+			case MODE24:
+				workmode = 24;
+				break;
     	}
-        sprintf(message, "Mode%d,%d", workmode, sysparam.gpsuploadgap);
+    	if (sysparam.MODE == MODE24)
+    	{
+			sprintf(message, "Mode%d,%d step", workmode, sysparam.step);
+    	}
+    	else 
+    	{
+        	sprintf(message, "Mode%d,%d m,%d s", workmode, sysparam.gpsuploadgap, sysparam.gpsuploadgap);
+        }
     }
     else
     {
@@ -476,6 +491,16 @@ static void doModeInstruction(ITEM *item, char *message)
                             sysparam.gpsuploadgap);
                 }
                 break;
+            case MODE24:
+                sysparam.gapMinutes = (uint16_t)atoi(item->item_data[2]);
+                if (sysparam.gapMinutes < 5)
+                {
+                    sysparam.gapMinutes = 5;
+                }
+				sysparam.step = (uint16_t)atoi(item->item_data[3]);
+				sprintf(message, "Change to mode %d and update interval time to %d and %d step;", workmode, sysparam.gapMinutes,
+                            sysparam.step);
+            	break;
             default:
                 strcpy(message, "Unsupport mode");
                 break;
@@ -484,7 +509,6 @@ static void doModeInstruction(ITEM *item, char *message)
 
     }
 }
-
 
 
 void dorequestSend123(void)
@@ -1527,27 +1551,27 @@ static void doFcgInstruction(ITEM *item, char *message)
 
 static void doBleenInstruction(ITEM *item, char *message)
 {
-	if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
-	{
-		sprintf(message, "Bleen is %s", sysparam.bleen ? "On" : "Off");
-	}
-	else
-	{
-		sysparam.bleen = atoi(item->item_data[1]);
-		if (sysparam.bleen == 1)
-		{	
-			char broadCastNmae[30];
-			sprintf(broadCastNmae, "%s-%s", "AUTO", sysparam.SN + 9);
-			appPeripheralBroadcastInfoCfg(broadCastNmae);
-		}
-		else if (sysparam.bleen == 0)
-		{
-			appPeripheralCancel();
-		}
-
-		sprintf(message, "Bleen is %s", sysparam.bleen ? "On" : "Off");
-		paramSaveAll();
-	}
+//	if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+//	{
+//		sprintf(message, "Bleen is %s", sysparam.bleen ? "On" : "Off");
+//	}
+//	else
+//	{
+//		sysparam.bleen = atoi(item->item_data[1]);
+//		if (sysparam.bleen == 1)
+//		{
+//			char broadCastNmae[30];
+//			sprintf(broadCastNmae, "%s-%s", "AUTO", sysparam.SN + 9);
+//			appPeripheralBroadcastInfoCfg(broadCastNmae);
+//		}
+//		else if (sysparam.bleen == 0)
+//		{
+//			appPeripheralCancel();
+//		}
+//
+//		sprintf(message, "Bleen is %s", sysparam.bleen ? "On" : "Off");
+//		paramSaveAll();
+//	}
 }
 /*--------------------------------------------------------------------------------------*/
 static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param)

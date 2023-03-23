@@ -792,11 +792,17 @@ static void jt808SendPosition(uint8_t *sn, gpsinfo_s *gpsinfo)
 
     len = jt808TerminalPosition(dest, sn, &jt808_position, 1);
 
-    if (primaryServerIsReady() && getTcpNack() == 0)
-    {
-        ret = jt808TcpSend(dest, len);
-    }
-
+	if (getMultiLinkConnType() == MULTILINK_TYPE_BLE)
+	{
+		ret = jt808TcpSend(dest, len);
+	}
+	else if (getMultiLinkConnType() == MULTILINK_TYPE_SOCKET)
+	{
+		if (multiConnServerIsReady() && getTcpNack() == 0)
+		{
+			ret = jt808TcpSend(dest, len);
+		}
+	}
     if (ret == 0 && gpsinfo->fixstatus && gpsinfo->hadupload == 0)
     {
         gpsRestoreSave(&jt808_gpsres);

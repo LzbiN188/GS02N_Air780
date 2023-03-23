@@ -12,11 +12,7 @@
 
 #define APP_PERIPHERAL_START_EVENT              0x0001
 #define APP_PERIPHERAL_PARAM_UPDATE_EVENT       0x0002
-#define APP_PERIPHERAL_MTU_CHANGE_EVENT			0x0004
-#define APP_UPDATE_MCU_RTC_EVENT				0x0008
-#define APP_PERIPHERAL_TERMINATE_EVENT			0x0010
-#define APP_PERIPHERAL_NOTIFY_EVENT				0x0020
-#define APP_START_AUTH_EVENT					0x0040
+
 
 typedef struct{
     uint16_t connectionHandle;   //!< Connection Handle from controller used to ref the device
@@ -28,8 +24,9 @@ typedef struct{
 
 void appPeripheralInit(void);
 void appSendNotifyData(uint8 *data, uint16 len);
-void appPeripheralBroadcastInfoCfg(uint8 *broadcastnmae);
-void appPeripheralCancel(void);
+void appPeripheralTerminateLink(void);
+void appPeripheralDevNameCfg(void);
+void appPeripheralProtocolRecv(uint8_t *rebuf, uint16_t len);
 
 
 #endif /* APP_INCLUDE_APP_PERIPHERAL_H_ */

@@ -11,6 +11,7 @@
 #include "app_server.h"
 #include "app_socket.h"
 #include "app_jt808.h"
+#include "app_peripheral.h"
 
 //联网相关结构体
 
@@ -421,10 +422,10 @@ static void changeProcess(uint8_t fsm)
 {
     moduleState.fsmState = fsm;
     moduleState.fsmtick = 0;
-    if (moduleState.fsmState != NORMAL_STATUS)
-    {
-        ledStatusUpdate(SYSTEM_LED_NETOK, 0);
-    }
+//    if (moduleState.fsmState != NORMAL_STATUS)
+//    {
+//        ledStatusUpdate(SYSTEM_LED_NETOK, 0);
+//    }
 }
 
 /**************************************************
@@ -555,6 +556,21 @@ static void queryRecvBuffer(void)
     {
         qirdCmdSend(HIDDEN_LINK);
     }
+}
+
+/**************************************************
+@bref		查询是否读完AGPS数据
+@param
+@return
+@note
+**************************************************/
+uint8_t isAgpsLinkQird(void)
+{
+	if (moduleState.agpsLinkQird)
+	{
+		return 1;
+	}
+	return 0;
 }
 
 /**************************************************
@@ -2323,21 +2339,36 @@ int socketSendData(uint8_t link, uint8_t *data, uint16_t len)
     int ret = 0;
     char param[10];
 
-    if (socketGetConnStatus(link) == 0)
-    {
-        //链路未链接
-        return 0;
-    }
+	if (getMultiLinkConnType() == MULTILINK_TYPE_BLE)
+	{
+		//蓝牙链路断开
+		if (sysinfo.bleConnStatus == 0)
+		{
+			return 0 ;
+		}
+		appSendNotifyData(data, len);
+		return len;
+	}
 
-    sprintf(param, "%d,%d", link, len);
-    sendModuleCmd(AT_CMD, NULL);
-    sendModuleCmd(CIPSEND_CMD, param);
-    createNode((char *)data, len, CIPSEND_CMD);
-    if (link == NORMAL_LINK || link == JT808_LINK)
-    {
-        moduleState.tcpNack = len;
+	else if (getMultiLinkConnType() == MULTILINK_TYPE_SOCKET)
+	{
+	    if (socketGetConnStatus(link) == 0)
+	    {
+	        //链路未链接
+	        return 0;
+	    }
+
+	    sprintf(param, "%d,%d", link, len);
+	    sendModuleCmd(AT_CMD, NULL);
+	    sendModuleCmd(CIPSEND_CMD, param);
+	    createNode((char *)data, len, CIPSEND_CMD);
+	    if (link == NORMAL_LINK || link == JT808_LINK)
+	    {
+	        moduleState.tcpNack = len;
+	    }
+	    return len;
     }
-    return len;
+    return 0;
 }
 /**************************************************
 @bref		模组睡眠控制
@@ -2599,6 +2630,19 @@ uint8_t isModulePowerOnOk(void)
     if (moduleState.powerOnTick > 10)
         return 1;
     return 0;
+}
+/**************************************************
+@bref		模组是否开机
+@param
+@return
+@note
+**************************************************/
+
+uint8_t isModulePowerOn(void)
+{
+	if (moduleState.powerState)
+		return 1;
+	return 0;	
 }
 
 /**************************************************

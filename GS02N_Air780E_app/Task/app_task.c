@@ -270,10 +270,24 @@ void ledStatusUpdate(uint8_t status, uint8_t onoff)
 
 static void ledTask(void)
 {
-    if (sysinfo.sysTick >= 300 && sysparam.ledctrl == 0)
+    if (sysparam.ledctrl == 0)
     {
-        SYS_LED1_OFF;
-        return;
+		if (sysinfo.sysTick >= 300)
+		{
+			SYS_LED1_OFF;
+			return;
+		}
+    }
+    else 
+    {
+		if (sysinfo.sysTick >= 300)
+		{
+			if (getTerminalAccState() == 0)
+			{
+				SYS_LED1_OFF;
+				return;
+			}
+		}
     }
     sysLed1Run();
 }
@@ -435,7 +449,7 @@ static void gpsOpen(void)
 	GPSPWR_ON;
     GPSLNA_ON;
     portUartCfg(APPUSART3, 1, 9600, gpsUartRead);
-    startTimer(10, gpsWarmStart, 0);
+    startTimer(10, changeGPSBaudRate, 0);
     sysinfo.gpsUpdatetick = sysinfo.sysTick;
     sysinfo.gpsOnoff = 1;
     gpsChangeFsmState(GPSWATISTATUS);
@@ -480,7 +494,7 @@ static void gpsClose(void)
     terminalGPSUnFixed();
     gpsChangeFsmState(GPSCLOSESTATUS);
     ledStatusUpdate(SYSTEM_LED_GPSOK, 0);
-    if (primaryServerIsReady())
+    if (multiConnServerIsReady())
     {
         moduleSleepCtl(1);
     }
@@ -619,7 +633,7 @@ void alarmRequestClear(uint16_t request)
 void alarmRequestTask(void)
 {
     uint8_t alarm;
-    if (primaryServerIsReady() == 0 || sysinfo.alarmRequest == 0)
+    if (multiConnServerIsReady() == 0 || sysinfo.alarmRequest == 0)
     {
         return;
     }
@@ -824,7 +838,7 @@ static void motionStateUpdate(motion_src_e src, motionState_e newState)
         terminalAccoff();
         updateRTCtimeRequest();
     }
-    if (primaryServerIsReady())
+    if (multiConnServerIsReady())
     {
         protocolInfoResiter(getBatteryLevel(), sysinfo.outsidevoltage > 5.0 ? sysinfo.outsidevoltage : sysinfo.insidevoltage,
                             sysparam.startUpCnt, sysparam.runTime);
@@ -1317,6 +1331,9 @@ static void modeStart(void)
         case MODE23:
             portGsensorCtl(1);
             break;
+        case MODE24:
+        	portGsensorCtl(1);
+        	break;
         default:
             sysparam.MODE = MODE2;
             paramSaveAll();
@@ -1326,18 +1343,9 @@ static void modeStart(void)
     wifiRequestSet(DEV_EXTEND_OF_MY);
     gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
     ledStatusUpdate(SYSTEM_LED_RUN, 1);
-    modulePowerOn();
+    //modulePowerOn();
     netResetCsqSearch();
-    if (sysparam.bleen == 1)
-    {	
-    	char broadCastNmae[30];
-		sprintf(broadCastNmae, "%s-%s", "AUTO", sysparam.SN + 9);
-    	appPeripheralBroadcastInfoCfg(broadCastNmae);
-    }
-    else if (sysparam.bleen == 0)
-    {
-		appPeripheralCancel();
-    }
+
     changeModeFsm(MODE_RUNING);
 }
 
@@ -1362,6 +1370,12 @@ static void sysRunTimeCnt(void)
 static void modeRun(void)
 {
     static uint8_t runtick = 0;
+    /*每10秒读步数或许不需要*/
+    if (++runtick >= sysparam.gpsuploadgap)
+    {
+		runtick = 0;
+		portUpdateStep();
+    }
     switch (sysparam.MODE)
     {
         case MODE1:
@@ -1386,6 +1400,11 @@ static void modeRun(void)
             modeShutDownQuickly();
             gpsUploadPointToServer();
             break;
+        case MODE24:
+            /*主功能在sysAutoReq*/
+            sysRunTimeCnt();
+            modeShutDownQuickly();
+       		break;
         default:
             LogMessage(DEBUG_ALL, "mode change unknow");
             sysparam.MODE = MODE2;
@@ -1453,6 +1472,7 @@ static void sysAutoReq(void)
 {
     uint16_t year;
     uint8_t month, date, hour, minute, second;
+    static uint8_t tick;
 
     if (sysparam.MODE == MODE1 || sysparam.MODE == MODE21)
     {
@@ -1462,6 +1482,22 @@ static void sysAutoReq(void)
             LogPrintf(DEBUG_ALL, "sysAutoReq==>%02d/%02d/%02d %02d:%02d:%02d", year, month, date, hour, minute, second);
             gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
         }
+    }
+    else if (sysparam.MODE == MODE24)
+    {
+    	if (sysparam.mode24Step != 0)
+    	{
+    		if ((tick++ % 10) == 0)
+    		{
+				sysinfo.runingStep = getStep();
+    		}
+			if (sysinfo.runingStep >= sysparam.mode24Step)
+			{
+				sysinfo.runingStep = 0;
+				gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
+				LogMessage(DEBUG_ALL, "reach target step");
+			}
+		}
     }
     else
     {
@@ -1537,11 +1573,17 @@ static void sendLbs(void)
 
 static void lbsRequestTask(void)
 {
+	if (getMultiLinkConnType() == MULTILINK_TYPE_BLE)
+	{
+		sysinfo.lbsRequest = 0;
+		sysinfo.lbsExtendEvt = 0;
+		return;
+	}
     if (sysinfo.lbsRequest == 0)
     {
         return;
     }
-    if (primaryServerIsReady() == 0)
+    if (multiConnServerIsReady() == 0)
         return;
     sysinfo.lbsRequest = 0;
     if (sysparam.protocol == ZT_PROTOCOL_TYPE)
@@ -1574,11 +1616,17 @@ void wifiRequestSet(uint8_t ext)
 
 static void wifiRequestTask(void)
 {
+	if (getMultiLinkConnType() == MULTILINK_TYPE_BLE)
+	{
+		sysinfo.wifiRequest = 0;
+		sysinfo.wifiExtendEvt = 0;
+		return;
+	}
     if (sysinfo.wifiRequest == 0)
     {
         return;
     }
-    if (primaryServerIsReady() == 0)
+    if (multiConnServerIsReady() == 0)
         return;
 
     sysinfo.wifiRequest = 0;
@@ -1624,7 +1672,7 @@ static uint8_t getWakeUpState(void)
         return 1;
     }
     //未联网，不休眠
-    if (primaryServerIsReady() == 0 && isModeRun())
+    if (multiConnServerIsReady() == 0 && isModeRun())
     {
         return 2;
     }
@@ -1771,7 +1819,17 @@ void relayAutoCtrlTask(void)
 
 static void rebootEveryDay(void)
 {
+	uint16_t year = 0, month = 0, date = 0, hour = 0, minute = 0, second = 0;
     sysinfo.sysTick++;
+	if (sysinfo.rtcUpdate)
+	{
+		RTC_GetTime(&year, &month, &date, &hour, &minute, &second);
+		if (hour == 0 && minute == 0 && second == 0)
+		{
+			LogMessage(DEBUG_ALL, "it's time to clear step!");
+			portClearStep();
+		}
+	}
     if (sysinfo.sysTick < 86400)
         return ;
     if (sysinfo.gpsRequest != 0)
@@ -1952,7 +2010,7 @@ void taskRunInSecond(void)
     sysModeRunTask();
     serverManageTask();
     autoSleepTask();
-    relayAutoCtrlTask();
+    //relayAutoCtrlTask();
     sosRequestTask();
 }
 
@@ -2000,7 +2058,7 @@ void doDebugRecvPoll(uint8_t *msg, uint16_t len)
 void myTaskPreInit(void)
 {
     tmos_memset(&sysinfo, 0, sizeof(sysinfo));
-	//sysinfo.logLevel = DEBUG_ALL;
+	sysinfo.logLevel = DEBUG_ALL;
 
     SetSysClock(CLK_SOURCE_PLL_60MHz);
     portGpioSetDefCfg();

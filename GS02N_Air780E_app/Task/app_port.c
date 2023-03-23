@@ -595,6 +595,7 @@ void portGpioSetDefCfg(void)
 void portSysReset(void)
 {
     LogMessage(DEBUG_ALL, "system reset");
+    portSaveStep();
     dbSaveRelease();
     SYS_ResetExecute();
 }
@@ -821,13 +822,15 @@ void portGsensorCtl(uint8_t onoff)
 {
 
     portIICCfg();
+
     if (onoff)
     {
         sysinfo.gsensorOnoff = 1;
         GSPWR_ON;
         mir3da_init();
-        mir3da_open_interrupt(10);
+        mir3da_set_active_interrupt_enable(10);
         mir3da_set_enable(1);
+        startStep();
 
         GPIOB_ModeCfg(GSINT_PIN, GPIO_ModeIN_PU);
         GPIOB_ITModeCfg(GSINT_PIN, GPIO_ITMode_FallEdge);
@@ -841,7 +844,6 @@ void portGsensorCtl(uint8_t onoff)
         R16_PB_INT_EN &= ~GSINT_PIN;
     }
     LogPrintf(DEBUG_ALL, "gsensor %s", onoff ? "On" : "Off");
-
 }
 
 /**
@@ -1168,6 +1170,42 @@ void portWdtCfg(void)
 void portWdtFeed(void)
 {
     WWDG_SetCounter(0);
+}
+
+/**
+ * @brief   更新步数
+ * @param
+ * @return
+ */
+void portUpdateStep(void)
+{
+	sysinfo.step = getStep() + sysparam.step;
+	LogPrintf(DEBUG_ALL, "portUpdateStep==>%d", sysinfo.step);
+}
+
+/**
+ * @brief   保存步数
+ * @param
+ * @return
+ */
+void portSaveStep(void)
+{
+	sysparam.step += getStep();
+	LogPrintf(DEBUG_ALL, "portSaveStep==>%d", sysparam.step);
+	clearStep();
+	paramSaveAll();
+}
+
+/**
+ * @brief   清除步数
+ * @param
+ * @return
+ */
+void portClearStep(void)
+{
+	clearStep();
+	sysparam.step = 0;
+	paramSaveAll();
 }
 
 /**

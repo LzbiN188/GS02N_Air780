@@ -18,6 +18,7 @@
 
 static netConnectInfo_s privateServConn, bleServConn, hiddenServConn;
 static jt808_Connect_s jt808ServConn;
+static multi_Connect_s multiConn;
 static bleInfo_s *bleHead = NULL;
 static int8_t timeOutId = -1;
 static int8_t hbtTimeOutId = -1;
@@ -581,11 +582,11 @@ void jt808ServerConnTask(void)
 {
     static uint8_t ret = 1;
     static uint16_t unLoginTick = 0;
-    if (isModuleRunNormal() == 0)
-    {
-        ledStatusUpdate(SYSTEM_LED_NETOK, 0);
-        return;
-    }
+//    if (isModuleRunNormal() == 0)
+//    {
+//        ledStatusUpdate(SYSTEM_LED_NETOK, 0);
+//        return;
+//    }
     if (socketGetUsedFlag(JT808_LINK) != 1)
     {
         ledStatusUpdate(SYSTEM_LED_NETOK, 0);
@@ -707,6 +708,160 @@ void jt808ServerConnTask(void)
     }
     jt808ServConn.runTick++;
 }
+
+
+/**************************************************
+@bref		蓝牙透传任务
+@param
+@return
+@note
+**************************************************/
+void blePassThroughTask(void)
+{
+	if ((multiConn.hbtTick % sysparam.heartbeatgap) == 0)
+	{
+		LogMessage(DEBUG_ALL, "Terminal heartbeat");
+		jt808SendToServer(TERMINAL_HEARTBEAT, NULL);
+		
+	}
+	multiConn.hbtTick++;
+	multiConn.runTick++;
+	if (multiConn.runTick % 3 == 0)
+	{
+//		if (dbUpload() == 0)
+//		{
+//			gpsRestoreUpload();
+//		}
+	}
+}
+
+
+/**************************************************
+@bref		获取当前链路类型
+@param
+@return
+@note
+**************************************************/
+
+multi_ConnType_e getMultiLinkConnType(void)
+{
+	return multiConn.connType;
+}
+
+/**************************************************
+@bref		双链路连接类型切换
+@param
+@return
+@note
+**************************************************/
+multi_ConnType_e multiLinkChangeConnType(void)
+{
+	static uint8_t waitTick = 0;
+	static uint8_t lastType = 0, nowType = 0;
+
+	if (sysinfo.bleConnStatus == 1)
+	{
+		nowType = MULTILINK_TYPE_BLE;
+	}
+	else 
+	{
+		nowType = MULTILINK_TYPE_SOCKET;
+	}
+	/*第一次开机选择连接方式*/
+	if (lastType == 0)
+	{
+		lastType = nowType;
+		LogPrintf(DEBUG_ALL, "ConnType is %s", nowType == MULTILINK_TYPE_SOCKET ? "Socket" : "Ble");
+		if (lastType == MULTILINK_TYPE_SOCKET)
+		{
+			if (isModulePowerOn() == 0)
+			{
+				modulePowerOn();
+			}
+		}
+		else if (lastType == MULTILINK_TYPE_BLE)
+		{
+			if (isModulePowerOn())
+			{
+				modulePowerOff();
+			}
+		}
+		return lastType;
+	}
+	/*状态切换*/
+	if (lastType != nowType)
+	{
+		if (waitTick++ >= 10)
+		{
+			waitTick = 0;
+			lastType = nowType;
+			LogPrintf(DEBUG_ALL, "ConnType change to %s", nowType == MULTILINK_TYPE_SOCKET ? "Socket" : "Ble");
+			if (lastType == MULTILINK_TYPE_SOCKET)
+			{
+				if (isModulePowerOn() == 0)
+				{
+					modulePowerOn();
+				}
+			}
+			else if (lastType == MULTILINK_TYPE_BLE)
+			{
+				if (isModulePowerOn())
+				{
+					modulePowerOff();
+				}
+			}
+		}
+		return lastType;
+	}
+	else
+	{
+		waitTick = 0;
+		return lastType;
+	}
+}
+
+/**************************************************
+@bref		蓝牙-808双链路管理任务
+@param
+@return
+@note
+**************************************************/
+
+void miltiLinkConnTask(void)
+{
+	static uint8_t ret = 1;
+	static uint16_t unLoginTick = 0;
+	
+	/*判断连接方式*/	
+	multiConn.connType = multiLinkChangeConnType();	
+	if (multiConn.connType == MULTILINK_TYPE_BLE)
+	{
+		tmos_memset(&jt808ServConn, 0, sizeof(jt808_Connect_s));
+		ledStatusUpdate(SYSTEM_LED_NETOK, 1);//可能放在心跳包上判断会比较好
+		blePassThroughTask();
+	}
+	else if (multiConn.connType == MULTILINK_TYPE_SOCKET)
+	{
+		
+		multiConn.runTick = 0;
+		multiConn.hbtTick = 0;
+		if (isModuleRunNormal() == 0)
+	    {
+	        ledStatusUpdate(SYSTEM_LED_NETOK, 0);
+	        return;
+	    }
+		jt808ServerConnTask();	
+	}
+	
+
+}
+
+
+
+
+
+
+
 
 /**************************************************
 @bref		添加待登录的从设备信息
@@ -943,7 +1098,7 @@ static void agpsServerConnTask(void)
 {
     static uint8_t agpsFsm = 0;
     static uint8_t runTick = 0;
-    char agpsBuff[150];
+//    char agpsBuff[150];
     int ret;
     gpsinfo_s *gpsinfo;
     if (sysinfo.agpsRequest == 0)
@@ -984,8 +1139,8 @@ static void agpsServerConnTask(void)
         case 0:
             if (gpsinfo->fixstatus == 0)
             {
-                sprintf(agpsBuff, "user=%s;pwd=%s;cmd=full;", sysparam.agpsUser, sysparam.agpsPswd);
-                socketSendData(AGPS_LINK, (uint8_t *) agpsBuff, strlen(agpsBuff));
+//                sprintf(agpsBuff, "user=%s;pwd=%s;cmd=full;", sysparam.agpsUser, sysparam.agpsPswd);
+//                socketSendData(AGPS_LINK, (uint8_t *) agpsBuff, strlen(agpsBuff));
             }
             agpsFsm = 1;
             runTick = 0;
@@ -993,10 +1148,13 @@ static void agpsServerConnTask(void)
         case 1:
             if (++runTick >= 15)
             {
-                agpsFsm = 0;
-                runTick = 0;
-                socketDel(AGPS_LINK);
-                agpsRequestClear();
+            	if (isAgpsLinkQird() == 0)
+            	{
+	                agpsFsm = 0;
+	                runTick = 0;
+	                socketDel(AGPS_LINK);
+	                agpsRequestClear();
+                }
             }
             break;
         default:
@@ -1018,7 +1176,7 @@ void serverManageTask(void)
 {
     if (sysparam.protocol == JT808_PROTOCOL_TYPE)
     {
-        jt808ServerConnTask();
+        miltiLinkConnTask();
     }
     else
     {
@@ -1028,6 +1186,44 @@ void serverManageTask(void)
     bleServerConnTask();
     hiddenServerConnTask();
     agpsServerConnTask();
+}
+
+/**************************************************
+@bref		判断双链路是否登录正常
+@param
+@return
+@note
+**************************************************/
+uint8_t multiConnServerIsReady(void)
+{
+	if (getMultiLinkConnType() == MULTILINK_TYPE_BLE)
+	{
+		if (sysinfo.bleConnStatus == 1)
+		{
+			return 1;
+		}
+		return 0;
+	}
+	else if (getMultiLinkConnType() == MULTILINK_TYPE_SOCKET)
+	{
+		if (isModuleRunNormal() == 0)
+        	return 0;
+	    if (sysparam.protocol == JT808_PROTOCOL_TYPE)
+	    {
+	        if (socketGetConnStatus(JT808_LINK) != SOCKET_CONN_SUCCESS)
+	            return 0;
+	        if (jt808ServConn.connectFsm != JT808_NORMAL)
+	            return 0;
+	    }
+	    else
+	    {
+	        if (socketGetConnStatus(NORMAL_LINK) != SOCKET_CONN_SUCCESS)
+	            return 0;
+	        if (privateServConn.fsmstate != SERV_READY)
+	            return 0;
+	    }
+	    return 1;
+	}
 }
 
 /**************************************************

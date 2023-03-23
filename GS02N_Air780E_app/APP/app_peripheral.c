@@ -5,34 +5,30 @@
  *      Author: idea
  */
 #include "app_peripheral.h"
-#include "aes.h"
 #include "app_instructioncmd.h"
 #include "app_port.h"
 #include "app_sys.h"
-#include "app_server.h"
-#include "app_protocol.h"
+#include "app_task.h"
 #include "app_param.h"
-#include "app_encrypt.h"
-#include "aes.h"
+#include "app_jt808.h"
+
 /*
  * 全局变量声明
  */
-//外设任务ID
 tmosTaskID appPeripheralTaskId = INVALID_TASK_ID;
-//绑定回调
 gapBondCBs_t appPeripheralGapBondCallBack;
-//外设角色事件回调
 gapRolesCBs_t appPeripheralGapRolesCallBack;
-//建立连接时信息保存
 connectionInfoStruct appPeripheralConn;
 /*
  * 函数声明
  */
-static tmosEvents appPeripheralEventProcess(tmosTaskID taskID, tmosEvents events);
+static tmosEvents appPeripheralEventProcess(tmosTaskID taskID,
+        tmosEvents events);
 static void appPeripheralGapRolesRssiRead(uint16_t connHandle, int8_t newRSSI);
-static void appPeripheralGapRolesStateNotify(gapRole_States_t newState, gapRoleEvent_t *pEvent);
-static void appPeripheralGapRolesParamUpdate(uint16_t connHandle, uint16_t connInterval, uint16_t connSlaveLatency,
-        uint16_t connTimeout);
+static void appPeripheralGapRolesStateNotify(gapRole_States_t newState,
+        gapRoleEvent_t *pEvent);
+static void appPeripheralGapRolesParamUpdate(uint16_t connHandle,
+        uint16_t connInterval, uint16_t connSlaveLatency, uint16_t connTimeout);
 
 /********************************************************
  * *定义UUID
@@ -40,8 +36,6 @@ static void appPeripheralGapRolesParamUpdate(uint16_t connHandle, uint16_t connI
 
 #define APP_SERVICE_UUID            0xFFE0
 #define APP_CHARACTERISTIC1_UUID    0xFFE1
-#define APP_SERVICE2_UUID			0xFF00
-#define APP_CHARACTERISTIC2_UUID    0xFFE2
 
 /********************************************************
  * *UUID换成小端
@@ -49,9 +43,6 @@ static void appPeripheralGapRolesParamUpdate(uint16_t connHandle, uint16_t connI
 
 static uint8 ServiceUUID[ATT_BT_UUID_SIZE] = { LO_UINT16(APP_SERVICE_UUID), HI_UINT16(APP_SERVICE_UUID)};
 static uint8 Char1UUID[ATT_BT_UUID_SIZE] = { LO_UINT16(APP_CHARACTERISTIC1_UUID), HI_UINT16(APP_CHARACTERISTIC1_UUID)};
-static uint8 Service2UUID[ATT_BT_UUID_SIZE] = { LO_UINT16(APP_SERVICE2_UUID), HI_UINT16(APP_SERVICE2_UUID)};
-static uint8 Char2UUID[ATT_BT_UUID_SIZE] = { LO_UINT16(APP_CHARACTERISTIC2_UUID), HI_UINT16(APP_CHARACTERISTIC2_UUID)};
-
 
 /********************************************************
  * *服务UUID配置信息
@@ -61,17 +52,10 @@ static gattAttrType_t ServiceProfile =
     ATT_BT_UUID_SIZE, ServiceUUID
 };
 
-static gattAttrType_t Service2Profile =
-{
-    ATT_BT_UUID_SIZE, Service2UUID
-};
-
 /********************************************************
  * *特征的属性值
  ********************************************************/
 static uint8 char1_Properties = GATT_PROP_READ | GATT_PROP_WRITE
-                                | GATT_PROP_NOTIFY;
-static uint8 char2_Properties = GATT_PROP_READ | GATT_PROP_WRITE
                                 | GATT_PROP_NOTIFY;
 
 /********************************************************
@@ -80,15 +64,11 @@ static uint8 char2_Properties = GATT_PROP_READ | GATT_PROP_WRITE
 static uint8 char1ValueStore[4];
 static gattCharCfg_t char1ClientConfig[4];
 
-static uint8 char2ValueStore[4];
-static gattCharCfg_t char2ClientConfig[4];
-
 /********************************************************
  * *特征描述
  ********************************************************/
 
 static uint8 char1Description[] = "appchar1";
-static uint8 char2Description[] = "appchar2";
 
 /********************************************************
  * *服务特征表
@@ -100,7 +80,6 @@ static gattAttribute_t appAttributeTable[] =
         GATT_PERMIT_READ, 0,
         (uint8 *)& ServiceProfile
     },
-    /*特征1*/
     //声明特征
     {   { ATT_BT_UUID_SIZE, characterUUID },
         GATT_PERMIT_READ, 0, &char1_Properties
@@ -116,36 +95,8 @@ static gattAttribute_t appAttributeTable[] =
     //具体特征的用户描述
     {   { ATT_BT_UUID_SIZE, charUserDescUUID },
         GATT_PERMIT_READ, 0, char1Description
-    },
+    }
 };
-
-static gattAttribute_t appAttributeTable2[] =
-{
-	//Service2
-	{	{ ATT_BT_UUID_SIZE, primaryServiceUUID }, //type
-		GATT_PERMIT_READ, 0,
-		(uint8 *)& Service2Profile
-	},
-	/*特征1*/
-	//声明特征
-	{	{ ATT_BT_UUID_SIZE, characterUUID },
-		GATT_PERMIT_READ, 0, &char2_Properties
-	},
-	//具体特征值
-	{	{ ATT_BT_UUID_SIZE, Char2UUID },
-		GATT_PERMIT_READ | GATT_PERMIT_WRITE, 0, char2ValueStore
-	},
-	//客户端配置用于NOTIFY
-	{	{ ATT_BT_UUID_SIZE, clientCharCfgUUID },
-		GATT_PERMIT_READ | GATT_PERMIT_WRITE, 0, (uint8 *) char2ClientConfig
-	},
-	//具体特征的用户描述
-	{	{ ATT_BT_UUID_SIZE, charUserDescUUID },
-		GATT_PERMIT_READ, 0, char2Description
-	},
-
-};
-
 
 /********************************************************
  * *添加服务回调
@@ -183,59 +134,6 @@ static bStatus_t appReadAttrCB(uint16 connHandle, gattAttribute_t *pAttr,
 
     return ret;
 }
-//SN:999913436051195,292,3.77,46
-void bleRecvParser(char *data, uint16_t len)
-{
-    ITEM item;
-    insParam_s insparam;
-    bleInfo_s devInfo;
-    int index;
-    char *rebuf;
-    int16_t relen;
-    char dec[256];
-    uint8_t decLen, ret;
-    char debugStr[100];
-    tmos_stop_task(appPeripheralTaskId, APP_PERIPHERAL_TERMINATE_EVENT);
-    ret = dencryptData(dec, &decLen, data, len);
-    if (ret == 0)
-    {
-        //解析失败
-        dencryptStr(data, len, dec, &decLen);
-        tmos_memset(debugStr, 0, 100);
-        byteToHexString(dec, debugStr, decLen);
-        LogPrintf(DEBUG_ALL, "解密后[%s]", debugStr);
-        return;
-    }
-
-    rebuf = dec;
-    relen = decLen;
-
-    if ((index = my_getstrindex(rebuf, "RE:", relen)) >= 0)
-    {
-        setInsId();
-        insparam.data = rebuf;
-        insparam.len = relen;
-        protocolSend(BLE_LINK, PROTOCOL_21, &insparam);
-    }
-    else if ((index = my_getstrindex(rebuf, "SN:", relen)) >= 0)
-    {
-        rebuf += index + 3;
-        relen -= index + 3;
-        stringToItem(&item, rebuf, relen);
-        if (item.item_cnt == 4)
-        {
-            strncpy(devInfo.imei, item.item_data[0], 15);
-            devInfo.imei[15] = 0;
-            devInfo.startCnt = atoi(item.item_data[1]);
-            devInfo.vol = atof(item.item_data[2]);
-            devInfo.batLevel = atoi(item.item_data[3]);
-
-            bleServerAddInfo(devInfo);
-            tmos_start_task(appPeripheralTaskId, APP_UPDATE_MCU_RTC_EVENT, MS1_TO_SYSTEM_TIME(200));
-        }
-    }
-}
-
 
 static bStatus_t appWriteAttrCB(uint16 connHandle, gattAttribute_t *pAttr,
                                 uint8 *pValue, uint16 len, uint16 offset, uint8 method)
@@ -250,19 +148,27 @@ static bStatus_t appWriteAttrCB(uint16 connHandle, gattAttribute_t *pAttr,
     if (pAttr->type.len == ATT_BT_UUID_SIZE)
     {
         uuid = BUILD_UINT16(pAttr->type.uuid[0], pAttr->type.uuid[1]);
-        LogPrintf(DEBUG_ALL, "UUID[0x%X]==>Write Request,size:%d", uuid, len);
+        //LogPrintf(DEBUG_ALL, "UUID[0x%X]==>Write Request,size:%d", uuid, len);
         debugLen = len > 50 ? 50 : len;
         byteToHexString(pValue, debugStr, debugLen);
         debugStr[debugLen * 2] = 0;
-        LogPrintf(DEBUG_ALL, "%s", debugStr);
+        //LogPrintf(DEBUG_ALL, "%s", debugStr);
         switch (uuid)
         {
             case APP_CHARACTERISTIC1_UUID:
-                bleRecvParser(pValue, len);
+                LogMessage(DEBUG_ALL, "- + - - + - - + - - + - - + - - + - - + - ^");
+                LogPrintf(DEBUG_ALL, "BLE receive:%s", debugStr);
+                LogMessage(DEBUG_ALL, "- + - - + - - + - - + - - + - - + - - + -");
+                appPeripheralProtocolRecv(pValue, len);
                 break;
             case GATT_CLIENT_CHAR_CFG_UUID:
                 ret = GATTServApp_ProcessCCCWriteReq(connHandle, pAttr, pValue, len,
                                                      offset, GATT_CLIENT_CFG_NOTIFY);
+                if(pValue[0] == 1)
+                {
+                    LogMessage(DEBUG_ALL, "Notify Success, Ble Connect Success");
+                    sysinfo.bleConnStatus = 1;
+                }
                 break;
         }
     }
@@ -272,37 +178,35 @@ static bStatus_t appWriteAttrCB(uint16 connHandle, gattAttribute_t *pAttr,
     }
     return ret;
 }
-static gattServiceCBs_t gattServiceCallBack = { appReadAttrCB, appWriteAttrCB, NULL};
+static gattServiceCBs_t gattServiceCallBack = { appReadAttrCB, appWriteAttrCB,
+                                                NULL,
+                                              };
 
 static void appHandleConnStatusCB(uint16 connHandle, uint8 changeType)
 {
+    // Make sure this is not loopback connection
     if (connHandle != LOOPBACK_CONNHANDLE)
     {
+        // Reset Client Char Config if connection has dropped
         if ((changeType == LINKDB_STATUS_UPDATE_REMOVED)
                 || ((changeType == LINKDB_STATUS_UPDATE_STATEFLAGS)
                     && (!linkDB_Up(connHandle))))
         {
             GATTServApp_InitCharCfg(connHandle, char1ClientConfig);
-            GATTServApp_InitCharCfg(connHandle, char2ClientConfig);
+            sysinfo.bleConnStatus = 0;
         }
     }
 }
-/*
- * 添加新服务
- */
 
 static void appAddServer(void)
 {
-	GATTServApp_InitCharCfg(INVALID_CONNHANDLE, char2ClientConfig);
-    linkDB_Register(appHandleConnStatusCB);
-    GATTServApp_RegisterService(appAttributeTable2, GATT_NUM_ATTRS(appAttributeTable2), GATT_MAX_ENCRYPT_KEY_SIZE,
-                                &gattServiceCallBack);
-
+    // Initialize Client Characteristic Configuration attributes
     GATTServApp_InitCharCfg(INVALID_CONNHANDLE, char1ClientConfig);
+    // Register with Link DB to receive link status change callback
     linkDB_Register(appHandleConnStatusCB);
-    GATTServApp_RegisterService(appAttributeTable, GATT_NUM_ATTRS(appAttributeTable), GATT_MAX_ENCRYPT_KEY_SIZE,
+    GATTServApp_RegisterService(appAttributeTable,
+                                GATT_NUM_ATTRS(appAttributeTable), GATT_MAX_ENCRYPT_KEY_SIZE,
                                 &gattServiceCallBack);
-
 }
 
 /*
@@ -310,32 +214,33 @@ static void appAddServer(void)
  */
 void appPeripheralBroadcastInfoCfg(uint8 *broadcastnmae)
 {
-    uint8 len, advLen;
+    uint8 len, advLen, u8Value;
     uint8 advertData[31];
     len = tmos_strlen(broadcastnmae);
+
     advLen = 0;
     advertData[advLen++] = len + 1;
     advertData[advLen++] = GAP_ADTYPE_LOCAL_NAME_COMPLETE;
     tmos_memcpy(advertData + advLen, broadcastnmae, len);
     advLen += len;
+    //设置广播信息
     GAPRole_SetParameter(GAPROLE_ADVERT_DATA, advLen, advertData);
-    	uint8_t u8Value;
-	u8Value = TRUE;
-    GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8), &u8Value);
+    u8Value = TRUE;
+    GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(u8Value), &u8Value);
 }
 
-void appPeripheralCancel(void)
+void appPeripheralDevNameCfg(void)
 {
-	uint8_t u8Value;
-	u8Value = FALSE;
-    GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8), &u8Value);
+    char name[30];
+    sprintf(name, "GS02PET-%s", sysparam.SN + 10);
+    appPeripheralBroadcastInfoCfg(name);
 }
+
 /*
  * 外设程序初始化
  */
 void appPeripheralInit(void)
 {
-    char broadCastNmae[30];
     uint8 u8Value;
     uint16 u16Value;
     //外设初始化
@@ -345,19 +250,17 @@ void appPeripheralInit(void)
 
     appPeripheralGapBondCallBack.pairStateCB = NULL;
     appPeripheralGapBondCallBack.passcodeCB = NULL;
-    appPeripheralGapRolesCallBack.pfnParamUpdate = appPeripheralGapRolesParamUpdate;
+    appPeripheralGapRolesCallBack.pfnParamUpdate =
+        appPeripheralGapRolesParamUpdate;
     appPeripheralGapRolesCallBack.pfnRssiRead = appPeripheralGapRolesRssiRead;
-    appPeripheralGapRolesCallBack.pfnStateChange = appPeripheralGapRolesStateNotify;
+    appPeripheralGapRolesCallBack.pfnStateChange =
+        appPeripheralGapRolesStateNotify;
 
     tmos_memset(&appPeripheralConn, 0, sizeof(appPeripheralConn));
     appPeripheralConn.connectionHandle = GAP_CONNHANDLE_INIT;
     //参数配置
     //开启广播
-    u8Value = TRUE;
-    GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8), &u8Value);
-    //配置广播信息
-    sprintf(broadCastNmae, "%s-%s", "AUTO", sysparam.SN + 9);
-    appPeripheralBroadcastInfoCfg(broadCastNmae);
+    appPeripheralDevNameCfg();
     //配置最短连接间隔
     u16Value = 0x0006;    //6*1.25=7.5ms
     GAPRole_SetParameter(GAPROLE_MIN_CONN_INTERVAL, sizeof(uint16), &u16Value);
@@ -372,10 +275,8 @@ void appPeripheralInit(void)
     //使能扫描应答通知
     GAP_SetParamValue(TGAP_ADV_SCAN_REQ_NOTIFY, FALSE);
     //添加服务
-    GGS_AddService(GATT_ALL_SERVICES);           // GAP
-    GATTServApp_AddService(GATT_ALL_SERVICES);   // GATT attributes
+
     appAddServer();
-    //GATT_InitClient();
     tmos_set_event(appPeripheralTaskId, APP_PERIPHERAL_START_EVENT);
 }
 
@@ -385,16 +286,18 @@ void appPeripheralInit(void)
 static bStatus_t appNotify(uint16 connHandle, attHandleValueNoti_t *pNoti)
 {
     uint16 value = GATTServApp_ReadCharCfg(connHandle, char1ClientConfig);
+
+    // If notifications enabled
     if (value & GATT_CLIENT_CFG_NOTIFY)
     {
+        // Set the handle
         pNoti->handle = appAttributeTable[2].handle;
+
+        // Send the notification
         return GATT_Notification(connHandle, pNoti, FALSE);
     }
     return bleIncorrectMode;
 }
-/*
- * 发送通知
- */
 
 void appSendNotifyData(uint8 *data, uint16 len)
 {
@@ -418,13 +321,17 @@ void appSendNotifyData(uint8 *data, uint16 len)
     }
 }
 
+
+
 static void appGapMsgProcess(gapRoleEvent_t *pMsg)
 {
     int8 debug[20];
+    LogPrintf(DEBUG_ALL, "appGapMsgProcess==>OptionCode:0x%X", pMsg->gap.opcode);
     switch (pMsg->gap.opcode)
     {
         case GAP_SCAN_REQUEST_EVENT:
-            byteToHexString(pMsg->scanReqEvt.scannerAddr, debug, B_ADDR_LEN);
+            byteToHexString(debug, pMsg->scanReqEvt.scannerAddr,
+                                       B_ADDR_LEN);
             debug[B_ADDR_LEN * 2] = 0;
             LogPrintf(DEBUG_ALL, "ScannerMac:%s", debug);
             break;
@@ -436,87 +343,25 @@ static void appGapMsgProcess(gapRoleEvent_t *pMsg)
             LogPrintf(DEBUG_ALL, "connTxPHYS:%d", pMsg->linkPhyUpdate.connTxPHYS);
             LogPrintf(DEBUG_ALL, "-------------------------------------");
             break;
-        default:
-
-            LogPrintf(DEBUG_ALL, "appGapMsgProcess==>OptionCode:0x%X,Unrealize!!!", pMsg->gap.opcode);
-            break;
-    }
-}
-
-static void appGattMsgProcess(gattMsgEvent_t *pMsg)
-{
-    LogPrintf(DEBUG_ALL, "doGattMsgMethod==>%#X", pMsg->method);
-    switch (pMsg->method)
-    {
-        case ATT_EXCHANGE_MTU_RSP:
-            LogPrintf(DEBUG_ALL, "Server rx mtu==>%d", pMsg->msg.exchangeMTURsp.serverRxMTU);
-            break;
-        case ATT_MTU_UPDATED_EVENT:
-            LogPrintf(DEBUG_ALL, "Att mtu update to==>%d", pMsg->msg.mtuEvt.MTU);
-            break;
-        default:
-            LogPrintf(DEBUG_ALL, "unprocess");
-            break;
     }
 }
 static void appPerihperalSysEventMsg(tmos_event_hdr_t *msg)
 {
+    LogPrintf(DEBUG_ALL, "SysMsgEvent=0x%X,Status=0x%X", msg->event, msg->status);
     switch (msg->event)
     {
         case GAP_MSG_EVENT:
             appGapMsgProcess((gapRoleEvent_t *) msg);
             break;
-        case GATT_MSG_EVENT:
-            appGattMsgProcess((gattMsgEvent_t *)msg);
-            break;
-        default:
-            LogPrintf(DEBUG_ALL, "Undo Event[0x%X][0x%X]", msg->event, msg->status);
-            break;
     }
 }
-static void appChangeMtu(void)
-{
-    bStatus_t ret;
-    attExchangeMTUReq_t pReq;
-    pReq.clientRxMTU = BLE_BUFF_MAX_LEN - 4;
-    ret = GATT_ExchangeMTU(appPeripheralConn.connectionHandle, &pReq, appPeripheralTaskId);
-    LogPrintf(DEBUG_ALL, "appChangeMtu==>Ret:0x%X", ret);
-}
-
-static void sendRtcDateTime(void)
-{
-    uint16_t year;
-    uint8_t  month;
-    uint8_t date;
-    uint8_t hour;
-    uint8_t minute;
-    uint8_t second;
-    char msg[20];
-    char encrypt[128];
-    uint8_t encryptLen;
-    portGetRtcDateTime(&year, &month, &date, &hour, &minute, &second);
-    sprintf(msg, "TIME,%d,%d,%d,%d,%d,%d", year, month, date, hour, minute, second);
-    encryptData(encrypt, &encryptLen, msg, strlen(msg));
-    LogMessage(DEBUG_ALL, "send datetime");
-    appSendNotifyData(encrypt, encryptLen);
-}
-
-void appLocalNotifyAutoCtl(void)
-{
-    uint16 cccd = 0;
-    uint8 ret;
-    cccd |= GATT_CLIENT_CFG_NOTIFY;
-    ret = GATTServApp_WriteCharCfg(appPeripheralConn.connectionHandle, char1ClientConfig, cccd);
-    LogPrintf(DEBUG_ALL, "enable notify ret:%d", ret);
-}
-
 
 /*
  * 外设事件处理
  */
-static tmosEvents appPeripheralEventProcess(tmosTaskID taskID, tmosEvents events)
+static tmosEvents appPeripheralEventProcess(tmosTaskID taskID,
+        tmosEvents events)
 {
-	bStatus_t status;
     if (events & SYS_EVENT_MSG)
     {
         uint8 *pMsg;
@@ -529,58 +374,22 @@ static tmosEvents appPeripheralEventProcess(tmosTaskID taskID, tmosEvents events
     }
     if (events & APP_PERIPHERAL_START_EVENT)
     {
-        status = GAPRole_PeripheralStartDevice(appPeripheralTaskId,
+        GAPRole_PeripheralStartDevice(appPeripheralTaskId,
                                       &appPeripheralGapBondCallBack, &appPeripheralGapRolesCallBack);
-        if (status == SUCCESS)
-        {
-			LogMessage(DEBUG_ALL, "slavor role init..");
-        }
-        else 
-        {
-			LogPrintf(DEBUG_ALL, "slavor role init error, ret:0x%0x2", status);
-        }
         return events ^ APP_PERIPHERAL_START_EVENT;
     }
     if (events & APP_PERIPHERAL_PARAM_UPDATE_EVENT)
     {
+        LogPrintf(DEBUG_ALL, "start app peripheral param updates");
         GAPRole_PeripheralConnParamUpdateReq(appPeripheralConn.connectionHandle, 6, 20, 0, 300, appPeripheralTaskId);
         return events ^ APP_PERIPHERAL_PARAM_UPDATE_EVENT;
-    }
-    if (events & APP_PERIPHERAL_MTU_CHANGE_EVENT)
-    {
-        appChangeMtu();
-        return events ^ APP_PERIPHERAL_MTU_CHANGE_EVENT;
-    }
-    if (events & APP_UPDATE_MCU_RTC_EVENT)
-    {
-        sendRtcDateTime();
-        return events ^ APP_UPDATE_MCU_RTC_EVENT;
-    }
-    if (events & APP_PERIPHERAL_TERMINATE_EVENT)
-    {
-        GAPRole_TerminateLink(appPeripheralConn.connectionHandle);
-        return events ^ APP_PERIPHERAL_TERMINATE_EVENT;
-    }
-    if (events & APP_PERIPHERAL_NOTIFY_EVENT)
-    {
-        appLocalNotifyAutoCtl();
-        return events ^ APP_PERIPHERAL_NOTIFY_EVENT;
-    }
-    if (events & APP_START_AUTH_EVENT)
-    {
-        uint32_t result;
-        result = tmos_rand();
-        LogPrintf(DEBUG_ALL, "rand:%u", result % 0xFF);
-        result = startAuthentication(result % 0xFF, 1, 2, appSendNotifyData);
-        LogPrintf(DEBUG_ALL, "Auth Result:%d", result);
-        return events ^ APP_START_AUTH_EVENT;
     }
     return 0;
 }
 /*
  * 设备建立链接
  */
-static void appPeripheralConnected(gapRoleEvent_t *pEvent)
+static void appEstablished(gapRoleEvent_t *pEvent)
 {
     uint8 debug[20];
     if (pEvent->gap.opcode == GAP_LINK_ESTABLISHED_EVENT)
@@ -590,7 +399,7 @@ static void appPeripheralConnected(gapRoleEvent_t *pEvent)
         appPeripheralConn.connLatency = pEvent->linkCmpl.clockAccuracy;
         appPeripheralConn.connRole = pEvent->linkCmpl.connRole;
         appPeripheralConn.connTimeout = pEvent->linkCmpl.connTimeout;
-        byteToHexString(pEvent->linkCmpl.devAddr, debug, 6);
+        byteToHexString(debug, pEvent->linkCmpl.devAddr, 6);
         debug[12] = 0;
         LogPrintf(DEBUG_ALL, "-------------------------------------");
         LogPrintf(DEBUG_ALL, "*****Device Connection*****");
@@ -603,39 +412,33 @@ static void appPeripheralConnected(gapRoleEvent_t *pEvent)
         LogPrintf(DEBUG_ALL, "connRole:%d", pEvent->linkCmpl.connRole);
         LogPrintf(DEBUG_ALL, "connTimeout:%d", pEvent->linkCmpl.connTimeout);
         LogPrintf(DEBUG_ALL, "-------------------------------------");
-        tmos_set_event(appPeripheralTaskId, APP_PERIPHERAL_MTU_CHANGE_EVENT);
-        //5秒后断开链接，除非鉴权通过
-        tmos_start_task(appPeripheralTaskId, APP_PERIPHERAL_TERMINATE_EVENT, MS1_TO_SYSTEM_TIME(10000));
-        tmos_start_task(appPeripheralTaskId, APP_PERIPHERAL_NOTIFY_EVENT, MS1_TO_SYSTEM_TIME(100));
-        tmos_start_task(appPeripheralTaskId, APP_START_AUTH_EVENT, MS1_TO_SYSTEM_TIME(1200));
+        tmos_start_task(appPeripheralTaskId, APP_PERIPHERAL_PARAM_UPDATE_EVENT, MS1_TO_SYSTEM_TIME(3000));
     }
 }
-/*
- * 设备等待
- */
 
 static void appGaproleWaitting(gapRoleEvent_t *pEvent)
 {
     uint8 u8Value;
+    //被断开
     if (pEvent->gap.opcode == GAP_LINK_TERMINATED_EVENT)
     {
-        pEvent->linkTerminate.connectionHandle;
         LogPrintf(DEBUG_ALL, "-------------------------------------");
         LogPrintf(DEBUG_ALL, "*****Device Terminate*****");
         LogPrintf(DEBUG_ALL, "TerminateHandle:%d", pEvent->linkTerminate.connectionHandle);
         LogPrintf(DEBUG_ALL, "TerminateRole:%d", pEvent->linkTerminate.connRole);
         LogPrintf(DEBUG_ALL, "TerminateReason:0x%X", pEvent->linkTerminate.reason);
         LogPrintf(DEBUG_ALL, "-------------------------------------");
-        u8Value = TRUE;
-        appPeripheralConn.connectionHandle = INVALID_CONNHANDLE;
-        GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8), &u8Value);
-
-        tmos_stop_task(appPeripheralTaskId, APP_PERIPHERAL_TERMINATE_EVENT);
     }
+    //主动断开
+    else if(pEvent->gap.opcode == GAP_END_DISCOVERABLE_DONE_EVENT)
+    {
+        LogMessage(DEBUG_ALL, "Waiting for advertising..");
+    }
+    u8Value = TRUE;
+    GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8), &u8Value);
+
 }
-/*
- * 参数更新
- */
+
 static void appPeripheralGapRolesParamUpdate(uint16_t connHandle,
         uint16_t connInterval, uint16_t connSlaveLatency, uint16_t connTimeout)
 {
@@ -653,42 +456,59 @@ static void appPeripheralGapRolesParamUpdate(uint16_t connHandle,
     LogPrintf(DEBUG_ALL, "connTimeout:%d", connTimeout);
     LogPrintf(DEBUG_ALL, "-------------------------------------");
 }
-/*
- * 信号值
- */
+
 static void appPeripheralGapRolesRssiRead(uint16_t connHandle, int8_t newRSSI)
 {
-    LogPrintf(DEBUG_ALL, "peripheral==>Conn[%d],rssi:%d", connHandle, newRSSI);
+    LogPrintf(DEBUG_ALL, "ConnHandle %d, RSSI :%d", connHandle, newRSSI);
 }
+
 /*
  * 状态事件
  */
-static void appPeripheralGapRolesStateNotify(gapRole_States_t newState,        gapRoleEvent_t *pEvent)
+static void appPeripheralGapRolesStateNotify(gapRole_States_t newState,
+        gapRoleEvent_t *pEvent)
 {
 
+    LogPrintf(DEBUG_ALL, "OptionCode=%d", pEvent->gap.opcode);
     switch (newState & GAPROLE_STATE_ADV_MASK)
     {
         case GAPROLE_STARTED:
-            LogPrintf(DEBUG_ALL, "peripheral==>start");
+            LogPrintf(DEBUG_ALL, "GAPRole started");
             break;
         case GAPROLE_ADVERTISING:
-            LogPrintf(DEBUG_ALL, "peripheral==>advertising");
+            LogPrintf(DEBUG_ALL, "GAPRole advertising");
             break;
         case GAPROLE_WAITING:
-            LogPrintf(DEBUG_ALL, "peripheral==>waitting");
+            LogPrintf(DEBUG_ALL, "GAPRole waitting");
             appGaproleWaitting(pEvent);
             break;
         case GAPROLE_CONNECTED:
-            LogPrintf(DEBUG_ALL, "peripheral==>connected");
-            appPeripheralConnected(pEvent);
+            LogPrintf(DEBUG_ALL, "GAPRole connected");
+            appEstablished(pEvent);
             break;
         case GAPROLE_CONNECTED_ADV:
-            LogPrintf(DEBUG_ALL, "peripheral==>connected and adv");
+            LogPrintf(DEBUG_ALL, "GAPRole connected adv");
             break;
         case GAPROLE_ERROR:
-            LogPrintf(DEBUG_ALL, "peripheral==>error");
+            LogPrintf(DEBUG_ALL, "GAPRole error");
             break;
         default:
             break;
     }
 }
+
+/*从机主动断连*/
+void appPeripheralTerminateLink(void)
+{
+    GAPRole_TerminateLink(appPeripheralConn.connectionHandle);
+    sysinfo.bleConnStatus = 0;
+}
+
+
+void appPeripheralProtocolRecv(uint8_t *rebuf, uint16_t len)
+{
+	jt808ReceiveParser(rebuf, len);
+}
+
+
+

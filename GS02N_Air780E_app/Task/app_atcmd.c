@@ -146,6 +146,14 @@ static void doAtdebugCmd(uint8_t *buf, uint16_t len)
     {
         agpsRequestSet();
     }
+    else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"GETSTEP"))
+    {
+		portSaveStep();
+    }
+    else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"CLEARSTEP"))
+    {
+		portClearStep();
+    }
     else
     {
         if (item.item_data[0][0] >= '0' && item.item_data[0][0] <= '9')

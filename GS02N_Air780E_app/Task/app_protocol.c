@@ -334,8 +334,11 @@ static int protocolLBSPack(char *dest, gpsinfo_s *gpsinfo)
     }
     pdu_len = 0;
 
-    dest[pdu_len++] = 0;
-    dest[pdu_len++] = 0;
+	//步数
+	portUpdateStep();
+    dest[pdu_len++] = sysinfo.step >> 8 & 0xff;
+    dest[pdu_len++] = sysinfo.step & 0xff;
+
 
     hightvalue = fabs(gpsinfo->hight * 10);
     hightvalue &= ~(0xF00000);
@@ -577,8 +580,9 @@ int createProtocol13(unsigned short Serial, char *DestBuf)
     DestBuf[pdu_len++ ] = 0;//感光
     DestBuf[pdu_len++ ] = (protocolInfo.startUpcnt >> 8) & 0xff; //模式一次数
     DestBuf[pdu_len++ ] = protocolInfo.startUpcnt & 0xff;
-    DestBuf[pdu_len++ ] = (protocolInfo.runCnt >> 8) & 0xff; //模式二次数
-    DestBuf[pdu_len++ ] = protocolInfo.runCnt & 0xff;
+    portUpdateStep();
+    DestBuf[pdu_len++ ] = (sysinfo.step >> 8) & 0xff; //模式二次数
+    DestBuf[pdu_len++ ] = sysinfo.step & 0xff;
     ret = createProtocolTail(DestBuf, pdu_len,  Serial);
     if (ret < 0)
     {

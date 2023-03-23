@@ -689,6 +689,7 @@ static void addGpsInfo(gpsinfo_s *gpsinfo)
 {
     if (sysinfo.rtcUpdate == 0 && gpsinfo->fixstatus == 1)
     {
+    	LogMessage(DEBUG_ALL, "11111111111111111111111111111");
         if (gpsinfo->datetime.day != 0 && gpsinfo->datetime.hour != 0 && gpsinfo->datetime.minute != 0 &&
                 gpsinfo->datetime.second != 0)
         {
@@ -697,6 +698,7 @@ static void addGpsInfo(gpsinfo_s *gpsinfo)
             {
                 sysinfo.rtcUpdate = 1;
                 updateLocalRTCTime(&gpsinfo->datetime);
+                LogMessage(DEBUG_ALL, "22222222222222222222222222222222");
             }
 
         }

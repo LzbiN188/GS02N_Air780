@@ -19,6 +19,7 @@
 #define MODE3									3
 #define MODE21								4  //模式2的扩展，类似模式1
 #define MODE23								5  //模式2的扩展，类似模式3
+#define MODE24								6  //宠物版本的模式
 
 #define ITEMCNTMAX	8
 #define ITEMSIZEMAX	60
@@ -55,6 +56,7 @@ typedef struct
 	uint8_t doSosFlag				: 1;
 	uint8_t moduleRstFlag			: 1;
 	uint8_t debugflag				: 1;
+	uint8_t bleConnStatus			: 1;
     uint8_t lbsExtendEvt;
     uint8_t wifiExtendEvt;
     uint8_t ringWakeUpTick;
@@ -89,6 +91,10 @@ typedef struct
     float lowvoltage;
 
 	uint8_t moduleRstCnt;
+	//宠物
+	uint16_t step;
+	uint16_t runingStep;
+
 } SystemInfoTypedef;
 
 extern SystemInfoTypedef sysinfo;

@@ -107,10 +107,10 @@
 #define CLK_OSC32K                          0   // 该项请勿在此修改，必须在工程配置里的预处理中修改，如包含主机角色必须使用外部32K
 #endif
 #ifndef BLE_MEMHEAP_SIZE
-#define BLE_MEMHEAP_SIZE                    (1024*8)
+#define BLE_MEMHEAP_SIZE                    (1024*6)
 #endif
 #ifndef BLE_BUFF_MAX_LEN
-#define BLE_BUFF_MAX_LEN                    107
+#define BLE_BUFF_MAX_LEN                    207
 #endif
 #ifndef BLE_BUFF_NUM
 #define BLE_BUFF_NUM                        3

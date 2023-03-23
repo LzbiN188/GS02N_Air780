@@ -124,8 +124,15 @@ void portSleepEn(void);
 void portSleepDn(void);
 void portGetSleepState(void);
 
+
 void portWdtCfg(void);
 void portWdtFeed(void);
+
+void portUpdateStep(void);
+void portSaveStep(void);
+void portClearStep(void);
+
+
 void portFclkChange(uint8_t type);
 
 #endif

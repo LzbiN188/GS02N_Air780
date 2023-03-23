@@ -54,6 +54,26 @@ typedef struct
     uint16_t hbtTick;
 } jt808_Connect_s;
 
+
+typedef enum
+{
+	MULTILINK_TYPE_BLE = 1,
+	MULTILINK_TYPE_SOCKET,
+}multi_ConnType_e;
+
+typedef struct
+{
+	uint8_t runTick;
+	uint8_t regCnt;
+	uint8_t authCnt;
+	uint16_t hbtTick;
+	multi_ConnType_e connType;
+}multi_Connect_s;
+
+
+
+multi_ConnType_e getMultiLinkConnType(void);
+
 void moduleRspSuccess(void);
 void hbtRspSuccess(void);
 
@@ -76,6 +96,7 @@ void bleSerLoginReady(void);
 void agpsRequestSet(void);
 void agpsRequestClear(void);
 
+uint8_t multiConnServerIsReady(void);
 uint8_t primaryServerIsReady(void);
 uint8_t hiddenServerIsReady(void);
 

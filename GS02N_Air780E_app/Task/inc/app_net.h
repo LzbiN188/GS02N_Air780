@@ -212,6 +212,8 @@ void querySendData(uint8_t link);
 void queryBatVoltage(void);
 
 
+uint8_t isAgpsLinkQird(void);
+
 
 uint8_t getModuleRssi(void);
 uint8_t *getModuleIMSI(void);
@@ -227,6 +229,8 @@ char *getQgmr(void);
 
 uint8_t isModuleRunNormal(void);
 uint8_t isModulePowerOnOk(void);
+uint8_t isModulePowerOn(void);
+
 void stopCall(void);
 void callPhone(char *tel);
 
