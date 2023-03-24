@@ -605,7 +605,7 @@ static void appPeripheralConnected(gapRoleEvent_t *pEvent)
         LogPrintf(DEBUG_ALL, "-------------------------------------");
         tmos_set_event(appPeripheralTaskId, APP_PERIPHERAL_MTU_CHANGE_EVENT);
         //5秒后断开链接，除非鉴权通过
-        tmos_start_task(appPeripheralTaskId, APP_PERIPHERAL_TERMINATE_EVENT, MS1_TO_SYSTEM_TIME(10000));
+        tmos_start_task(appPeripheralTaskId, APP_PERIPHERAL_TERMINATE_EVENT, MS1_TO_SYSTEM_TIME(30000));
         tmos_start_task(appPeripheralTaskId, APP_PERIPHERAL_NOTIFY_EVENT, MS1_TO_SYSTEM_TIME(100));
         tmos_start_task(appPeripheralTaskId, APP_START_AUTH_EVENT, MS1_TO_SYSTEM_TIME(1200));
     }

@@ -862,18 +862,21 @@ void bleServerConnTask(void)
             }
             break;
         case SERV_READY:
+        	gpsinfo = getCurrentGPSInfo();
             if (bleServConn.heartbeattick++ == 0)
             {
                 protocolInfoResiter(bleHead->batLevel, sysinfo.outsidevoltage > 5.0 ? sysinfo.outsidevoltage : sysinfo.insidevoltage, bleHead->startCnt, 0);
                 protocolSend(BLE_LINK, PROTOCOL_13, NULL);
-                lbsRequestSet(DEV_EXTEND_OF_BLE);
-                wifiRequestSet(DEV_EXTEND_OF_BLE);
+                if (gpsinfo->fixstatus != 1)
+                {
+                	lbsRequestSet(DEV_EXTEND_OF_BLE);
+                	wifiRequestSet(DEV_EXTEND_OF_BLE);
+                }
             }
-            gpsinfo = getCurrentGPSInfo();
 
             if (gpsinfo->fixstatus)
             {
-                if (tick++ >= 10)
+                if (tick++ >= 15)
                 {
                     protocolSend(BLE_LINK, PROTOCOL_12, gpsinfo);
                     bleServConn.fsmstate = SERV_END;

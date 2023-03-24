@@ -1089,7 +1089,7 @@ static void protoclparase80(uint8_t link, char *protocol, int size)
     insParam_s insparam;
     uint8_t *instruction;
     uint8_t instructionlen;
-    char encrypt[128];
+    char encrypt[256];
     unsigned char encryptLen;
     instructionid[0] = protocol[5];
     instructionid[1] = protocol[6];
@@ -1107,8 +1107,10 @@ static void protoclparase80(uint8_t link, char *protocol, int size)
     else if (link == BLE_LINK)
     {
         getInsid();
-        encryptData(encrypt, &encryptLen, instruction, instructionlen);
-        appSendNotifyData(encrypt, encryptLen);
+        sprintf(encrypt, "CMD[01020304]:%s", instruction);
+        instructionlen += 14;
+        encryptData(encrypt, &encryptLen, encrypt, instructionlen);
+        appSendNotifyData(encrypt, encryptLen); 
     }
 }
 
