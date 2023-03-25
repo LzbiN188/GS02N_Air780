@@ -206,7 +206,10 @@ void bleRecvParser(char *data, uint16_t len)
         LogPrintf(DEBUG_ALL, "解密后[%s]", debugStr);
         return;
     }
-
+//	tmos_memset(debugStr, 0, 100);
+//    byteToHexString(dec, debugStr, decLen);
+//    LogPrintf(DEBUG_ALL, "解密后[%s]", dec);
+    
     rebuf = dec;
     relen = decLen;
 
@@ -328,6 +331,9 @@ void appPeripheralCancel(void)
 {
 	uint8_t u8Value;
 	u8Value = FALSE;
+
+	GAPRole_TerminateLink(appPeripheralConn.connectionHandle);
+	
     GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8), &u8Value);
 }
 /*
@@ -605,7 +611,7 @@ static void appPeripheralConnected(gapRoleEvent_t *pEvent)
         LogPrintf(DEBUG_ALL, "-------------------------------------");
         tmos_set_event(appPeripheralTaskId, APP_PERIPHERAL_MTU_CHANGE_EVENT);
         //5秒后断开链接，除非鉴权通过
-        tmos_start_task(appPeripheralTaskId, APP_PERIPHERAL_TERMINATE_EVENT, MS1_TO_SYSTEM_TIME(10000));
+        tmos_start_task(appPeripheralTaskId, APP_PERIPHERAL_TERMINATE_EVENT, MS1_TO_SYSTEM_TIME(20000));
         tmos_start_task(appPeripheralTaskId, APP_PERIPHERAL_NOTIFY_EVENT, MS1_TO_SYSTEM_TIME(100));
         tmos_start_task(appPeripheralTaskId, APP_START_AUTH_EVENT, MS1_TO_SYSTEM_TIME(1200));
     }
@@ -630,8 +636,9 @@ static void appGaproleWaitting(gapRoleEvent_t *pEvent)
         appPeripheralConn.connectionHandle = INVALID_CONNHANDLE;
         GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8), &u8Value);
 
-        tmos_stop_task(appPeripheralTaskId, APP_PERIPHERAL_TERMINATE_EVENT);
+       
     }
+    tmos_stop_task(appPeripheralTaskId, APP_PERIPHERAL_TERMINATE_EVENT);
 }
 /*
  * 参数更新
@@ -692,3 +699,10 @@ static void appPeripheralGapRolesStateNotify(gapRole_States_t newState,        g
             break;
     }
 }
+
+
+void appPeripheralTerminateLink(void)
+{
+	GAPRole_TerminateLink(appPeripheralConn.connectionHandle);
+}
+

@@ -18,6 +18,7 @@ static moduleState_s  moduleState;
 static moduleCtrl_s moduleCtrl;
 static cmdNode_s *headNode = NULL;
 
+
 static void gpsUploadChangeFsm(uint8_t fsm);
 static void gpsUploadSetSize(uint32_t size);
 
@@ -97,9 +98,9 @@ uint8_t createNode(char *data, uint16_t datalen, uint8_t currentcmd)
     WAKEMODULE;
     if (currentcmd == WIFISCAN_CMD)
     {
-    	wakeUpByInt(1, 20);
+		wakeUpByInt(1, 20);
     }
-    else 
+    else
     {
 		wakeUpByInt(1, 15);
     }
@@ -223,7 +224,7 @@ void outputNode(void)
         free(currentnode->data);
         free(currentnode);
         if (currentnode->currentcmd == QICLOSE_CMD || currentnode->currentcmd == CMGS_CMD || 
-        			currentnode->currentcmd == WIFISCAN_CMD)
+        		currentnode->currentcmd == WIFISCAN_CMD)
         {
             lockFlag = 1;
             if (currentnode->currentcmd == QICLOSE_CMD)
@@ -1301,6 +1302,9 @@ static void qisendParser(uint8_t *buf, uint16_t len)
 }
 
 
+
+
+
 /**************************************************
 @bref		QWIFISCAN	÷∏¡ÓΩ‚Œˆ
 @param
@@ -1321,7 +1325,6 @@ OK
 
 
 **************************************************/
-
 static void wifiscanParser(uint8_t *buf, uint16_t len)
 {
     int index;
@@ -1358,7 +1361,7 @@ static void wifiscanParser(uint8_t *buf, uint16_t len)
 
         index = my_getstrindex((char *)rebuf, "+WIFISCAN:", relen);
     }
-    if (wifiList.apcount != 0)
+	if (wifiList.apcount != 0)
     {
         if (sysinfo.wifiExtendEvt & DEV_EXTEND_OF_MY)
         {
@@ -1370,6 +1373,7 @@ static void wifiscanParser(uint8_t *buf, uint16_t len)
         }
         sysinfo.wifiExtendEvt = 0;
     }
+
 }
 
 static void cgsnParser(uint8_t *buf, uint16_t len)
@@ -2412,7 +2416,7 @@ void moduleGetLbs(void)
 void moduleGetWifiScan(void)
 {
     sendModuleCmd(AT_CMD, NULL);
-    sendModuleCmd(WIFISCAN_CMD, "?");
+    sendModuleCmd(WIFISCAN_CMD, NULL);
 }
 
 /**************************************************

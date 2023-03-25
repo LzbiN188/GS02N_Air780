@@ -270,11 +270,26 @@ void ledStatusUpdate(uint8_t status, uint8_t onoff)
 
 static void ledTask(void)
 {
-    if (sysinfo.sysTick >= 300 && sysparam.ledctrl == 0)
-    {
-        SYS_LED1_OFF;
-        return;
-    }
+	if (sysparam.ledctrl == 0)
+	{
+		if (sysinfo.sysTick >= 300)
+		{
+			SYS_LED1_OFF;
+			return;
+		}
+	}
+	else
+	{
+		if (sysinfo.sysTick >= 300)
+		{
+			if (getTerminalAccState() == 0)
+			{
+				SYS_LED1_OFF;
+				return;
+			}
+		}
+	}
+	
     sysLed1Run();
 }
 /**************************************************
@@ -794,6 +809,9 @@ static void motionStateUpdate(motion_src_e src, motionState_e newState)
         case GSENSOR_SRC:
             strcpy(type, "gsensor");
             break;
+        case SYS_SRC:
+        	strcpy(type, "SYS");
+        	break;
         default:
             return;
             break;
@@ -952,49 +970,36 @@ static void motionCheckTask(void)
 
     if (sysparam.MODE == MODE21 || sysparam.MODE == MODE23)
     {
-        staticTime = 180;
+        staticTime = 60;
     }
     else
     {
-        staticTime = 180;
+        staticTime = 60;
     }
 
+    if ((sysinfo.outsidevoltage <= sysparam.protectVoltage) && (sysinfo.outsidevoltage > 4.5))
+    {
+        hTick = 0;
+        if (++lTick >= 30)
+        {
+            lFlag = 1;
+        }
+    }
+    else if ((sysinfo.outsidevoltage > sysparam.protectVoltage) || (sysinfo.outsidevoltage <= 4.5))
+    {
+        lTick = 0;
+        if (++hTick >= 30)
+        {
+            lFlag = 0;
+        }
+    }
 
-    if (sysparam.protectVoltage >= 2)
-    {
-        if (sysinfo.outsidevoltage <= sysparam.protectVoltage)
-        {
-            hTick = 0;
-            if (++lTick >= 30)
-            {
-                lFlag = 1;
-            }
-        }
-        else if (sysinfo.outsidevoltage >= sysparam.protectVoltage + 0.2)
-        {
-            lTick = 0;
-            if (++hTick >= 30)
-            {
-                lFlag = 0;
-            }
-        }
-        else
-        {
-            lTick = 0;
-            hTick = 0;
-        }
-    }
-    else
-    {
-        lFlag = 0;
-    }
     if (sysparam.MODE == MODE1 || sysparam.MODE == MODE3 || lFlag)
     {
         motionStateUpdate(SYS_SRC, MOTION_STATIC);
         gsStaticTick = 0;
         return ;
     }
-
     //保持运动状态时，如果gap大于Max，则周期性上报gps
     if (getTerminalAccState() && sysparam.gpsuploadgap >= GPS_UPLOAD_GAP_MAX)
     {
@@ -1563,7 +1568,6 @@ void wifiRequestSet(uint8_t ext)
     sysinfo.wifiRequest = 1;
     sysinfo.wifiExtendEvt |= ext;
 }
-
 
 /**************************************************
 @bref		WIFI上送任务

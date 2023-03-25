@@ -57,6 +57,7 @@ const instruction_s insCmdTable[] =
     {FCG_INS, "FCG"},
     {QFOTA_INS, "QFOTA"},
     {BLEEN_INS, "BLEEN"},
+    {AGPSEN_INS, "AGPSEN"},
     {SN_INS, "*"},
 };
 
@@ -1549,6 +1550,21 @@ static void doBleenInstruction(ITEM *item, char *message)
 		paramSaveAll();
 	}
 }
+
+static void doAgpsenInstrution(ITEM *item, char *message)
+{
+	if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+	{
+		sprintf(message, "Agpsen is %s", sysparam.agpsen ? "On" : "Off");
+	}
+	else
+	{
+		sysparam.agpsen = atoi(item->item_data[1]);
+		sprintf(message, "Agpsen is %s", sysparam.agpsen ? "On" : "Off");
+		paramSaveAll();
+	}
+
+}
 /*--------------------------------------------------------------------------------------*/
 static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param)
 {
@@ -1688,6 +1704,9 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
         case BLEEN_INS:
         	doBleenInstruction(item, message);
         	break;
+       	case AGPSEN_INS:
+       		doAgpsenInstrution(item, message);
+       		break;
         default:
             if (mode == SMS_MODE)
             {

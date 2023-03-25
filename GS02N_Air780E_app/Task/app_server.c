@@ -803,7 +803,66 @@ void bleSerLoginReady(void)
 
 static void bleServerSocketRecv(char *data, uint16_t len)
 {
-    protocolRxParser(BLE_LINK, data, len);
+    uint16_t i, beginindex, contentlen, lastindex;
+    //遍历，寻找协议头
+    for (i = 0; i < len; i++)
+    {
+        beginindex = i;
+        if (data[i] == 0x78)
+        {
+            if (i + 1 >= len)
+            {
+                continue ;
+            }
+            if (data[i + 1] != 0x78)
+            {
+                continue ;
+            }
+            if (i + 2 >= len)
+            {
+                continue ;
+            }
+            contentlen = data[i + 2];
+            if ((i + 5 + contentlen) > len)
+            {
+                continue ;
+            }
+            if (data[i + 3 + contentlen] == 0x0D && data[i + 4 + contentlen] == 0x0A)
+            {
+                i += (4 + contentlen);
+                lastindex = i + 1;
+                //LogPrintf(DEBUG_ALL, "Fint it ====>Begin:7878[%d,%d]", beginindex, lastindex - beginindex);
+                protocolRxParser(BLE_LINK, (char *)data + beginindex, lastindex - beginindex);
+            }
+        }
+        else if (data[i] == 0x79)
+        {
+            if (i + 1 >= len)
+            {
+                continue ;
+            }
+            if (data[i + 1] != 0x79)
+            {
+                continue ;
+            }
+            if (i + 3 >= len)
+            {
+                continue ;
+            }
+            contentlen = data[i + 2] << 8 | data[i + 3];
+            if ((i + 6 + contentlen) > len)
+            {
+                continue ;
+            }
+            if (data[i + 4 + contentlen] == 0x0D && data[i + 5 + contentlen] == 0x0A)
+            {
+                i += (5 + contentlen);
+                lastindex = i + 1;
+                //LogPrintf(DEBUG_ALL, "Fint it ====>Begin:7979[%d,%d]", beginindex, lastindex - beginindex);
+                protocolRxParser(BLE_LINK, (char *)data + beginindex, lastindex - beginindex);
+            }
+        }
+    }
 }
 
 /**************************************************
@@ -862,32 +921,42 @@ void bleServerConnTask(void)
             }
             break;
         case SERV_READY:
+        	gpsinfo = getCurrentGPSInfo();
+        	tick++;
             if (bleServConn.heartbeattick++ == 0)
             {
                 protocolInfoResiter(bleHead->batLevel, sysinfo.outsidevoltage > 5.0 ? sysinfo.outsidevoltage : sysinfo.insidevoltage, bleHead->startCnt, 0);
                 protocolSend(BLE_LINK, PROTOCOL_13, NULL);
-                lbsRequestSet(DEV_EXTEND_OF_BLE);
-                wifiRequestSet(DEV_EXTEND_OF_BLE);
+                if (gpsinfo->fixstatus != 1)
+                {
+	                lbsRequestSet(DEV_EXTEND_OF_BLE);
+	                wifiRequestSet(DEV_EXTEND_OF_BLE);
+                }
             }
-            gpsinfo = getCurrentGPSInfo();
-
+            
             if (gpsinfo->fixstatus)
             {
-                if (tick++ >= 10)
+                if (tick == 10)
                 {
                     protocolSend(BLE_LINK, PROTOCOL_12, gpsinfo);
-                    bleServConn.fsmstate = SERV_END;
-                    break;
+                    //bleServConn.fsmstate = SERV_END;
+                    
+                }
+                if (tick >= 20)
+                {
+					bleServConn.fsmstate = SERV_END;
+					tick = 0;
+		
                 }
             }
             else
             {
-                tick = 0;
-            }
-            if (bleServConn.heartbeattick >= 180)
-            {
-                protocolSend(BLE_LINK, PROTOCOL_12, getLastFixedGPSInfo());
-                bleServConn.fsmstate = SERV_END;
+	            if (bleServConn.heartbeattick >= 180)
+	            {
+	                protocolSend(BLE_LINK, PROTOCOL_12, getLastFixedGPSInfo());
+	                bleServConn.fsmstate = SERV_END;
+	                tick = 0;
+	            }
             }
             break;
         case SERV_END:
@@ -947,6 +1016,12 @@ static void agpsServerConnTask(void)
 //    char agpsBuff[150];
     int ret;
     gpsinfo_s *gpsinfo;
+
+    if (sysparam.agpsen == 0)
+    {
+		sysinfo.agpsRequest = 0;
+		return;
+    }
     if (sysinfo.agpsRequest == 0)
     {
         return;

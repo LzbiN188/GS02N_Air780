@@ -30,6 +30,7 @@ void appPeripheralInit(void);
 void appSendNotifyData(uint8 *data, uint16 len);
 void appPeripheralBroadcastInfoCfg(uint8 *broadcastnmae);
 void appPeripheralCancel(void);
+void appPeripheralTerminateLink(void);
 
 
 #endif /* APP_INCLUDE_APP_PERIPHERAL_H_ */

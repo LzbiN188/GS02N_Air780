@@ -548,7 +548,7 @@ void atCmdParserFunction(uint8_t *buf, uint16_t len)
     }
     else
     {
-        //createNode(buf, len, 0);
-       	portUartSend(&usart0_ctl, buf, len);
+        createNode(buf, len, 0);
+       	//portUartSend(&usart0_ctl, buf, len);
     }
 }

@@ -213,6 +213,7 @@ void queryBatVoltage(void);
 
 uint8_t isAgpsDataRecvComplete(void);
 
+void sendWifi(void);
 
 
 
