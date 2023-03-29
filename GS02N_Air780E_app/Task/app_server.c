@@ -921,42 +921,32 @@ void bleServerConnTask(void)
             }
             break;
         case SERV_READY:
-        	gpsinfo = getCurrentGPSInfo();
-        	tick++;
             if (bleServConn.heartbeattick++ == 0)
             {
-                protocolInfoResiter(bleHead->batLevel, sysinfo.outsidevoltage > 5.0 ? sysinfo.outsidevoltage : sysinfo.insidevoltage, bleHead->startCnt, 0);
+                protocolInfoResiter(getBatteryLevel(), sysinfo.outsidevoltage, bleHead->startCnt, 0);
                 protocolSend(BLE_LINK, PROTOCOL_13, NULL);
-                if (gpsinfo->fixstatus != 1)
-                {
-	                lbsRequestSet(DEV_EXTEND_OF_BLE);
-	                wifiRequestSet(DEV_EXTEND_OF_BLE);
-                }
+                lbsRequestSet(DEV_EXTEND_OF_BLE);
+                wifiRequestSet(DEV_EXTEND_OF_BLE);
             }
-            
+            gpsinfo = getCurrentGPSInfo();
+
             if (gpsinfo->fixstatus)
             {
-                if (tick == 10)
+                if (tick++ >= 10)
                 {
                     protocolSend(BLE_LINK, PROTOCOL_12, gpsinfo);
-                    //bleServConn.fsmstate = SERV_END;
-                    
-                }
-                if (tick >= 20)
-                {
-					bleServConn.fsmstate = SERV_END;
-					tick = 0;
-		
+                    bleServConn.fsmstate = SERV_END;
+                    break;
                 }
             }
             else
             {
-	            if (bleServConn.heartbeattick >= 180)
-	            {
-	                protocolSend(BLE_LINK, PROTOCOL_12, getLastFixedGPSInfo());
-	                bleServConn.fsmstate = SERV_END;
-	                tick = 0;
-	            }
+                tick = 0;
+            }
+            if (bleServConn.heartbeattick >= 180)
+            {
+                protocolSend(BLE_LINK, PROTOCOL_12, getLastFixedGPSInfo());
+                bleServConn.fsmstate = SERV_END;
             }
             break;
         case SERV_END:

@@ -24,12 +24,14 @@ typedef struct{
     uint16_t connInterval;       //!< Connection Interval
     uint16_t connLatency;        //!< Connection Latency
     uint16_t connTimeout;        //!< Connection Timeout
+    uint8_t connMac[12];
 }connectionInfoStruct;
 
 void appPeripheralInit(void);
 void appSendNotifyData(uint8 *data, uint16 len);
 void appPeripheralBroadcastInfoCfg(uint8 *broadcastnmae);
 void appPeripheralCancel(void);
+uint8_t *appPeripheralParamCallback(void);
 void appPeripheralTerminateLink(void);
 
 

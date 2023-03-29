@@ -1363,6 +1363,14 @@ static void wifiscanParser(uint8_t *buf, uint16_t len)
     }
 	if (wifiList.apcount != 0)
     {
+	    gpsinfo_s *gpsinfo;
+		gpsinfo = getCurrentGPSInfo();
+		//当前已经定到位置则不发送lbs
+		if (gpsinfo->fixstatus)
+		{
+			sysinfo.wifiExtendEvt = 0;
+			return;
+		}
         if (sysinfo.wifiExtendEvt & DEV_EXTEND_OF_MY)
         {
             protocolSend(NORMAL_LINK, PROTOCOL_F3, &wifiList);

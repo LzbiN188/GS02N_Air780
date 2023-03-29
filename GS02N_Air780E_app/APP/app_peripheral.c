@@ -195,7 +195,7 @@ void bleRecvParser(char *data, uint16_t len)
     char dec[256];
     uint8_t decLen, ret;
     char debugStr[100];
-    tmos_stop_task(appPeripheralTaskId, APP_PERIPHERAL_TERMINATE_EVENT);
+
     ret = dencryptData(dec, &decLen, data, len);
     if (ret == 0)
     {
@@ -333,7 +333,6 @@ void appPeripheralCancel(void)
 	u8Value = FALSE;
 
 	GAPRole_TerminateLink(appPeripheralConn.connectionHandle);
-	
     GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8), &u8Value);
 }
 /*
@@ -564,6 +563,7 @@ static tmosEvents appPeripheralEventProcess(tmosTaskID taskID, tmosEvents events
     }
     if (events & APP_PERIPHERAL_TERMINATE_EVENT)
     {
+    	LogMessage(DEBUG_ALL, "Connect timeout");
         GAPRole_TerminateLink(appPeripheralConn.connectionHandle);
         return events ^ APP_PERIPHERAL_TERMINATE_EVENT;
     }
@@ -598,6 +598,7 @@ static void appPeripheralConnected(gapRoleEvent_t *pEvent)
         appPeripheralConn.connTimeout = pEvent->linkCmpl.connTimeout;
         byteToHexString(pEvent->linkCmpl.devAddr, debug, 6);
         debug[12] = 0;
+        tmos_memcpy(appPeripheralConn.connMac, debug, 12);
         LogPrintf(DEBUG_ALL, "-------------------------------------");
         LogPrintf(DEBUG_ALL, "*****Device Connection*****");
         LogPrintf(DEBUG_ALL, "DeviceMac:%s", debug);
@@ -610,10 +611,10 @@ static void appPeripheralConnected(gapRoleEvent_t *pEvent)
         LogPrintf(DEBUG_ALL, "connTimeout:%d", pEvent->linkCmpl.connTimeout);
         LogPrintf(DEBUG_ALL, "-------------------------------------");
         tmos_set_event(appPeripheralTaskId, APP_PERIPHERAL_MTU_CHANGE_EVENT);
-        //5秒后断开链接，除非鉴权通过
-        tmos_start_task(appPeripheralTaskId, APP_PERIPHERAL_TERMINATE_EVENT, MS1_TO_SYSTEM_TIME(20000));
+        //60秒后断开
+        tmos_start_task(appPeripheralTaskId, APP_PERIPHERAL_TERMINATE_EVENT, MS1_TO_SYSTEM_TIME(60000));
         tmos_start_task(appPeripheralTaskId, APP_PERIPHERAL_NOTIFY_EVENT, MS1_TO_SYSTEM_TIME(100));
-        tmos_start_task(appPeripheralTaskId, APP_START_AUTH_EVENT, MS1_TO_SYSTEM_TIME(1200));
+        sysinfo.bleConnStatus = 1;
     }
 }
 /*
@@ -635,8 +636,8 @@ static void appGaproleWaitting(gapRoleEvent_t *pEvent)
         u8Value = TRUE;
         appPeripheralConn.connectionHandle = INVALID_CONNHANDLE;
         GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8), &u8Value);
-
-       
+		sysinfo.bleConnStatus = 0;
+		tmos_memset(appPeripheralConn.connMac, 0, 12);
     }
     tmos_stop_task(appPeripheralTaskId, APP_PERIPHERAL_TERMINATE_EVENT);
 }
@@ -704,5 +705,10 @@ static void appPeripheralGapRolesStateNotify(gapRole_States_t newState,        g
 void appPeripheralTerminateLink(void)
 {
 	GAPRole_TerminateLink(appPeripheralConn.connectionHandle);
+}
+
+uint8_t *appPeripheralParamCallback(void)
+{
+	return appPeripheralConn.connMac;
 }
 

@@ -56,6 +56,7 @@ typedef struct
 	uint8_t moduleRstFlag			: 1;
 	uint8_t debugflag				: 1;
 	uint8_t wifisendflag			: 1;
+	uint8_t bleConnStatus			: 1;
     uint8_t lbsExtendEvt;
     uint8_t wifiExtendEvt;
     uint8_t ringWakeUpTick;

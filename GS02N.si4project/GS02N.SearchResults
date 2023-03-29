@@ -1,0 +1,22 @@
+---- tmos_memset Matches (21 in 11 files) ----
+bleRelayInsert in app_bleRelay.c (GS02N_Air780E_app\Task) :             tmos_memset(&bleRelayList[i], 0, sizeof(bleRelayDev_s));
+bleRelayInit in app_bleRelay.c (GS02N_Air780E_app\Task) :     tmos_memset(mac, 0, 6);
+bleRelayInit in app_bleRelay.c (GS02N_Air780E_app\Task) :     tmos_memset(&bleRelayList, 0, sizeof(bleRelayList));
+bleRelayDeleteAll in app_bleRelay.c (GS02N_Air780E_app\Task) :     tmos_memset(bleRelayList, 0, sizeof(bleRelayList));
+bleDevConnInit in app_central.c (GS02N_Air780E_app\APP) :     tmos_memset(&devInfoList, 0, sizeof(devInfoList));
+bleDevConnAdd in app_central.c (GS02N_Air780E_app\APP) :             tmos_memset(&devInfoList[i], 0, sizeof(deviceConnInfo_s));
+bleDevConnDelAll in app_central.c (GS02N_Air780E_app\APP) :             tmos_memset(&devInfoList[i], 0, sizeof(deviceConnInfo_s));
+dbInfoClear in app_db.c (GS02N_Air780E_app\Task) :     tmos_memset(&dbinfo, 0, sizeof(dbinfo));
+doSetBleMacInstruction in app_instructioncmd.c (GS02N_Air780E_app\Task) : //        tmos_memset(sysparam.bleConnMac, 0, sizeof(sysparam.bleConnMac));
+cgsnParser in app_net.c (GS02N_Air780E_app\Task) :             tmos_memset(sysparam.SN, 0, sizeof(sysparam.SN));
+bleRecvParser in app_peripheral.c (GS02N_Air780E_app\APP) :         tmos_memset(debugStr, 0, 100);
+bleRecvParser in app_peripheral.c (GS02N_Air780E_app\APP) : //	tmos_memset(debugStr, 0, 100);
+appPeripheralInit in app_peripheral.c (GS02N_Air780E_app\APP) :     tmos_memset(&appPeripheralConn, 0, sizeof(appPeripheralConn));
+appGaproleWaitting in app_peripheral.c (GS02N_Air780E_app\APP) : 		tmos_memset(appPeripheralConn.connMac, 0, )
+socketListInit in app_socket.c (GS02N_Air780E_app\Task) :     tmos_memset(socketList, 0, sizeof(socketList));
+socketListInit in app_socket.c (GS02N_Air780E_app\Task) :     tmos_memset(&sockSchInfo, 0, sizeof(SocketScheduleInfo_s));
+socketDel in app_socket.c (GS02N_Air780E_app\Task) : 		tmos_memset(&socketList[sock],0,sizeof(SocketInfo_s));
+myTaskPreInit in app_task.c (GS02N_Air780E_app\Task) :     tmos_memset(&sysinfo, 0, sizeof(sysinfo));
+CH58xBLE_LIB.h (GS02N_Air780E_app\LIB) line 2564 : extern void tmos_memset( void * pDst, uint8_t Value, uint32_t len );
+CH58xBLE_ROM.h (GS02N_Air780E_app\LIB) line 2590 : #define    tmos_memset  ((  void (*)  ( void * pDst, uint8_t Value, uint32_t len ))  BLE_LIB_JT(5))
+CH58X_BLEInit in MCU.c (GS02N_Air780E_app\HAL) :     tmos_memset(&cfg, 0, sizeof(bleConfig_t));

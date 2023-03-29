@@ -1333,16 +1333,6 @@ static void modeStart(void)
     ledStatusUpdate(SYSTEM_LED_RUN, 1);
     modulePowerOn();
     netResetCsqSearch();
-    if (sysparam.bleen == 1)
-    {	
-    	char broadCastNmae[30];
-		sprintf(broadCastNmae, "%s-%s", "AUTO", sysparam.SN + 9);
-    	appPeripheralBroadcastInfoCfg(broadCastNmae);
-    }
-    else if (sysparam.bleen == 0)
-    {
-		appPeripheralCancel();
-    }
     changeModeFsm(MODE_RUNING);
 }
 
@@ -1523,6 +1513,14 @@ void lbsRequestSet(uint8_t ext)
 
 static void sendLbs(void)
 {
+	gpsinfo_s *gpsinfo;
+	gpsinfo = getCurrentGPSInfo();
+	//当前已经定到位置则不发送lbs
+	if (gpsinfo->fixstatus)
+	{
+		sysinfo.lbsExtendEvt = 0;
+		return;
+	}
     if (sysinfo.lbsExtendEvt & DEV_EXTEND_OF_MY)
     {
         protocolSend(NORMAL_LINK, PROTOCOL_19, NULL);
@@ -2021,6 +2019,16 @@ void myTaskPreInit(void)
     createSystemTask(ledTask, 1);
     createSystemTask(outputNode, 2);
     sysinfo.sysTaskId = createSystemTask(taskRunInSecond, 10);
+    if (sysparam.bleen == 1)
+    {	
+    	char broadCastNmae[30];
+		sprintf(broadCastNmae, "%s-%s", "AUTO", sysparam.SN + 9);
+    	appPeripheralBroadcastInfoCfg(broadCastNmae);
+    }
+    else if (sysparam.bleen == 0)
+    {
+		appPeripheralCancel();
+    }
 
 }
 
