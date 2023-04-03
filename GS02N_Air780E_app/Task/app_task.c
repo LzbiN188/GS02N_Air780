@@ -436,7 +436,7 @@ static void gpsWarmStart(void)
 	sprintf(param, "$PCAS10,0*1C\r\n");
 	portUartSend(&usart3_ctl, (uint8_t *)param, strlen(param));
 	LogMessage(DEBUG_ALL, "Gps config warm start");
-    startTimer(10, changeGPSBaudRate, 0);
+    startTimer(15, changeGPSBaudRate, 0);
 }
 /**************************************************
 @bref		¿ªÆôgps
@@ -970,11 +970,11 @@ static void motionCheckTask(void)
 
     if (sysparam.MODE == MODE21 || sysparam.MODE == MODE23)
     {
-        staticTime = 60;
+        staticTime = 180;
     }
     else
     {
-        staticTime = 60;
+        staticTime = 180;
     }
 
     if ((sysinfo.outsidevoltage <= sysparam.protectVoltage) && (sysinfo.outsidevoltage > 4.5))
