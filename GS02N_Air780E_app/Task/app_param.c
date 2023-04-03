@@ -71,7 +71,7 @@ void paramDefaultInit(uint8_t level)
     sysparam.accctlgnss = 1;
     sysparam.accdetmode = 2;
     sysparam.heartbeatgap = 180;
-    sysparam.ledctrl = 0;
+    sysparam.ledctrl = 1;
     sysparam.poitype = 2;
     sysparam.fence = 30;
     sysparam.accOnVoltage = 13.2;
@@ -86,11 +86,15 @@ void paramDefaultInit(uint8_t level)
     sysparam.blePreShieldDetCnt = 10;
     sysparam.blePreShieldHoldTime = 1;
     sysparam.relaySpeed = 20;
-    sysparam.protectVoltage = 0;
+    sysparam.protectVoltage = 4.6;
     sysparam.bf = 0;
     sysparam.gsdettime=15;
     sysparam.gsValidCnt=7;
     sysparam.gsInvalidCnt=0;
+    sysparam.hiddenServOnoff = 1;
+    sysparam.agpsen = 1;
+    sysparam.bleen = 1;
+
 
     paramSaveAll();
 }

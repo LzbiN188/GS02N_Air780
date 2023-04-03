@@ -270,11 +270,25 @@ void ledStatusUpdate(uint8_t status, uint8_t onoff)
 
 static void ledTask(void)
 {
-    if (sysinfo.sysTick >= 300 && sysparam.ledctrl == 0)
-    {
-        SYS_LED1_OFF;
-        return;
-    }
+	if (sysparam.ledctrl == 0)
+	{
+		if (sysinfo.sysTick >= 300)
+		{
+			SYS_LED1_OFF;
+			return;
+		}
+	}
+	else
+	{
+		if (sysinfo.sysTick >= 300)
+		{
+			if (getTerminalAccState() == 0)
+			{
+				SYS_LED1_OFF;
+				return;
+			}
+		}
+	}
     sysLed1Run();
 }
 /**************************************************
@@ -435,7 +449,7 @@ static void gpsOpen(void)
 	GPSPWR_ON;
     GPSLNA_ON;
     portUartCfg(APPUSART3, 1, 9600, gpsUartRead);
-    startTimer(10, gpsWarmStart, 0);
+    startTimer(10, changeGPSBaudRate, 0);
     sysinfo.gpsUpdatetick = sysinfo.sysTick;
     sysinfo.gpsOnoff = 1;
     gpsChangeFsmState(GPSWATISTATUS);
@@ -794,6 +808,9 @@ static void motionStateUpdate(motion_src_e src, motionState_e newState)
         case GSENSOR_SRC:
             strcpy(type, "gsensor");
             break;
+       	case SYS_SRC:
+       		strcpy(type, "sys");
+            break;
         default:
             return;
             break;
@@ -960,34 +977,23 @@ static void motionCheckTask(void)
     }
 
 
-    if (sysparam.protectVoltage >= 2)
-    {
-        if (sysinfo.outsidevoltage <= sysparam.protectVoltage)
-        {
-            hTick = 0;
-            if (++lTick >= 30)
-            {
-                lFlag = 1;
-            }
-        }
-        else if (sysinfo.outsidevoltage >= sysparam.protectVoltage + 0.2)
-        {
-            lTick = 0;
-            if (++hTick >= 30)
-            {
-                lFlag = 0;
-            }
-        }
-        else
-        {
-            lTick = 0;
-            hTick = 0;
-        }
-    }
-    else
-    {
-        lFlag = 0;
-    }
+	if ((sysinfo.outsidevoltage <= sysparam.protectVoltage) && (sysinfo.outsidevoltage > 4.5))
+	{
+		hTick = 0;
+		if (++lTick >= 30)
+		{
+			lFlag = 1;
+		}
+	}
+	else if ((sysinfo.outsidevoltage > sysparam.protectVoltage) || (sysinfo.outsidevoltage <= 4.5))
+	{
+		lTick = 0;
+		if (++hTick >= 30)
+		{
+			lFlag = 0;
+		}
+	}
+
     if (sysparam.MODE == MODE1 || sysparam.MODE == MODE3 || lFlag)
     {
         motionStateUpdate(SYS_SRC, MOTION_STATIC);
@@ -1328,16 +1334,6 @@ static void modeStart(void)
     ledStatusUpdate(SYSTEM_LED_RUN, 1);
     modulePowerOn();
     netResetCsqSearch();
-    if (sysparam.bleen == 1)
-    {	
-    	char broadCastNmae[30];
-		sprintf(broadCastNmae, "%s-%s", "AUTO", sysparam.SN + 9);
-    	appPeripheralBroadcastInfoCfg(broadCastNmae);
-    }
-    else if (sysparam.bleen == 0)
-    {
-		appPeripheralCancel();
-    }
     changeModeFsm(MODE_RUNING);
 }
 
@@ -1518,6 +1514,14 @@ void lbsRequestSet(uint8_t ext)
 
 static void sendLbs(void)
 {
+	gpsinfo_s *gpsinfo;
+	gpsinfo = getCurrentGPSInfo();
+	//当前已经定到位置则不发送lbs
+	if (gpsinfo->fixstatus)
+	{
+		sysinfo.lbsExtendEvt = 0;
+		return;
+	}
     if (sysinfo.lbsExtendEvt & DEV_EXTEND_OF_MY)
     {
         protocolSend(NORMAL_LINK, PROTOCOL_19, NULL);
@@ -2017,6 +2021,16 @@ void myTaskPreInit(void)
     createSystemTask(ledTask, 1);
     createSystemTask(outputNode, 2);
     sysinfo.sysTaskId = createSystemTask(taskRunInSecond, 10);
+    if (sysparam.bleen == 1)
+    {	
+    	char broadCastNmae[30];
+		sprintf(broadCastNmae, "%s-%s", "AUTO", sysparam.SN + 9);
+    	appPeripheralBroadcastInfoCfg(broadCastNmae);
+    }
+    else if (sysparam.bleen == 0)
+    {
+		appPeripheralCancel();
+    }
 
 }
 

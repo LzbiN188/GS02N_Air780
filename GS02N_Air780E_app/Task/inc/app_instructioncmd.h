@@ -56,6 +56,7 @@ typedef enum{
     FCG_INS,
     QFOTA_INS,
     BLEEN_INS,
+    AGPSEN_INS,
 
 }INSTRUCTIONID;
 

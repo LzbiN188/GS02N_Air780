@@ -12,7 +12,7 @@
 #include "app_socket.h"
 #include "app_server.h"
 #include "aes.h"
-#include "app_sn.h"
+
 #include "app_jt808.h"
 #include "app_task.h"
 #include "app_central.h"

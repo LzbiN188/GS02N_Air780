@@ -7,7 +7,7 @@
 #include "app_kernal.h"
 #include "app_net.h"
 #include "app_param.h"
-#include "app_sn.h"
+
 #include "app_sys.h"
 #include "app_task.h"
 #include "app_server.h"
@@ -57,6 +57,7 @@ const instruction_s insCmdTable[] =
     {FCG_INS, "FCG"},
     {QFOTA_INS, "QFOTA"},
     {BLEEN_INS, "BLEEN"},
+    {AGPSEN_INS, "AGPSEN"},
     {SN_INS, "*"},
 };
 
@@ -716,7 +717,8 @@ void doDebugInstrucion(ITEM *item, char *message)
             sysinfo.sysTick / 3600, sysinfo.sysTick % 3600 / 60, sysinfo.sysTick % 60, sysinfo.gpsRequest,
             sysinfo.gpsUpdatetick / 3600, sysinfo.gpsUpdatetick % 3600 / 60, sysinfo.gpsUpdatetick % 60);
     sprintf(message + strlen(message), "hideLogin:%s;", hiddenServerIsReady() ? "Yes" : "No");
-    sprintf(message + strlen(message), "moduleRstCnt:%d", sysinfo.moduleRstCnt);
+    sprintf(message + strlen(message), "moduleRstCnt:%d;", sysinfo.moduleRstCnt);
+    sprintf(message + strlen(message), "bleConnStatus[%s]:%s", sysinfo.bleConnStatus ? "CONNECTED" : "DISCONNECTED", appPeripheralParamCallback());
 }
 
 void doACCCTLGNSSInstrucion(ITEM *item, char *message)
@@ -1549,6 +1551,22 @@ static void doBleenInstruction(ITEM *item, char *message)
 		paramSaveAll();
 	}
 }
+
+static void doAgpsenInstrution(ITEM *item, char *message)
+{
+	if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+	{
+		sprintf(message, "Agpsen is %s", sysparam.agpsen ? "On" : "Off");
+	}
+	else
+	{
+		sysparam.agpsen = atoi(item->item_data[1]);
+		sprintf(message, "Agpsen is %s", sysparam.agpsen ? "On" : "Off");
+		paramSaveAll();
+	}
+}
+
+
 /*--------------------------------------------------------------------------------------*/
 static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param)
 {
@@ -1688,6 +1706,9 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
         case BLEEN_INS:
         	doBleenInstruction(item, message);
         	break;
+       	case AGPSEN_INS:
+       		doAgpsenInstrution(item, message);
+       		break;
         default:
             if (mode == SMS_MODE)
             {

@@ -1360,6 +1360,14 @@ static void wifiscanParser(uint8_t *buf, uint16_t len)
     }
     if (wifiList.apcount != 0)
     {
+    	gpsinfo_s *gpsinfo;
+		gpsinfo = getCurrentGPSInfo();
+		//当前已经定到位置则不发送lbs
+		if (gpsinfo->fixstatus)
+		{
+			sysinfo.wifiExtendEvt = 0;
+			return;
+		}
         if (sysinfo.wifiExtendEvt & DEV_EXTEND_OF_MY)
         {
             protocolSend(NORMAL_LINK, PROTOCOL_F3, &wifiList);
@@ -1976,16 +1984,17 @@ uint8_t ciprxgetParser(uint8_t *buf, uint16_t len)
                     {
                         debugLen = readLen > 256 ? 256 : readLen;
                         byteToHexString(rebuf, restore, debugLen);
-                        restore[debugLen * 2] = 0;
-                        LogPrintf(DEBUG_ALL, "TCP RECV (%d)[%d]:%s", link, readLen, restore);
-                        if (link == 4)
-                        {
-                        	socketRecv(link, rebuf, readLen);
-                        }
-                        else 
-                        {
+						restore[debugLen * 2] = 0;
+						LogPrintf(DEBUG_ALL, "TCP RECV (%d)[%d]:%s", link, readLen, restore);
+						if (link == 4)
+						{
+							socketRecv(link, rebuf, readLen);
+						}
+						else 
+						{
 							socketRecv(link, rebuf, relen);//relen替代readLen
-                        }
+						}
+
                     }
                 }
                 else
@@ -2408,7 +2417,7 @@ void moduleGetLbs(void)
 void moduleGetWifiScan(void)
 {
     sendModuleCmd(AT_CMD, NULL);
-    sendModuleCmd(WIFISCAN_CMD, "?");
+    sendModuleCmd(WIFISCAN_CMD, NULL);
 }
 
 /**************************************************
