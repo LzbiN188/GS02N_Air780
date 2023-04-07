@@ -24,7 +24,7 @@ typedef struct{
     uint16_t connInterval;       //!< Connection Interval
     uint16_t connLatency;        //!< Connection Latency
     uint16_t connTimeout;        //!< Connection Timeout
-    uint8_t connMac[6];
+    uint8_t connMac[12];
 }connectionInfoStruct;
 
 void appPeripheralInit(void);

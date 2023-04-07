@@ -299,6 +299,11 @@ static void ledTask(void)
 **************************************************/
 void gpsRequestSet(uint32_t flag)
 {
+	if (sysinfo.lowBatProtectFlag)
+	{
+		LogMessage(DEBUG_ALL, "gpsRequestSet==>Low Battery");
+		return;
+	}
     LogPrintf(DEBUG_ALL, "gpsRequestSet==>0x%04X", flag);
     sysinfo.gpsRequest |= flag;
 }
@@ -958,7 +963,7 @@ static void motionCheckTask(void)
     static uint8_t  volOffTick = 0;
     static uint8_t bfFlag = 0;
     static uint8_t bfTick = 0;
-    static uint8_t lFlag = 0, lTick = 0, hTick = 0;
+    static uint8_t lTick = 0, hTick = 0;
     static uint8_t vFlag = 0;
     static uint8_t motionState = 0;
     gpsinfo_s *gpsinfo;
@@ -982,7 +987,7 @@ static void motionCheckTask(void)
 		hTick = 0;
 		if (++lTick >= 30)
 		{
-			lFlag = 1;
+			sysinfo.lowBatProtectFlag = 1;
 		}
 	}
 	else if ((sysinfo.outsidevoltage > sysparam.protectVoltage) || (sysinfo.outsidevoltage <= 4.5))
@@ -990,11 +995,11 @@ static void motionCheckTask(void)
 		lTick = 0;
 		if (++hTick >= 30)
 		{
-			lFlag = 0;
+			sysinfo.lowBatProtectFlag = 0;
 		}
 	}
 
-    if (sysparam.MODE == MODE1 || sysparam.MODE == MODE3 || lFlag)
+    if (sysparam.MODE == MODE1 || sysparam.MODE == MODE3 || sysinfo.lowBatProtectFlag)
     {
         motionStateUpdate(SYS_SRC, MOTION_STATIC);
         gsStaticTick = 0;
@@ -1471,6 +1476,18 @@ static void sysAutoReq(void)
         }
     }
 }
+
+/**************************************************
+@bref		电池低电保护
+@param
+@return
+@note
+**************************************************/
+void lowBatProtectTask(void)
+{
+	
+}
+
 
 /**************************************************
 @bref		模式运行任务
@@ -2021,17 +2038,6 @@ void myTaskPreInit(void)
     createSystemTask(ledTask, 1);
     createSystemTask(outputNode, 2);
     sysinfo.sysTaskId = createSystemTask(taskRunInSecond, 10);
-    if (sysparam.bleen == 1)
-    {	
-    	char broadCastNmae[30];
-		sprintf(broadCastNmae, "%s-%s", "AUTO", sysparam.SN + 9);
-    	appPeripheralBroadcastInfoCfg(broadCastNmae);
-    }
-    else if (sysparam.bleen == 0)
-    {
-		appPeripheralCancel();
-    }
-
 }
 
 /**************************************************
@@ -2080,5 +2086,15 @@ void myTaskInit(void)
     sysinfo.taskId = TMOS_ProcessEventRegister(myTaskEventProcess);
     tmos_start_reload_task(sysinfo.taskId, APP_TASK_KERNAL_EVENT, MS1_TO_SYSTEM_TIME(100));
     tmos_start_reload_task(sysinfo.taskId, APP_TASK_POLLUART_EVENT, MS1_TO_SYSTEM_TIME(50));
+    if (sysparam.bleen == 1)
+    {	
+    	char broadCastNmae[30];
+		sprintf(broadCastNmae, "%s-%s", "AUTO", sysparam.SN + 9);
+    	appPeripheralBroadcastInfoCfg(broadCastNmae);
+    }
+    else if (sysparam.bleen == 0)
+    {
+		appPeripheralCancel();
+    }
 }
 
