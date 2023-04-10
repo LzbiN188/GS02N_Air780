@@ -923,7 +923,7 @@ void bleServerConnTask(void)
         case SERV_READY:
             if (bleServConn.heartbeattick++ == 0)
             {
-                protocolInfoResiter(getBatteryLevel(), sysinfo.outsidevoltage, bleHead->startCnt, 0);
+                protocolInfoResiter(bleHead->batLevel, sysinfo.outsidevoltage > 5.0 ? sysinfo.outsidevoltage : sysinfo.insidevoltage, bleHead->startCnt, 0);
                 protocolSend(BLE_LINK, PROTOCOL_13, NULL);
                 lbsRequestSet(DEV_EXTEND_OF_BLE);
                 wifiRequestSet(DEV_EXTEND_OF_BLE);
@@ -1003,7 +1003,7 @@ static void agpsServerConnTask(void)
 {
     static uint8_t agpsFsm = 0;
     static uint8_t runTick = 0;
-//    char agpsBuff[150];
+    char agpsBuff[150];
     int ret;
     gpsinfo_s *gpsinfo;
 
@@ -1050,8 +1050,8 @@ static void agpsServerConnTask(void)
         case 0:
             if (gpsinfo->fixstatus == 0)
             {
-//                sprintf(agpsBuff, "user=%s;pwd=%s;cmd=full;", sysparam.agpsUser, sysparam.agpsPswd);
-//                socketSendData(AGPS_LINK, (uint8_t *) agpsBuff, strlen(agpsBuff));
+                sprintf(agpsBuff, "user=%s;pwd=%s;cmd=full;", sysparam.agpsUser, sysparam.agpsPswd);
+                socketSendData(AGPS_LINK, (uint8_t *) agpsBuff, strlen(agpsBuff));
             }
             agpsFsm = 1;
             runTick = 0;

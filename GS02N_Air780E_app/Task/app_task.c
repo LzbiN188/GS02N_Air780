@@ -300,6 +300,11 @@ static void ledTask(void)
 **************************************************/
 void gpsRequestSet(uint32_t flag)
 {
+	if (sysinfo.lowBatFlag)
+	{
+		LogMessage(DEBUG_ALL, "gpsRequestSet==>lowBatFlag");
+		return;
+	}
     LogPrintf(DEBUG_ALL, "gpsRequestSet==>0x%04X", flag);
     sysinfo.gpsRequest |= flag;
 }
@@ -436,7 +441,7 @@ static void gpsWarmStart(void)
 	sprintf(param, "$PCAS10,0*1C\r\n");
 	portUartSend(&usart3_ctl, (uint8_t *)param, strlen(param));
 	LogMessage(DEBUG_ALL, "Gps config warm start");
-    startTimer(10, changeGPSBaudRate, 0);
+    startTimer(15, changeGPSBaudRate, 0);
 }
 /**************************************************
 @bref		¿ªÆôgps
@@ -959,7 +964,7 @@ static void motionCheckTask(void)
     static uint8_t  volOffTick = 0;
     static uint8_t bfFlag = 0;
     static uint8_t bfTick = 0;
-    static uint8_t lFlag = 0, lTick = 0, hTick = 0;
+    static uint8_t lTick = 0, hTick = 0;
     static uint8_t vFlag = 0;
     static uint8_t motionState = 0;
     gpsinfo_s *gpsinfo;
@@ -970,11 +975,11 @@ static void motionCheckTask(void)
 
     if (sysparam.MODE == MODE21 || sysparam.MODE == MODE23)
     {
-        staticTime = 60;
+        staticTime = 180;
     }
     else
     {
-        staticTime = 60;
+        staticTime = 180;
     }
 
     if ((sysinfo.outsidevoltage <= sysparam.protectVoltage) && (sysinfo.outsidevoltage > 4.5))
@@ -982,7 +987,7 @@ static void motionCheckTask(void)
         hTick = 0;
         if (++lTick >= 30)
         {
-            lFlag = 1;
+            sysinfo.lowBatFlag = 1;
         }
     }
     else if ((sysinfo.outsidevoltage > sysparam.protectVoltage) || (sysinfo.outsidevoltage <= 4.5))
@@ -990,11 +995,11 @@ static void motionCheckTask(void)
         lTick = 0;
         if (++hTick >= 30)
         {
-            lFlag = 0;
+            sysinfo.lowBatFlag = 0;
         }
     }
 
-    if (sysparam.MODE == MODE1 || sysparam.MODE == MODE3 || lFlag)
+    if (sysparam.MODE == MODE1 || sysparam.MODE == MODE3 || sysinfo.lowBatFlag)
     {
         motionStateUpdate(SYS_SRC, MOTION_STATIC);
         gsStaticTick = 0;
@@ -1464,8 +1469,8 @@ static void sysAutoReq(void)
         {
             if (sysinfo.sysTick % (sysparam.gapMinutes * 60) == 0)
             {
-                gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
-                LogMessage(DEBUG_ALL, "upload period");
+	           gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
+	           LogMessage(DEBUG_ALL, "upload period");
             }
         }
     }
