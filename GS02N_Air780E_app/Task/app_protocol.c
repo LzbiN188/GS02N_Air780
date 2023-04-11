@@ -725,7 +725,7 @@ int createProtocolF1(unsigned short Serial, char *DestBuf)
 {
     int pdu_len;
     pdu_len = createProtocolHead(DestBuf, 0xF1);
-    sprintf(DestBuf + pdu_len, "%s&&%s&&%s", sysparam.SN, getModuleIMSI(), getModuleICCID());
+    sprintf(DestBuf + pdu_len, "%s&&%s&&%s", dynamicParam.SN, getModuleIMSI(), getModuleICCID());
     pdu_len += strlen(DestBuf + pdu_len);
     pdu_len = createProtocolTail(DestBuf, pdu_len,  createProtocolSerial());
     return pdu_len;

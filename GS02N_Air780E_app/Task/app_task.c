@@ -850,7 +850,7 @@ static void motionStateUpdate(motion_src_e src, motionState_e newState)
     if (primaryServerIsReady())
     {
         protocolInfoResiter(getBatteryLevel(), sysinfo.outsidevoltage > 5.0 ? sysinfo.outsidevoltage : sysinfo.insidevoltage,
-                            sysparam.startUpCnt, sysparam.runTime);
+                            dynamicParam.startUpCnt, dynamicParam.runTime);
         protocolSend(NORMAL_LINK, PROTOCOL_13, NULL);
         jt808SendToServer(TERMINAL_POSITION, getLastFixedGPSInfo());
     }
@@ -1306,8 +1306,9 @@ static void modeStart(void)
     {
         case MODE1:
             portGsensorCtl(0);
-            sysparam.startUpCnt++;
+            dynamicParam.startUpCnt++;
             portSetNextAlarmTime();
+            dynamicParamSaveAll();
             break;
         case MODE2:
             portGsensorCtl(1);
@@ -1318,7 +1319,8 @@ static void modeStart(void)
             break;
         case MODE3:
             portGsensorCtl(0);
-            sysparam.startUpCnt++;
+            dynamicParam.startUpCnt++;
+            dynamicParamSaveAll();
             break;
         case MODE21:
             portGsensorCtl(1);
@@ -1347,8 +1349,8 @@ static void sysRunTimeCnt(void)
     if (++runTick >= 180)
     {
         runTick = 0;
-        sysparam.runTime++;
-        paramSaveAll();
+        dynamicParam.runTime++;
+        dynamicParamSaveAll();
     }
 }
 
@@ -1838,7 +1840,7 @@ static void sosRequestTask(void)
                 if (sysparam.sosNum[ind][0] != 0)
                 {
                     flag = 1;
-                    sprintf(msg, "Your device(%s) is sending you an SOS alert", sysparam.SN);
+                    sprintf(msg, "Your device(%s) is sending you an SOS alert", dynamicParam.SN);
                     //LogPrintf(DEBUG_ALL, "[%s]==>%s", sysparam.sosNum[ind], msg);
                     sendMessage(msg, strlen(msg), sysparam.sosNum[ind]);
                     ind++;
@@ -2024,16 +2026,6 @@ void myTaskPreInit(void)
     createSystemTask(ledTask, 1);
     createSystemTask(outputNode, 2);
     sysinfo.sysTaskId = createSystemTask(taskRunInSecond, 10);
-    if (sysparam.bleen == 1)
-    {	
-    	char broadCastNmae[30];
-		sprintf(broadCastNmae, "%s-%s", "AUTO", sysparam.SN + 9);
-    	appPeripheralBroadcastInfoCfg(broadCastNmae);
-    }
-    else if (sysparam.bleen == 0)
-    {
-		appPeripheralCancel();
-    }
 
 }
 
@@ -2083,5 +2075,15 @@ void myTaskInit(void)
     sysinfo.taskId = TMOS_ProcessEventRegister(myTaskEventProcess);
     tmos_start_reload_task(sysinfo.taskId, APP_TASK_KERNAL_EVENT, MS1_TO_SYSTEM_TIME(100));
     tmos_start_reload_task(sysinfo.taskId, APP_TASK_POLLUART_EVENT, MS1_TO_SYSTEM_TIME(50));
+    if (sysparam.bleen == 1)
+    {
+        char broadCastNmae[30];
+        sprintf(broadCastNmae, "%s-%s", "AUTO", dynamicParam.SN + 9);
+        appPeripheralBroadcastInfoCfg(broadCastNmae);
+    }
+    else if (sysparam.bleen == 0)
+    {
+        appPeripheralCancel();
+    }
 }
 

@@ -1404,14 +1404,14 @@ static void cgsnParser(uint8_t *buf, uint16_t len)
         }
         moduleState.IMEI[index] = 0;
         LogPrintf(DEBUG_ALL, "module IMEI [%s]", moduleState.IMEI);
-        if (tmos_memcmp(moduleState.IMEI, sysparam.SN, 15) == FALSE)
+        if (tmos_memcmp(moduleState.IMEI, dynamicParam.SN, 15) == FALSE)
         {
-            tmos_memset(sysparam.SN, 0, sizeof(sysparam.SN));
-            strncpy(sysparam.SN, moduleState.IMEI, 15);
-            jt808CreateSn(sysparam.jt808sn, sysparam.SN + 3, 12);
-            sysparam.jt808isRegister = 0;
-            sysparam.jt808AuthLen = 0;
-            paramSaveAll();
+            tmos_memset(dynamicParam.SN, 0, sizeof(dynamicParam.SN));
+            strncpy(dynamicParam.SN, moduleState.IMEI, 15);
+            jt808CreateSn(dynamicParam.jt808sn, dynamicParam.SN + 3, 12);
+            dynamicParam.jt808isRegister = 0;
+            dynamicParam.jt808AuthLen = 0;
+            dynamicParamSaveAll();
         }
     }
 

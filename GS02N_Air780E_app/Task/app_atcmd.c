@@ -271,7 +271,7 @@ static void atCmdZTSNParser(uint8_t *buf, uint16_t len)
 void atCmdIMEIParser(void)
 {
     char imei[20];
-    LogPrintf(DEBUG_FACTORY, "ZTINFO:%s:%s:%s", sysparam.SN, getModuleIMEI(), EEPROM_VERSION);
+    LogPrintf(DEBUG_FACTORY, "ZTINFO:%s:%s:%s", dynamicParam.SN, getModuleIMEI(), EEPROM_VERSION);
 }
 
 //unsigned char nmeaCrc(char *str, int len)
@@ -394,7 +394,7 @@ static void atCmdFmpcIMSIParser(void)
     sendModuleCmd(CIMI_CMD, NULL);
     sendModuleCmd(CCID_CMD, NULL);
     sendModuleCmd(CGSN_CMD, NULL);
-    LogPrintf(DEBUG_FACTORY, "FMPC_IMSI_RSP OK, IMSI=%s&&%s&&%s", sysparam.SN, getModuleIMSI(), getModuleICCID());
+    LogPrintf(DEBUG_FACTORY, "FMPC_IMSI_RSP OK, IMSI=%s&&%s&&%s", dynamicParam.SN, getModuleIMSI(), getModuleICCID());
 }
 
 /**************************************************
@@ -408,7 +408,7 @@ static void atCmdFmpcIMSIParser(void)
 
 static void atCmdFmpcChkpParser(void)
 {
-    LogPrintf(DEBUG_FACTORY, "+FMPC_CHKP:%s,%s:%d", sysparam.SN, sysparam.Server, sysparam.ServerPort);
+    LogPrintf(DEBUG_FACTORY, "+FMPC_CHKP:%s,%s:%d", dynamicParam.SN, sysparam.Server, sysparam.ServerPort);
 }
 
 /**************************************************

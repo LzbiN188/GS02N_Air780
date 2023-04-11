@@ -105,14 +105,14 @@ static void doParamInstruction(ITEM *item, char *message)
     uint8_t debugMsg[15];
     if (sysparam.protocol == JT808_PROTOCOL_TYPE)
     {
-        byteToHexString(sysparam.jt808sn, debugMsg, 6);
+        byteToHexString(dynamicParam.jt808sn, debugMsg, 6);
         debugMsg[12] = 0;
-        sprintf(message + strlen(message), "JT808SN:%s;SN:%s;IP:%s:%u;", debugMsg, sysparam.SN, sysparam.jt808Server,
+        sprintf(message + strlen(message), "JT808SN:%s;SN:%s;IP:%s:%u;", debugMsg, dynamicParam.SN, sysparam.jt808Server,
                 sysparam.jt808Port);
     }
     else
     {
-        sprintf(message + strlen(message), "SN:%s;IP:%s:%d;", sysparam.SN, sysparam.Server, sysparam.ServerPort);
+        sprintf(message + strlen(message), "SN:%s;IP:%s:%d;", dynamicParam.SN, sysparam.Server, sysparam.ServerPort);
     }
     sprintf(message + strlen(message), "APN:%s;", sysparam.apn);
     sprintf(message + strlen(message), "UTC:%s%d;", sysparam.utc >= 0 ? "+" : "", sysparam.utc);
@@ -177,7 +177,7 @@ static void doParamInstruction(ITEM *item, char *message)
             break;
     }
 
-    sprintf(message + strlen(message), "StartUp:%u;RunTime:%u;", sysparam.startUpCnt, sysparam.runTime);
+    sprintf(message + strlen(message), "StartUp:%u;RunTime:%u;", dynamicParam.startUpCnt, dynamicParam.runTime);
 
 }
 static void doStatusInstruction(ITEM *item, char *message)
@@ -232,13 +232,14 @@ static void serverChangeCallBack(void)
     if (serverType == JT808_PROTOCOL_TYPE)
     {
         sysparam.protocol = JT808_PROTOCOL_TYPE;
-        sysparam.jt808isRegister = 0;
+        dynamicParam.jt808isRegister = 0;
     }
     else
     {
         sysparam.protocol = ZT_PROTOCOL_TYPE;
     }
     paramSaveAll();
+    dynamicParamSaveAll();
 }
 
 static void doServerInstruction(ITEM *item, char *message)
@@ -502,7 +503,7 @@ void dorequestSend123(void)
     portGetRtcDateTime(&year, &month, &date, &hour, &minute, &second);
     sysinfo.flag123 = 0;
     gpsinfo = getCurrentGPSInfo();
-    sprintf(message, "(%s)<Local Time:%.2d/%.2d/%.2d %.2d:%.2d:%.2d>http://maps.google.com/maps?q=%s%f,%s%f", sysparam.SN, \
+    sprintf(message, "(%s)<Local Time:%.2d/%.2d/%.2d %.2d:%.2d:%.2d>http://maps.google.com/maps?q=%s%f,%s%f", dynamicParam.SN, \
             year, month, date, hour, minute, second, \
             gpsinfo->NS == 'N' ? "" : "-", gpsinfo->latitude, gpsinfo->EW == 'E' ? "" : "-", gpsinfo->longtitude);
     reCover123InstructionId();
@@ -586,7 +587,7 @@ void doUPSInstruction(ITEM *item, char *message)
     sprintf(message, "The device will download the firmware from %s:%d in 5 seconds", bootparam.updateServer,
             bootparam.updatePort);
     bootparam.updateStatus = 1;
-    strcpy(bootparam.SN, sysparam.SN);
+    strcpy(bootparam.SN, dynamicParam.SN);
     strcpy(bootparam.apn, sysparam.apn);
     strcpy(bootparam.apnuser, sysparam.apnuser);
     strcpy(bootparam.apnpassword, sysparam.apnpassword);
@@ -839,6 +840,7 @@ void doSetAgpsInstruction(ITEM *item, char *message)
         if (item->item_data[1][0] != 0)
         {
             strcpy((char *)sysparam.agpsServer, item->item_data[1]);
+            stringToLowwer((char *)sysparam.agpsServer, strlen(sysparam.agpsServer));
         }
         if (item->item_data[2][0] != 0)
         {
@@ -847,10 +849,12 @@ void doSetAgpsInstruction(ITEM *item, char *message)
         if (item->item_data[3][0] != 0)
         {
             strcpy((char *)sysparam.agpsUser, item->item_data[3]);
+            stringToLowwer((char *)sysparam.agpsUser, strlen(sysparam.agpsUser));
         }
         if (item->item_data[4][0] != 0)
         {
             strcpy((char *)sysparam.agpsPswd, item->item_data[4]);
+            stringToLowwer((char *)sysparam.agpsPswd, strlen(sysparam.agpsPswd));
         }
         paramSaveAll();
         sprintf(message, "Update Agps info:%s,%d,%s,%s", sysparam.agpsServer, sysparam.agpsPort, sysparam.agpsUser,
@@ -864,7 +868,7 @@ static void doJT808SNInstrucion(ITEM *item, char *message)
     uint8_t snlen;
     if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
     {
-        byteToHexString(sysparam.jt808sn, (uint8_t *)senddata, 6);
+        byteToHexString(dynamicParam.jt808sn, (uint8_t *)senddata, 6);
         senddata[12] = 0;
         sprintf(message, "JT808SN:%s", senddata);
     }
@@ -877,14 +881,15 @@ static void doJT808SNInstrucion(ITEM *item, char *message)
         }
         else
         {
-            jt808CreateSn(sysparam.jt808sn, (uint8_t *)item->item_data[1], snlen);
-            byteToHexString(sysparam.jt808sn, (uint8_t *)senddata, 6);
+            jt808CreateSn(dynamicParam.jt808sn, (uint8_t *)item->item_data[1], snlen);
+            byteToHexString(dynamicParam.jt808sn, (uint8_t *)senddata, 6);
             senddata[12] = 0;
             sprintf(message, "Update SN:%s", senddata);
-            sysparam.jt808isRegister = 0;
-            sysparam.jt808AuthLen = 0;
-            jt808RegisterLoginInfo(sysparam.jt808sn, sysparam.jt808isRegister, sysparam.jt808AuthCode, sysparam.jt808AuthLen);
+            dynamicParam.jt808isRegister = 0;
+            dynamicParam.jt808AuthLen = 0;
+            jt808RegisterLoginInfo(dynamicParam.jt808sn, dynamicParam.jt808isRegister, dynamicParam.jt808AuthCode, dynamicParam.jt808AuthLen);
             paramSaveAll();
+            dynamicParamSaveAll();
         }
     }
 }
@@ -1539,7 +1544,7 @@ static void doBleenInstruction(ITEM *item, char *message)
 		if (sysparam.bleen == 1)
 		{	
 			char broadCastNmae[30];
-			sprintf(broadCastNmae, "%s-%s", "AUTO", sysparam.SN + 9);
+			sprintf(broadCastNmae, "%s-%s", "AUTO", dynamicParam.SN + 9);
 			appPeripheralBroadcastInfoCfg(broadCastNmae);
 		}
 		else if (sysparam.bleen == 0)

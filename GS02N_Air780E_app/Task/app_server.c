@@ -249,14 +249,14 @@ void privateServerConnTask(void)
     {
         case SERV_LOGIN:
             unLoginTick = 0;
-            if (strncmp(sysparam.SN, "888888887777777", 15) == 0)
+            if (strncmp(dynamicParam.SN, "888888887777777", 15) == 0)
             {
                 LogMessage(DEBUG_ALL, "no Sn");
                 return;
             }
 
             LogMessage(DEBUG_ALL, "Login to server...");
-            protocolSnRegister(sysparam.SN);
+            protocolSnRegister(dynamicParam.SN);
             protocolSend(NORMAL_LINK, PROTOCOL_01, NULL);
             protocolSend(NORMAL_LINK, PROTOCOL_F1, NULL);
             protocolSend(NORMAL_LINK, PROTOCOL_8A, NULL);
@@ -295,7 +295,7 @@ void privateServerConnTask(void)
                     hbtTimeOutId = startTimer(1800, hbtRspTimeOut, 0);
                 }
                 protocolInfoResiter(getBatteryLevel(), sysinfo.outsidevoltage > 5.0 ? sysinfo.outsidevoltage : sysinfo.insidevoltage,
-                                    sysparam.startUpCnt, sysparam.runTime);
+                                    dynamicParam.startUpCnt, dynamicParam.runTime);
                 protocolSend(NORMAL_LINK, PROTOCOL_13, NULL);
             }
             privateServConn.heartbeattick++;
@@ -447,7 +447,7 @@ static void hiddenServerConnTask(void)
     {
         case SERV_LOGIN:
             LogMessage(DEBUG_ALL, "Login to server...");
-            protocolSnRegister(sysparam.SN);
+            protocolSnRegister(dynamicParam.SN);
             protocolSend(HIDDEN_LINK, PROTOCOL_01, NULL);
             hiddenServerChangeFsm(SERV_LOGIN_WAIT);
             hiddenServConn.logintick = 0;
@@ -480,7 +480,7 @@ static void hiddenServerConnTask(void)
                     timeOutId = startTimer(80, moduleRspTimeout, 0);
                 }
                 protocolInfoResiter(getBatteryLevel(), sysinfo.outsidevoltage > 5.0 ? sysinfo.outsidevoltage : sysinfo.insidevoltage,
-                                    sysparam.startUpCnt, sysparam.runTime);
+                                    dynamicParam.startUpCnt, dynamicParam.runTime);
                 protocolSend(HIDDEN_LINK, PROTOCOL_13, NULL);
             }
             hiddenServConn.heartbeattick++;
@@ -614,13 +614,13 @@ void jt808ServerConnTask(void)
     {
         case JT808_REGISTER:
 
-            if (strcmp((char *)sysparam.jt808sn, "888777") == 0)
+            if (strcmp((char *)dynamicParam.jt808sn, "888777") == 0)
             {
                 LogMessage(DEBUG_ALL, "no JT808SN");
                 return;
             }
 
-            if (sysparam.jt808isRegister)
+            if (dynamicParam.jt808isRegister)
             {
                 //已注册过的设备不用重复注册
                 jt808ServerChangeFsm(JT808_AUTHENTICATION);
@@ -640,7 +640,7 @@ void jt808ServerConnTask(void)
                     else
                     {
                         LogMessage(DEBUG_ALL, "Terminal register");
-                        jt808RegisterLoginInfo(sysparam.jt808sn, sysparam.jt808isRegister, sysparam.jt808AuthCode, sysparam.jt808AuthLen);
+                        jt808RegisterLoginInfo(dynamicParam.jt808sn, dynamicParam.jt808isRegister, dynamicParam.jt808AuthCode, dynamicParam.jt808AuthLen);
                         jt808SendToServer(TERMINAL_REGISTER, NULL);
                     }
                 }
@@ -654,8 +654,8 @@ void jt808ServerConnTask(void)
                 if (jt808ServConn.authCnt++ > 3)
                 {
                     jt808ServConn.authCnt = 0;
-                    sysparam.jt808isRegister = 0;
-                    paramSaveAll();
+                    dynamicParam.jt808isRegister = 0;
+                    dynamicParamSaveAll();
                     jt808ServerReconnect();
                     LogMessage(DEBUG_ALL, "Authentication timeout");
                 }
@@ -663,7 +663,7 @@ void jt808ServerConnTask(void)
                 {
                     LogMessage(DEBUG_ALL, "Terminal authentication");
                     jt808ServConn.hbtTick = sysparam.heartbeatgap;
-                    jt808RegisterLoginInfo(sysparam.jt808sn, sysparam.jt808isRegister, sysparam.jt808AuthCode, sysparam.jt808AuthLen);
+                    jt808RegisterLoginInfo(dynamicParam.jt808sn, dynamicParam.jt808isRegister, dynamicParam.jt808AuthCode, dynamicParam.jt808AuthLen);
                     jt808SendToServer(TERMINAL_AUTH, NULL);
                 }
             }

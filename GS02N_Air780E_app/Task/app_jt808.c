@@ -1108,10 +1108,10 @@ static void jt808RegisterResponParser(uint8_t *msg, uint16_t len)
         jt808_info.jt808AuthLen = len - 3;
         jt808_info.jt808isRegister = 1;
         //±£´æ×¢²áÐÅÏ¢
-        sysparam.jt808isRegister = 1;
-        sysparam.jt808AuthLen = jt808_info.jt808AuthLen;
-        memcpy(sysparam.jt808AuthCode, jt808_info.jt808AuthCode, jt808_info.jt808AuthLen);
-        paramSaveAll();
+        dynamicParam.jt808isRegister = 1;
+        dynamicParam.jt808AuthLen = jt808_info.jt808AuthLen;
+        memcpy(dynamicParam.jt808AuthCode, jt808_info.jt808AuthCode, jt808_info.jt808AuthLen);
+        dynamicParamSaveAll();
         LogMessage(DEBUG_ALL, "Register OK");
     }
 }

@@ -14,7 +14,8 @@
 /*
  * DataFlash ·Ö²¼
  * [0~1)        Total:1KB   bootloader
- * [1~10)       Total:9KB   app
+ * [1~9)        Total:8KB   systemparam
+ * [9~10)		Total:1KB	dynamicparam
  * [10~30)      Total:20KB  database
  * [30~31)		Total:1KB	databaseInfo
  * [31~32)      Total:1KB   blestack
