@@ -18,6 +18,7 @@ static moduleState_s  moduleState;
 static moduleCtrl_s moduleCtrl;
 static cmdNode_s *headNode = NULL;
 
+
 static void gpsUploadChangeFsm(uint8_t fsm);
 static void gpsUploadSetSize(uint32_t size);
 
@@ -99,9 +100,9 @@ uint8_t createNode(char *data, uint16_t datalen, uint8_t currentcmd)
     {
 		wakeUpByInt(1, 20);
     }
-    else 
+    else
     {
-    	wakeUpByInt(1, 15);
+		wakeUpByInt(1, 15);
     }
     if (headNode == NULL)
     {
@@ -223,7 +224,7 @@ void outputNode(void)
         free(currentnode->data);
         free(currentnode);
         if (currentnode->currentcmd == QICLOSE_CMD || currentnode->currentcmd == CMGS_CMD || 
-        			currentnode->currentcmd == WIFISCAN_CMD)
+        		currentnode->currentcmd == WIFISCAN_CMD)
         {
             lockFlag = 1;
             if (currentnode->currentcmd == QICLOSE_CMD)
@@ -1301,6 +1302,9 @@ static void qisendParser(uint8_t *buf, uint16_t len)
 }
 
 
+
+
+
 /**************************************************
 @bref		QWIFISCAN	指令解析
 @param
@@ -1321,7 +1325,6 @@ OK
 
 
 **************************************************/
-
 static void wifiscanParser(uint8_t *buf, uint16_t len)
 {
     int index;
@@ -1358,9 +1361,9 @@ static void wifiscanParser(uint8_t *buf, uint16_t len)
 
         index = my_getstrindex((char *)rebuf, "+WIFISCAN:", relen);
     }
-    if (wifiList.apcount != 0)
+	if (wifiList.apcount != 0)
     {
-    	gpsinfo_s *gpsinfo;
+	    gpsinfo_s *gpsinfo;
 		gpsinfo = getCurrentGPSInfo();
 		//当前已经定到位置则不发送lbs
 		if (gpsinfo->fixstatus)
@@ -1378,6 +1381,7 @@ static void wifiscanParser(uint8_t *buf, uint16_t len)
         }
         sysinfo.wifiExtendEvt = 0;
     }
+
 }
 
 static void cgsnParser(uint8_t *buf, uint16_t len)
@@ -1400,14 +1404,14 @@ static void cgsnParser(uint8_t *buf, uint16_t len)
         }
         moduleState.IMEI[index] = 0;
         LogPrintf(DEBUG_ALL, "module IMEI [%s]", moduleState.IMEI);
-        if (tmos_memcmp(moduleState.IMEI, sysparam.SN, 15) == FALSE)
+        if (tmos_memcmp(moduleState.IMEI, dynamicParam.SN, 15) == FALSE)
         {
-            tmos_memset(sysparam.SN, 0, sizeof(sysparam.SN));
-            strncpy(sysparam.SN, moduleState.IMEI, 15);
-            jt808CreateSn(sysparam.jt808sn, sysparam.SN + 3, 12);
-            sysparam.jt808isRegister = 0;
-            sysparam.jt808AuthLen = 0;
-            paramSaveAll();
+            tmos_memset(dynamicParam.SN, 0, sizeof(dynamicParam.SN));
+            strncpy(dynamicParam.SN, moduleState.IMEI, 15);
+            jt808CreateSn(dynamicParam.jt808sn, dynamicParam.SN + 3, 12);
+            dynamicParam.jt808isRegister = 0;
+            dynamicParam.jt808AuthLen = 0;
+            dynamicParamSaveAll();
         }
     }
 
@@ -1984,17 +1988,20 @@ uint8_t ciprxgetParser(uint8_t *buf, uint16_t len)
                     {
                         debugLen = readLen > 256 ? 256 : readLen;
                         byteToHexString(rebuf, restore, debugLen);
-						restore[debugLen * 2] = 0;
-						LogPrintf(DEBUG_ALL, "TCP RECV (%d)[%d]:%s", link, readLen, restore);
-						if (link == 4)
-						{
-							socketRecv(link, rebuf, readLen);
-						}
-						else 
-						{
+//                        if (link == 4)
+//                        {
+//							LogMessageWL(DEBUG_ALL, rebuf, relen);
+//                        }
+                        restore[debugLen * 2] = 0;
+                        LogPrintf(DEBUG_ALL, "TCP RECV (%d)[%d]:%s", link, readLen, restore);
+                        if (link == 4)
+                        {
+                        	socketRecv(link, rebuf, readLen);
+                        }
+                        else 
+                        {
 							socketRecv(link, rebuf, relen);//relen替代readLen
-						}
-
+                        }
                     }
                 }
                 else

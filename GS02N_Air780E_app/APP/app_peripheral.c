@@ -357,7 +357,7 @@ void appPeripheralInit(void)
     u8Value = TRUE;
     GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8), &u8Value);
     //配置广播信息
-    sprintf(broadCastNmae, "%s-%s", "AUTO", sysparam.SN + 9);
+    sprintf(broadCastNmae, "%s-%s", "AUTO", dynamicParam.SN + 9);
     appPeripheralBroadcastInfoCfg(broadCastNmae);
     //配置最短连接间隔
     u16Value = 0x0006;    //6*1.25=7.5ms

@@ -4,6 +4,8 @@
 
 bootParam_s bootparam;
 systemParam_s sysparam;
+dynamicParam_s dynamicParam;
+
 
 void bootParamSaveAll(void)
 {
@@ -26,15 +28,27 @@ void paramGetAll(void)
     EEPROM_READ(APP_USER_PARAM_ADDR, &sysparam, sizeof(systemParam_s));
 }
 
+void dynamicParamSaveAll(void)
+{
+	EEPROM_ERASE(APP_DYNAMIC_PARAM_ADDR, sizeof(dynamicParam_s));
+	EEPROM_WRITE(APP_DYNAMIC_PARAM_ADDR, &dynamicParam, sizeof(dynamicParam_s));
+}
+
+void dynamicParamGetAll(void)
+{
+	EEPROM_READ(APP_DYNAMIC_PARAM_ADDR, &dynamicParam, sizeof(dynamicParam_s));
+}
+
 void paramDefaultInit(uint8_t level)
 {
     LogMessage(DEBUG_ALL, "paramDefaultInit");
     if (level == 0)
     {
         memset(&sysparam, 0, sizeof(systemParam_s));
+        memset(&dynamicParam, 0, sizeof(dynamicParam_s));
         sysparam.VERSION = APP_PARAM_FLAG;
-        strcpy(sysparam.SN, "888888887777777");
-        strncpy(sysparam.jt808sn, "888777", 6);
+        strcpy(dynamicParam.SN, "888888887777777");
+        strncpy(dynamicParam.jt808sn, "888777", 6);
 
         strcpy(sysparam.Server, "jzwz.basegps.com");
         strcpy(sysparam.hiddenServer, "jzwz.basegps.com");
@@ -66,8 +80,8 @@ void paramDefaultInit(uint8_t level)
         sysparam.agpsPort = 10188;
 
     }
-    sysparam.runTime = 0;
-    sysparam.startUpCnt = 0;
+    dynamicParam.runTime = 0;
+    dynamicParam.startUpCnt = 0;
     sysparam.accctlgnss = 1;
     sysparam.accdetmode = 2;
     sysparam.heartbeatgap = 180;
@@ -76,9 +90,9 @@ void paramDefaultInit(uint8_t level)
     sysparam.fence = 30;
     sysparam.accOnVoltage = 13.2;
     sysparam.accOffVoltage = 12.8;
-    sysparam.noNmeaRstCnt = 0;
+    dynamicParam.noNmeaRstCnt = 0;
     sysparam.sosalm = ALARM_TYPE_NONE;
-
+	
     sysparam.bleRfThreshold = 48;
     sysparam.bleOutThreshold = 1500;
     sysparam.bleAutoDisc = 0;
@@ -95,13 +109,14 @@ void paramDefaultInit(uint8_t level)
     sysparam.agpsen = 1;
     sysparam.bleen = 1;
 
-
     paramSaveAll();
+    dynamicParamSaveAll();
 }
 
 void paramInit(void)
 {
     paramGetAll();
+    dynamicParamGetAll();
     if (sysparam.VERSION != APP_PARAM_FLAG)
     {
         paramDefaultInit(0);
