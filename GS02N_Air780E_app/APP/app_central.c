@@ -2,6 +2,7 @@
 #include "app_sys.h"
 #include "app_bleRelay.h"
 #include "app_task.h"
+#include "app_server.h"
 //全局变量
 
 tmosTaskID bleCentralTaskId = INVALID_TASK_ID;
@@ -980,14 +981,13 @@ static uint8_t bleDevSendDataTest(void)
 @note
 **************************************************/
 
-void bleDevTerminate(uint8_t *addr)
+void bleDevTerminate(void)
 {
     uint8_t i;
     bStatus_t status;
     for (i = 0; i < DEVICE_MAX_CONNECT_COUNT; i++)
     {
-        if (devInfoList[i].use && tmos_memcmp(devInfoList[i].addr, addr, 6) == TRUE &&
-                devInfoList[i].connHandle != INVALID_CONNHANDLE)
+        if (devInfoList[i].use && devInfoList[i].connHandle != INVALID_CONNHANDLE)
         {
             status = GAPRole_TerminateLink(devInfoList[i].connHandle);
             LogPrintf(DEBUG_ALL, "Terminate Hanle[%d]", devInfoList[i].connHandle);
@@ -1060,6 +1060,12 @@ static void bleSchduleChangeFsm(bleFsm nfsm)
 static void bleScheduleTask(void)
 {
     static uint8_t ind = 0;
+    if (primaryServerIsReady() == 0)
+    {
+        bleDevTerminate();
+        return;
+    }
+
     switch (bleSchedule.fsm)
     {
         case BLE_SCHEDULE_IDLE:

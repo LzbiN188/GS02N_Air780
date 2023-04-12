@@ -67,7 +67,7 @@ void bleCentralStartDiscover(void);
 void bleCentralStartConnect(uint8_t *addr, uint8_t addrType);
 void bleCentralDisconnect(uint16_t connHandle);
 uint8 bleCentralSend(uint16_t connHandle, uint16 attrHandle, uint8 *data, uint8 len);
-void bleDevTerminate(uint8_t *addr);
+void bleDevTerminate(void);
 deviceConnInfo_s *bleDevGetInfo(uint8_t *addr);
 uint8_t *bleDevGetAddrByHandle(uint16_t connHandle);
 

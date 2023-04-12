@@ -1131,12 +1131,12 @@ static void doSetBleMacInstruction(ITEM *item, char *message)
             }
             //aa bb cc dd ee ff
             //ff ee dd cc bb aa
-            if (ind < 2)
-            {
-                changeHexStringToByteArray(sysparam.bleConnMac[ind], item->item_data[i], 6);
-                bleRelayInsert(sysparam.bleConnMac[ind], 0);
-                ind++;
-            }
+//            if (ind < 2)
+//            {
+//                changeHexStringToByteArray(sysparam.bleConnMac[ind], item->item_data[i], 6);
+//                bleRelayInsert(sysparam.bleConnMac[ind], 0);
+//                ind++;
+//            }
             l = 5;
             for (j = 0; j < 3; j++)
             {
@@ -1145,7 +1145,12 @@ static void doSetBleMacInstruction(ITEM *item, char *message)
                 tmos_memcpy(&item->item_data[i][l * 2], mac, 2);
                 l--;
             }
-
+            if (ind < 2)
+            {
+                changeHexStringToByteArray(sysparam.bleConnMac[ind], item->item_data[i], 6);
+                bleRelayInsert(sysparam.bleConnMac[ind], 0);
+                ind++;
+            }
 
             l = 0;
             for (j = 0; j < 12; j += 2)
