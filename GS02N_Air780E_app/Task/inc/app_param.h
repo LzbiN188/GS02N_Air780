@@ -22,7 +22,7 @@
 #define APP_PARAM_FLAG          0x1A
 #define BOOT_PARAM_FLAG         0xB0
 
-#define EEPROM_VERSION									"GS02N_Air780_V1.2.3LP"
+#define EEPROM_VERSION									"GS02N_Air780_V1.2.4LP"
 
 
 #define JT808_PROTOCOL_TYPE			8
@@ -115,6 +115,7 @@ typedef struct
 
     uint8_t bleen;
     uint8_t agpsen;
+    uint8_t cm2;
 } systemParam_s;
 
 /*存在EEPROM里的动态参数*/

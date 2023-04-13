@@ -815,7 +815,7 @@ static void motionStateUpdate(motion_src_e src, motionState_e newState)
             strcpy(type, "gsensor");
             break;
         case SYS_SRC:
-        	strcpy(type, "SYS");
+        	strcpy(type, "sys");
         	break;
         default:
             return;

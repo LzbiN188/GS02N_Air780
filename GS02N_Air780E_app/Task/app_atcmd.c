@@ -38,9 +38,12 @@ const CMDTABLE atcmdtable[] =
     {AT_FMPC_CSQ_CMD, "FMPC_CSQ"},
     {AT_FMPC_IMSI_CMD, "FMPC_IMSI"},
     {AT_FMPC_CHKP_CMD, "FMPC_CHKP"},
-    {AT_FMPC_CM_CMD, "FMPC_CM"},
-    {AT_FMPC_CMGET_CMD, "FMPC_CMGET"},
+    {AT_FMPC_CM1_CMD, "FMPC_CM1"},
+    {AT_FMPC_CM1GET_CMD, "FMPC_CM1GET"},
+	{AT_FMPC_CM2_CMD, "FMPC_CM2"},
+    {AT_FMPC_CM2GET_CMD, "FMPC_CM2GET"},
     {AT_FMPC_EXTVOL_CMD, "FMPC_EXTVOL"},
+
 };
 /**************************************************
 @bref		查找指令
@@ -202,23 +205,22 @@ static void atCmdFmpcAdccalParser(void)
 
 static void atCmdNmeaParser(uint8_t *buf, uint16_t len)
 {
-	 char buff[80];
+    char buff[80];
     if (my_strstr((char *)buf, "ON", len))
     {
+        strcpy(buff, "$PCAS03,0,0,0,1,1,0,0,0,0,0,0,0,0,0*02\r\n");
+        portUartSend(&usart3_ctl, buff, strlen(buff));
+        LogMessage(DEBUG_FACTORY, "NMEA ON OK");
         sysinfo.nmeaOutPutCtl = 1;
-        //开启AGPS有效性检测
-   		sprintf(buff, "$PCAS03,,,,,,,,,,,1*1F\r\n");
-    	portUartSend(&usart3_ctl, (uint8_t *)buff, strlen(buff));
-        LogMessage(DEBUG_FACTORY, "NMEA OPEN");
+        gpsRequestSet(GPS_REQUEST_DEBUG);
     }
     else
     {
-//    	//关闭AGPS有效性检测
-   		sprintf(buff, "$PCAS03,,,,,,,,,,,0*1E\r\n");
-    	portUartSend(&usart3_ctl, (uint8_t *)buff, strlen(buff));
+        LogMessage(DEBUG_FACTORY, "NMEA OFF OK");
+        gpsRequestClear(GPS_REQUEST_ALL);
         sysinfo.nmeaOutPutCtl = 0;
-        LogMessage(DEBUG_FACTORY, "NMEA CLOSE");
     }
+
 
 }
 
@@ -302,17 +304,19 @@ static void atCmdFmpcNmeaParser(uint8_t *buf, uint16_t len)
     char buff[80];
     if (my_strstr((char *)buf, "ON", len))
     {
-        strcpy(buff, "$PCAS03,0,0,0,1,1,0,0,0,0,0,0,0,0,0*02\r\n");
-        portUartSend(&usart3_ctl, buff, strlen(buff));
-        LogMessage(DEBUG_FACTORY, "NMEA ON OK");
         sysinfo.nmeaOutPutCtl = 1;
-        gpsRequestSet(GPS_REQUEST_DEBUG);
+        //开启AGPS有效性检测
+   		sprintf(buff, "$PCAS03,,,,,,,,,,,1*1F\r\n");
+    	portUartSend(&usart3_ctl, (uint8_t *)buff, strlen(buff));
+        LogMessage(DEBUG_FACTORY, "NMEA OPEN");
     }
     else
     {
-        LogMessage(DEBUG_FACTORY, "NMEA OFF OK");
-        gpsRequestClear(0xFFFF);
+//    	//关闭AGPS有效性检测
+   		sprintf(buff, "$PCAS03,,,,,,,,,,,0*1E\r\n");
+    	portUartSend(&usart3_ctl, (uint8_t *)buff, strlen(buff));
         sysinfo.nmeaOutPutCtl = 0;
+        LogMessage(DEBUG_FACTORY, "NMEA CLOSE");
     }
 }
 /**************************************************
@@ -412,7 +416,7 @@ static void atCmdFmpcChkpParser(void)
 }
 
 /**************************************************
-@bref		FMPC_CM 指令
+@bref		FMPC_CM1 指令
 @param
 	buf
 	len
@@ -420,31 +424,66 @@ static void atCmdFmpcChkpParser(void)
 @note
 **************************************************/
 
-static void atCmdFmpcCmParser(void)
+static void atCmdFmpcCm1Parser(void)
 {
     sysparam.cm = 1;
     paramSaveAll();
-    LogMessage(DEBUG_FACTORY, "CM OK");
+    LogMessage(DEBUG_FACTORY, "CM1 OK");
 
 }
 /**************************************************
-@bref		FMPC_CMGET 指令
+@bref		FMPC_CM1GET 指令
 @param
 @return
 @note
 **************************************************/
 
-static void atCmdCmGetParser(void)
+static void atCmdCm1GetParser(void)
 {
     if (sysparam.cm == 1)
     {
-        LogMessage(DEBUG_FACTORY, "CM OK");
+        LogMessage(DEBUG_FACTORY, "CM1 OK");
     }
     else
     {
-        LogMessage(DEBUG_FACTORY, "CM FAIL");
+        LogMessage(DEBUG_FACTORY, "CM1 FAIL");
     }
 }
+
+/**************************************************
+@bref		FMPC_CM2 指令
+@param
+	buf
+	len
+@return
+@note
+**************************************************/
+static void atCmdFmpcCm2Parser(void)
+{
+	sysparam.cm2 = 1;
+	paramSaveAll();
+	LogMessage(DEBUG_FACTORY, "CM2 OK");
+}
+
+/**************************************************
+@bref		FMPC_CM2GET 指令
+@param
+@return
+@note
+**************************************************/
+static void atCmdCm2GetParser(void)
+{
+	if (sysparam.cm2)
+	{
+		LogMessage(DEBUG_FACTORY, "CM2 OK");
+	}
+	else
+	{
+		LogMessage(DEBUG_FACTORY, "CM2 FAIL");
+	}
+}
+
+
 /**************************************************
 @bref		FMPC_EXTVOL 指令
 @param
@@ -456,6 +495,7 @@ static void atCmdFmpcExtvolParser(void)
 {
     LogPrintf(DEBUG_FACTORY, "+FMPC_EXTVOL: %.2f", sysinfo.outsidevoltage);
 }
+
 
 /**************************************************
 @bref		AT 指令解析
@@ -530,11 +570,17 @@ void atCmdParserFunction(uint8_t *buf, uint16_t len)
                     case AT_FMPC_CHKP_CMD:
                         atCmdFmpcChkpParser();
                         break;
-                    case AT_FMPC_CM_CMD:
-                        atCmdFmpcCmParser();
+                    case AT_FMPC_CM1_CMD:
+                        atCmdFmpcCm1Parser();
                         break;
-                    case AT_FMPC_CMGET_CMD:
-                        atCmdCmGetParser();
+                    case AT_FMPC_CM1GET_CMD:
+                        atCmdCm1GetParser();
+                        break;
+                   	case AT_FMPC_CM2_CMD:
+                        atCmdFmpcCm2Parser();
+                        break;
+                    case AT_FMPC_CM2GET_CMD:
+                        atCmdCm2GetParser();
                         break;
                     case AT_FMPC_EXTVOL_CMD:
                         atCmdFmpcExtvolParser();
