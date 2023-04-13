@@ -65,6 +65,10 @@ static insMode_e mode123;
 static insParam_s param123;
 static uint8_t serverType;
 
+/*关于指令延迟回复*/
+static insMode_e lastmode;
+static insParam_s lastparam;
+
 
 static void sendMsgWithMode(uint8_t *buf, uint16_t len, insMode_e mode, void *param)
 {
@@ -97,6 +101,12 @@ static void sendMsgWithMode(uint8_t *buf, uint16_t len, insMode_e mode, void *pa
             appSendNotifyData(buf, len);
             break;
     }
+}
+
+void instructionRespone(char *message)
+{
+	setLastInsid();
+	sendMsgWithMode((uint8_t *)message, strlen(message), lastmode, &lastparam);
 }
 
 static void doParamInstruction(ITEM *item, char *message)
@@ -951,28 +961,31 @@ static void doBleServerInstruction(ITEM *item, char *message)
     }
 }
 
-
-static void doRelayInstrucion(ITEM *item, char *message)
+static void doRelayInstrucion(ITEM *item, char *message, insMode_e mode, void *param)
 {
     if (item->item_data[1][0] == '1')
     {
         sysparam.relayCtl = 1;
         paramSaveAll();
         relayAutoRequest();
-        strcpy(message, "Relay on success");
+        lastmode = mode;
+        //strcpy(message, "Relay on success");
     }
     else if (item->item_data[1][0] == '0')
     {
         sysparam.relayCtl = 0;
+        lastmode = mode;
         paramSaveAll();
         bleRelaySetAllReq(BLE_EVENT_SET_DEVOFF | BLE_EVENT_CLR_CNT);
         bleRelayClearAllReq(BLE_EVENT_SET_DEVON);
-        strcpy(message, "Relay off success");
+        //strcpy(message, "Relay off success");
     }
     else
     {
-        sprintf(message, "Relay status %s", sysparam.relayCtl == 1 ? "relay on" : "relay off");
+        sprintf(message, "Relay status %s", sysparam.relayCtl == 1 ? "on" : "off");
+        sendMsgWithMode((uint8_t *)message, strlen(message), mode, param);
     }
+    
 }
 
 static void doReadParamInstruction(ITEM *item, char *message)
@@ -1581,6 +1594,7 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
 {
     char message[512];
     message[0] = 0;
+    insParam_s *debugparam;
     switch (cmdid)
     {
         case PARAM_INS:
@@ -1659,35 +1673,40 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
             doBleServerInstruction(item, message);
             break;
         case RELAY_INS:
-           doRelayInstrucion(item, message);
-           break;
+        	if (param != NULL)
+        	{
+	           	debugparam = (insParam_s *)param;
+	           	lastparam.link = debugparam->link;
+           	}
+           	doRelayInstrucion(item, message, mode, param);
+           	break;
         case READPARAM_INS:
-           doReadParamInstruction(item, message);
-           break;
+           	doReadParamInstruction(item, message);
+           	break;
         case SETBLEPARAM_INS:
-           doSetBleParamInstruction(item, message);
-           break;
+           	doSetBleParamInstruction(item, message);
+           	break;
         case SETBLEWARNPARAM_INS:
-           doSetBleWarnParamInstruction(item, message);
-           break;
+           	doSetBleWarnParamInstruction(item, message);
+           	break;
         case SETBLEMAC_INS:
-           doSetBleMacInstruction(item, message);
-           break;
+           	doSetBleMacInstruction(item, message);
+           	break;
         case RELAYSPEED_INS:
-           doRelaySpeedInstruction(item, message);
-           break;
+           	doRelaySpeedInstruction(item, message);
+           	break;
         case RELAYFORCE_INS:
-           doRelayForceInstrucion(item, message);
-           break;
+           	doRelayForceInstrucion(item, message);
+           	break;
         case BF_INS:
-           doBFInstruction(item, message);
-           break;
+           	doBFInstruction(item, message);
+           	break;
         case CF_INS:
-           doCFInstruction(item, message);
-           break;
+           	doCFInstruction(item, message);
+           	break;
         case PROTECTVOL_INS:
-           doProtectVolInstrucion(item, message);
-           break;
+           	doProtectVolInstrucion(item, message);
+           	break;
         case TIMER_INS:
             doTimerInstrucion(item, message);
             break;
@@ -1727,8 +1746,10 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
             snprintf(message, 50, "Unsupport CMD:%s;", item->item_data[0]);
             break;
     }
-
-    sendMsgWithMode((uint8_t *)message, strlen(message), mode, param);
+	if (cmdid != RELAY_INS)
+	{
+    	sendMsgWithMode((uint8_t *)message, strlen(message), mode, param);
+    }
 }
 
 static int16_t getInstructionid(uint8_t *cmdstr)

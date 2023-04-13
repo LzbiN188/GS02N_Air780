@@ -80,6 +80,11 @@ void reCover123InstructionId(void);
 void getInsid(void);
 void setInsId(void);
 
+void getLastInsid(void);
+void setLastInsid(void);
+
+
+
 void gpsRestoreUpload(void);
 
 

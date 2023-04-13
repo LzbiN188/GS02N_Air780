@@ -75,6 +75,7 @@ typedef struct{
 	uint8_t link;
 }insParam_s;
 
+void instructionRespone(char *message);
 void instructionParser(uint8_t *str, uint16_t len, insMode_e mode, void * param);
 void dorequestSend123(void);
 

@@ -315,6 +315,10 @@ static tmosEvents bleCentralTaskEventProcess(tmosTaskID taskID, tmosEvents event
         }
         else
         {
+            if (sysinfo.logLevel == 4)
+            {
+                LogMessage(DEBUG_FACTORY, "+FMPC:BLE CONNECT SUCCESS");
+            }
             LogMessage(DEBUG_ALL, "Notify done!");
             bleSchduleChangeFsm(BLE_SCHEDULE_DONE);
         }
@@ -1088,6 +1092,10 @@ static void bleScheduleTask(void)
                 LogPrintf(DEBUG_ALL, "bleSchedule==>timeout!!!");
                 bleCentralDisconnect(devInfoList[ind].connHandle);
                 bleSchduleChangeFsm(BLE_SCHEDULE_DONE);
+                if (sysinfo.logLevel == 4)
+                {
+                    LogMessage(DEBUG_FACTORY, "+FMPC:BLE CONNECT FAIL");
+                }
             }
             else
             {

@@ -17,6 +17,8 @@
 
 static uint8_t instructionid[4];
 static uint8_t bleinstructionid[4];
+static uint8_t lastinstructionid[4];
+
 
 static uint8_t instructionid123[4];
 static uint16_t instructionserier = 0;
@@ -1102,6 +1104,7 @@ static void protoclparase80(uint8_t link, char *protocol, int size)
 
     if (link == NORMAL_LINK || link == HIDDEN_LINK)
     {
+    	getLastInsid();
         instructionParser(instruction, instructionlen, NET_MODE, &insparam);
     }
     else if (link == BLE_LINK)
@@ -1213,7 +1216,7 @@ void getInsid(void)
 }
 
 /**************************************************
-@bref		重置指令ID
+@bref		设置指令ID
 @param
 @return
 @note
@@ -1226,6 +1229,37 @@ void setInsId(void)
     instructionid[2] = bleinstructionid[2];
     instructionid[3] = bleinstructionid[3];
 }
+
+/**************************************************
+@bref		保存上次指令ID
+@param
+@return
+@note
+**************************************************/
+
+void getLastInsid(void)
+{
+	lastinstructionid[0] = instructionid[0];
+	lastinstructionid[1] = instructionid[1];
+	lastinstructionid[2] = instructionid[2];
+	lastinstructionid[3] = instructionid[3];
+}
+
+/**************************************************
+@bref		设置上次指令ID
+@param
+@return
+@note
+**************************************************/
+
+void setLastInsid(void)
+{
+	instructionid[0] = lastinstructionid[0];
+	instructionid[1] = lastinstructionid[1];
+	instructionid[2] = lastinstructionid[2];
+	instructionid[3] = lastinstructionid[3];
+}
+
 /**************************************************
 @bref		注册sn号，用于登录
 @param

@@ -11,6 +11,7 @@
 #include "aes.h"
 #include "app_port.h"
 #include "app_encrypt.h"
+#include "app_instructioncmd.h"
 
 static bleRelayDev_s bleRelayList[BLE_CONNECT_LIST_SIZE];
 
@@ -554,10 +555,12 @@ void bleRelayRecvParser(uint8_t connHandle, uint8_t *data, uint8_t len)
                 {
                     LogMessage(DEBUG_ALL, "BLE==>relayon success");
                     alarmRequestSet(ALARM_OIL_CUTDOWN_REQUEST);
+                    instructionRespone("relayon success");
                 }
                 else
                 {
                     LogMessage(DEBUG_ALL, "BLE==>relayon fail");
+                    instructionRespone("relayon fail");
                 }
                 bleRelayClearReq(ind, BLE_EVENT_SET_DEVON);
                 break;
@@ -566,10 +569,12 @@ void bleRelayRecvParser(uint8_t connHandle, uint8_t *data, uint8_t len)
                 {
                     LogMessage(DEBUG_ALL, "BLE==>relayoff success");
                     alarmRequestSet(ALARM_OIL_RESTORE_REQUEST);
+                    instructionRespone("relayoff success");
                 }
                 else
                 {
                     LogMessage(DEBUG_ALL, "BLE==>relayoff fail");
+                    instructionRespone("relayoff fail");
                 }
                 bleRelayClearReq(ind, BLE_EVENT_SET_DEVOFF);
                 break;
