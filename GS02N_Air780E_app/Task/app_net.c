@@ -718,7 +718,7 @@ void netConnectTask(void)
             }
         case CONFIG_STATUS:
             sendModuleCmd(CPMS_CMD, "\"ME\",\"ME\",\"ME\"");    /*修改短信存储位置*/
-            sendModuleCmd(CNMI_CMD, "2,1");                     /*第二个参数表示缓存在ME中, 不立即上报*/
+            sendModuleCmd(CNMI_CMD, "2,2");                     /*第二个参数表示缓存在ME中, 不立即上报*/
             sendModuleCmd(CMGF_CMD, "1");                       /*TEXT模式*/
             sendModuleCmd(CFGRI_CMD, "1,50,50,3");
             sendModuleCmd(CIPMUX_CMD, "1");
@@ -2241,6 +2241,7 @@ void moduleRecvParser(uint8_t *buf, uint16_t bufsize)
     moduleRstDetector(dataRestore, len);
     moduleRspSuccess();
     cmtiParser(dataRestore, len);
+    cmtParser(dataRestore, len);
     cmgrParser(dataRestore, len);
     nmeaParser(dataRestore, len);
     cipstartRspParser(dataRestore, len);
