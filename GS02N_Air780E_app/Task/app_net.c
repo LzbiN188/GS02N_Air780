@@ -237,7 +237,7 @@ void outputNode(void)
             }
             else
             {
-                tickRange = 25;
+                tickRange = 10;
             }
             LogMessage(DEBUG_ALL, "outputNode==>Lock");
         }
@@ -717,6 +717,9 @@ void netConnectTask(void)
                 break;
             }
         case CONFIG_STATUS:
+        	sendModuleCmd(CPMS_CMD, "\"ME\",\"ME\",\"ME\"");	/*修改短信存储位置*/
+        	sendModuleCmd(CNMI_CMD, "2,1");						/*第二个参数表示缓存在ME中, 不立即上报*/
+        	sendModuleCmd(CMGF_CMD, "1");						/*TEXT模式*/
             sendModuleCmd(CFGRI_CMD, "1,50,50,3");
             sendModuleCmd(CIPMUX_CMD, "1");
             sendModuleCmd(CIPQSEND_CMD, "1");
@@ -1207,9 +1210,9 @@ static void cmgrParser(uint8_t *buf, uint16_t len)
         if (index < 0)
             return;
         //偏移到内容处
-        rebuf = rebuf + index + 1;
+        rebuf = rebuf + index + 2;
         //得到从内容处开始的第一个\n，测试index就是内容长度
-        index = getCharIndex(rebuf, len, '\n');
+        index = getCharIndex(rebuf, len, '"');
         if (index > 100 || index < 0)
             return ;
         for (i = 0; i < index; i++)
@@ -1219,6 +1222,7 @@ static void cmgrParser(uint8_t *buf, uint16_t len)
         restore[index] = 0;
         LogPrintf(DEBUG_ALL, "Message:%s", restore);
         insparam.telNum = moduleState.messagePhone;
+        lastparam.telNum = moduleState.messagePhone;
         instructionParser((uint8_t *)restore, index, SMS_MODE, &insparam);
     }
 }
@@ -2440,6 +2444,7 @@ void sendMessage(uint8_t *buf, uint16_t len, char *telnum)
     sprintf(param, "\"%s\"", telnum);
     sendModuleCmd(CMGF_CMD, "1");
     sendModuleCmd(CMGS_CMD, param);
+    LogPrintf(DEBUG_ALL, "len:%d", len);
     buf[len] = 0x1A;
     createNode((char *)buf, len + 1, CMGS_CMD);
 }

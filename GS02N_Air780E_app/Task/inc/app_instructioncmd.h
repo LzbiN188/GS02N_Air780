@@ -57,6 +57,8 @@ typedef enum{
     QFOTA_INS,
     BLEEN_INS,
     AGPSEN_INS,
+    BLERELAYCTL_INS,
+    RELAYFUN_INS,
 
 }INSTRUCTIONID;
 
@@ -75,6 +77,7 @@ typedef struct{
 	uint8_t link;
 }insParam_s;
 
+extern insParam_s lastparam;
 void instructionRespone(char *message);
 void instructionParser(uint8_t *str, uint16_t len, insMode_e mode, void * param);
 void dorequestSend123(void);

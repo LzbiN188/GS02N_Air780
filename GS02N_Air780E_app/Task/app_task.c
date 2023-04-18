@@ -1168,6 +1168,9 @@ static void voltageCheckTask(void)
     static uint8_t  lowwflag = 0;
     static uint32_t  LostVoltageTick = 0;
     static uint8_t  LostVoltageFlag = 0;
+	static uint8_t lostTick = 0;
+    static uint8_t bleCutFlag = 0;
+    static uint8_t bleCutTick = 0;
     float x;
     x = portGetAdcVol(CH_EXTIN_13);
     sysinfo.outsidevoltage = x * sysparam.adccal;
@@ -1206,7 +1209,8 @@ static void voltageCheckTask(void)
 
     if (sysinfo.outsidevoltage < 5.0)
     {
-        if (LostVoltageFlag == 0)
+    	lostTick++;
+        if (LostVoltageFlag == 0 && lostTick >= 20)
         {
             LostVoltageFlag = 1;
             LostVoltageTick = sysinfo.sysTick;
@@ -1217,10 +1221,44 @@ static void voltageCheckTask(void)
             lbsRequestSet(DEV_EXTEND_OF_MY);
             wifiRequestSet(DEV_EXTEND_OF_MY);
             gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
+            if (sysparam.bleRelay != 0 && bleCutFlag != 0)
+            {
+				LogMessage(DEBUG_ALL, "ble relay on immediately");
+				sysparam.relayCtl = 1;
+				paramSaveAll();
+				if (sysparam.relayFun)
+				{
+					relayAutoClear();
+					bleRelayClearAllReq(BLE_EVENT_SET_DEVOFF);
+                    bleRelaySetAllReq(BLE_EVENT_SET_DEVON);
+				}
+				else
+				{
+					relayAutoRequest();
+				}
+            }
+            else
+            {
+				LogMessage(DEBUG_ALL, "relay on was disable");
+            }
         }
     }
     else if (sysinfo.outsidevoltage > 6.0)
     {
+    	//电压小于设置的保护电压范围时，则运行蓝牙去执行断电报警
+		if (sysinfo.outsidevoltage > sysparam.bleVoltage)
+		{
+			if (bleCutTick++ >= 30)
+			{
+				bleCutFlag = 1;
+			}
+		}
+		else
+		{
+			bleCutFlag = 0;
+			bleCutTick = 0;
+		}
+    	lostTick = 0;
         terminalCharge();
         if (LostVoltageFlag == 1)
         {

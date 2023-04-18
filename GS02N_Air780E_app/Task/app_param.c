@@ -108,6 +108,8 @@ void paramDefaultInit(uint8_t level)
     sysparam.hiddenServOnoff = 1;
     sysparam.agpsen = 1;
     sysparam.bleen = 1;
+    sysparam.bleRelay = 1;
+    sysparam.bleVoltage = 11.5;
 
     paramSaveAll();
     dynamicParamSaveAll();

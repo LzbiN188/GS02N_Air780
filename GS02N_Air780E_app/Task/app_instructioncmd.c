@@ -58,6 +58,8 @@ const instruction_s insCmdTable[] =
     {QFOTA_INS, "QFOTA"},
     {BLEEN_INS, "BLEEN"},
     {AGPSEN_INS, "AGPSEN"},
+    {BLERELAYCTL_INS, "BLERELAYCTL"},
+    {RELAYFUN_INS, "RELAYFUN"},
     {SN_INS, "*"},
 };
 
@@ -67,7 +69,7 @@ static uint8_t serverType;
 
 /*关于指令延迟回复*/
 static insMode_e lastmode;
-static insParam_s lastparam;
+insParam_s lastparam;
 
 
 static void sendMsgWithMode(uint8_t *buf, uint16_t len, insMode_e mode, void *param)
@@ -105,8 +107,10 @@ static void sendMsgWithMode(uint8_t *buf, uint16_t len, insMode_e mode, void *pa
 
 void instructionRespone(char *message)
 {
+	char buf[50];
+	sprintf(buf, "%s", message);
 	setLastInsid();
-	sendMsgWithMode((uint8_t *)message, strlen(message), lastmode, &lastparam);
+	sendMsgWithMode((uint8_t *)buf, strlen(buf), lastmode, &lastparam);
 }
 
 static void doParamInstruction(ITEM *item, char *message)
@@ -1588,6 +1592,33 @@ static void doAgpsenInstrution(ITEM *item, char *message)
 	}
 }
 
+static void doBleRelayCtlInstruction(ITEM *item, char *message)
+{
+	if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+    {
+        sprintf(message, "BleRelayCtrl param is %d,%.2f", sysparam.bleRelay, sysparam.bleVoltage);
+        return ;
+    }
+    sysparam.bleRelay = atoi(item->item_data[1]);
+    sysparam.bleVoltage = atof(item->item_data[2]);
+    paramSaveAll();
+    sprintf(message, "set success ,%d,%.2f", sysparam.bleRelay, sysparam.bleVoltage);
+	
+}
+
+static void doRelayFunInstruction(ITEM *item, char *message)
+{
+    if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+    {
+        sprintf(message, "Current relayfun %d", sysparam.relayFun);
+    }
+    else
+    {
+        sysparam.relayFun = atoi(item->item_data[1]);
+        paramSaveAll();
+        sprintf(message, "Update relayfun %d", sysparam.relayFun);
+    }
+}
 
 /*--------------------------------------------------------------------------------------*/
 static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param)
@@ -1736,6 +1767,12 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
         	break;
        	case AGPSEN_INS:
        		doAgpsenInstrution(item, message);
+       		break;
+       	case BLERELAYCTL_INS:
+       		doBleRelayCtlInstruction(item, message);
+       		break;
+       	case RELAYFUN_INS:
+       		doRelayFunInstruction(item, message);
        		break;
         default:
             if (mode == SMS_MODE)

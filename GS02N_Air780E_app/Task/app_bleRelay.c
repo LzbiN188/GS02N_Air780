@@ -621,6 +621,9 @@ void bleRelayRecvParser(uint8_t connHandle, uint8_t *data, uint8_t len)
                 LogPrintf(DEBUG_ALL, "BLE==>relay state %d", data[readInd + 4]);
                 break;
             case CMD_ALARM:
+            	sysparam.relayCtl = 1;
+            	paramSaveAll();
+            	relayAutoRequest();
                 LogMessage(DEBUG_ALL, "BLE==>shield alarm occur");
                 LogMessage(DEBUG_ALL, "oh, À¶ÑÀÆÁ±Î±¨¾¯...");
                 alarmRequestSet(ALARM_SHIELD_REQUEST);
