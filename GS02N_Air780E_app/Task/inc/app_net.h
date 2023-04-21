@@ -89,6 +89,7 @@ typedef enum
     WIFISCAN_CMD,
     CFG_CMD,
     CIICR_CMD,
+    CMGL_CMD,
 } atCmdType_e;
 
 

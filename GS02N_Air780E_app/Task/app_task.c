@@ -2049,7 +2049,7 @@ void doDebugRecvPoll(uint8_t *msg, uint16_t len)
 void myTaskPreInit(void)
 {
     tmos_memset(&sysinfo, 0, sizeof(sysinfo));
-	//sysinfo.logLevel = DEBUG_ALL;
+    sysinfo.logLevel = DEBUG_ALL;
 
     SetSysClock(CLK_SOURCE_PLL_60MHz);
     portGpioSetDefCfg();
@@ -2066,6 +2066,7 @@ void myTaskPreInit(void)
     createSystemTask(ledTask, 1);
     createSystemTask(outputNode, 2);
     sysinfo.sysTaskId = createSystemTask(taskRunInSecond, 10);
+
 }
 
 /**************************************************

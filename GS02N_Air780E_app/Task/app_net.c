@@ -81,6 +81,7 @@ const atCmd_s cmdtable[] =
     {WIFISCAN_CMD, "AT+WIFISCAN"},
     {CFG_CMD, "AT+CFG"},
 	{CIICR_CMD, "AT+CMD"},
+	{CMGL_CMD, "AT+CMGL"},
 };
 
 /**************************************************
@@ -725,6 +726,7 @@ void netConnectTask(void)
             sendModuleCmd(CIPQSEND_CMD, "1");
             sendModuleCmd(CIPRXGET_CMD, "5");
             sendModuleCmd(CFG_CMD, "\"urcdelay\",100");
+            //sendModuleCmd(CMGL_CMD, "\"ALL\"");
             changeProcess(QIACT_STATUS);
             break;
         case QIACT_STATUS:
@@ -1160,6 +1162,7 @@ static void cmtiParser(uint8_t *buf, uint16_t len)
         }
         restore[index] = 0;
         LogPrintf(DEBUG_ALL, "Message index=%d", atoi(restore));
+        sendModuleCmd(CMGF_CMD, "1");
         sendModuleCmd(CMGR_CMD, restore);
     }
 }
@@ -2242,6 +2245,7 @@ void moduleRecvParser(uint8_t *buf, uint16_t bufsize)
     moduleRstDetector(dataRestore, len);
     moduleRspSuccess();
     cmtiParser(dataRestore, len);
+    cmtParser(dataRestore, len);
     cmgrParser(dataRestore, len);
     nmeaParser(dataRestore, len);
     cipstartRspParser(dataRestore, len);
@@ -2458,7 +2462,7 @@ void sendMessage(uint8_t *buf, uint16_t len, char *telnum)
 
 void deleteMessage(void)
 {
-    sendModuleCmd(CMGD_CMD, "0,4");
+    sendModuleCmd(CMGD_CMD, "0,2");
 }
 
 /**************************************************
