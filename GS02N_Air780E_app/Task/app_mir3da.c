@@ -130,7 +130,7 @@ s8_m mir3da_close_interrupt(void)
 	return res;
 }
 
-s8_m read_gsensor_id(void)
+u8_m read_gsensor_id(void)
 {
 	s8_m res = 0;
 	u8_m data_m = 0;
@@ -150,7 +150,7 @@ s8_m read_gsensor_id(void)
 		}
 	}
 	LogPrintf(DEBUG_FACTORY,"GSENSOR Chk. ID=0x%X\r\nGSENSOR CHK OK",data_m);
-	return res;
+	return data_m;
 }
 
 s8_m readInterruptConfig(void)

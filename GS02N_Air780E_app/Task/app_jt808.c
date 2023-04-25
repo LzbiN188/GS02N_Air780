@@ -1143,11 +1143,10 @@ static void jt808TerminalCtrlParser(uint8_t *msg, uint16_t len)
 
 static void jt808ReceiveF8(uint8_t *msg, uint16_t len)
 {
-    //    instructionParam_s insParam;
-    //    memset(&insParam, 0, sizeof(instructionParam_s));
-    //    insParam.mode = JT808_MODE;
-    //    insParam.link = JT808_LINK;
-    //    instructionParser(msg, len, &insParam);
+    insParam_s insParam;
+    memset(&insParam, 0, sizeof(insParam_s));
+    insParam.link = JT808_LINK;
+    instructionParser(msg, len, JT808_MODE, &insParam);
 }
 
 /**************************************************

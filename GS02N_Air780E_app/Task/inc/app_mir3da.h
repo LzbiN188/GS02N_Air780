@@ -93,7 +93,7 @@ s8_m mir3da_read_data(s16_m *x, s16_m *y, s16_m *z);
 s8_m mir3da_open_interrupt(u8_m th);
 s8_m mir3da_close_interrupt(void);
 s8_m mir3da_set_enable(u8_m enable);
-s8_m read_gsensor_id(void);
+u8_m read_gsensor_id(void);
 s8_m readInterruptConfig(void);
 
 void startStep(void);

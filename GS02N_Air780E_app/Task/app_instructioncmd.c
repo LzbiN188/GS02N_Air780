@@ -12,6 +12,7 @@
 #include "app_task.h"
 #include "app_server.h"
 #include "app_jt808.h"
+#include "app_mir3da.h"
 const instruction_s insCmdTable[] =
 {
     {PARAM_INS, "PARAM"},
@@ -70,6 +71,7 @@ static uint8_t serverType;
 /*关于指令延迟回复*/
 static insMode_e lastmode;
 insParam_s lastparam;
+static int rspTimeOut = -1;
 
 
 static void sendMsgWithMode(uint8_t *buf, uint16_t len, insMode_e mode, void *param)
@@ -102,6 +104,9 @@ static void sendMsgWithMode(uint8_t *buf, uint16_t len, insMode_e mode, void *pa
         case BLE_MODE:
             appSendNotifyData(buf, len);
             break;
+        case JT808_MODE:
+            jt808MessageSend(buf, len);
+            break;
     }
 }
 
@@ -111,6 +116,20 @@ void instructionRespone(char *message)
 	sprintf(buf, "%s", message);
 	setLastInsid();
 	sendMsgWithMode((uint8_t *)buf, strlen(buf), lastmode, &lastparam);
+	if (rspTimeOut != -1)
+	{
+		stopTimer(rspTimeOut);
+	}
+	rspTimeOut = -1;
+}
+
+static void relayOnRspTimeOut(void)
+{
+	if (rspTimeOut != -1)
+	{
+		instructionRespone("Relay on fail:Time out");
+	}
+	rspTimeOut = -1;
 }
 
 static void doParamInstruction(ITEM *item, char *message)
@@ -215,6 +234,7 @@ static void doStatusInstruction(ITEM *item, char *message)
     sprintf(message + strlen(message), "SIGNAL=%d;", getModuleRssi());
     sprintf(message + strlen(message), "BATTERY=%s;", getTerminalChargeState() > 0 ? "Charging" : "Uncharged");
     sprintf(message + strlen(message), "LOGIN=%s;", primaryServerIsReady() > 0 ? "Yes" : "No");
+    sprintf(message + strlen(message), "Gsensor=%s", read_gsensor_id() == 0x13 ? "OK" : "ERR");
 }
 
 static void doSNInstruction(ITEM *item, char *message)
@@ -973,6 +993,11 @@ static void doRelayInstrucion(ITEM *item, char *message, insMode_e mode, void *p
         paramSaveAll();
         relayAutoRequest();
         lastmode = mode;
+        if (rspTimeOut == -1)
+        {
+        	LogMessage(DEBUG_ALL, "SET rsptimeout");
+			rspTimeOut = startTimer(300, relayOnRspTimeOut, 0);
+        }
         //strcpy(message, "Relay on success");
     }
     else if (item->item_data[1][0] == '0')
@@ -1709,6 +1734,7 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
 	           	debugparam = (insParam_s *)param;
 	           	lastparam.link = debugparam->link;
            	}
+           	getLastInsid();
            	doRelayInstrucion(item, message, mode, param);
            	break;
         case READPARAM_INS:

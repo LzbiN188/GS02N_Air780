@@ -1104,7 +1104,6 @@ static void protoclparase80(uint8_t link, char *protocol, int size)
 
     if (link == NORMAL_LINK || link == HIDDEN_LINK)
     {
-    	getLastInsid();
         instructionParser(instruction, instructionlen, NET_MODE, &insparam);
     }
     else if (link == BLE_LINK)

@@ -1774,6 +1774,7 @@ void relayAutoCtrlTask(void)
 {
     static uint8_t runTick = 0;
     gpsinfo_s *gpsinfo;
+    char message[50];
     if (sysinfo.doRelayFlag == 0)
     {
         runTick = 0;
@@ -1788,19 +1789,24 @@ void relayAutoCtrlTask(void)
     if (sysparam.relaySpeed == 0)
     {
         //没有配置速度规则，那就等acc off才断
+        instructionRespone("Relay on: Acc on");
         return;
     }
     if (sysinfo.gpsOnoff == 0)
     {
+    	instructionRespone("Relay on: No gps");
         return;
     }
     gpsinfo = getCurrentGPSInfo();
     if (gpsinfo->fixstatus == 0)
     {
+    	instructionRespone("Relay on: No gps");
         return;
     }
     if (gpsinfo->speed > sysparam.relaySpeed)
     {
+    	sprintf(message, "Relay on: Overspeed %d km/h", sysparam.relaySpeed);
+    	instructionRespone(message);
         runTick = 0;
         return;
     }
