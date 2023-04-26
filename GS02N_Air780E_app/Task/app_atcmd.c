@@ -43,8 +43,6 @@ const CMDTABLE atcmdtable[] =
 	{AT_FMPC_CM2_CMD, "FMPC_CM2"},
     {AT_FMPC_CM2GET_CMD, "FMPC_CM2GET"},
     {AT_FMPC_EXTVOL_CMD, "FMPC_EXTVOL"},
-    {AT_FMPC_VER_CMD, "FMPC_VER"},
-    {AT_FMPC_SN_CMD, "FMPC_SN"},
 
 };
 /**************************************************
@@ -504,7 +502,6 @@ static void atCmdFmpcExtvolParser(void)
 @return
 @note
 **************************************************/
-sta
 
 
 /**************************************************

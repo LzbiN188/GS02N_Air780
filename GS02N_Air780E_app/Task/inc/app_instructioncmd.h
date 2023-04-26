@@ -9,6 +9,7 @@ typedef enum{
 	SMS_MODE,
 	NET_MODE,
 	BLE_MODE,
+	JT808_MODE,
 }insMode_e;
 
 typedef enum{

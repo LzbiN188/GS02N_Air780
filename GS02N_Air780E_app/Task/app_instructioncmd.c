@@ -96,6 +96,9 @@ static void sendMsgWithMode(uint8_t *buf, uint16_t len, insMode_e mode, void *pa
         case BLE_MODE:
             appSendNotifyData(buf, len);
             break;
+        case JT808_MODE:
+            jt808MessageSend(buf, len);
+            break;
     }
 }
 
