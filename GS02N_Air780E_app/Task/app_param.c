@@ -71,7 +71,7 @@ void paramDefaultInit(uint8_t level)
         sysparam.gapDay = 1;
         sysparam.poitype = 2;
         sysparam.lowvoltage = 115;
-        sysparam.adccal = 41.81;
+        sysparam.adccal = 41.84;
         strcpy(sysparam.apn, "cmnet");
 
         strcpy((char *)sysparam.agpsServer, "agps.domilink.com");

@@ -1180,6 +1180,7 @@ static void voltageCheckTask(void)
     float x;
     x = portGetAdcVol(CH_EXTIN_13);
     sysinfo.outsidevoltage = x * sysparam.adccal;
+    sysinfo.outsidevoltage += (((24 - sysinfo.outsidevoltage) * 0.2) / 14);
 	//LogPrintf(DEBUG_ALL, "OUTSIDE:%f %f", sysinfo.outsidevoltage, x);
     //µÍµç±¨¾¯
     if (sysinfo.outsidevoltage < sysinfo.lowvoltage)
@@ -1345,7 +1346,7 @@ static void modeStart(void)
             break;
     }
     lbsRequestSet(DEV_EXTEND_OF_MY);
-    wifiRequestSet(DEV_EXTEND_OF_MY);
+    //wifiRequestSet(DEV_EXTEND_OF_MY);
     gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
     ledStatusUpdate(SYSTEM_LED_RUN, 1);
     modulePowerOn();

@@ -1064,6 +1064,7 @@ static void agpsServerConnTask(void)
 	                agpsFsm = 0;
 	                runTick = 0;
 	                socketDel(AGPS_LINK);
+	                wifiRequestSet(DEV_EXTEND_OF_MY);
 	                agpsRequestClear();
                 }
             }
