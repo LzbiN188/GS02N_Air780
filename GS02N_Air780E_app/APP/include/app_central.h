@@ -58,6 +58,7 @@ typedef enum
     BLE_SCHEDULE_IDLE,
     BLE_SCHEDULE_WAIT,
     BLE_SCHEDULE_DONE,
+    BLE_SCHEDULE_NONET,
 } bleFsm;
 
 

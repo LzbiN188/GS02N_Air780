@@ -3,6 +3,7 @@
 #include "app_bleRelay.h"
 #include "app_task.h"
 #include "app_server.h"
+#include "app_param.h"
 //全局变量
 
 tmosTaskID bleCentralTaskId = INVALID_TASK_ID;
@@ -1052,6 +1053,7 @@ static void bleSchduleChangeFsm(bleFsm nfsm)
 {
     bleSchedule.fsm = nfsm;
     bleSchedule.runTick = 0;
+    LogPrintf(DEBUG_ALL, "bleSchduleChangeFsm==>%d", nfsm);
 }
 
 /**************************************************
@@ -1064,25 +1066,73 @@ static void bleSchduleChangeFsm(bleFsm nfsm)
 static void bleScheduleTask(void)
 {
     static uint8_t ind = 0;
+    static uint8_t noNetFlag = 0;
+    static uint16_t noNetTick = 0;
+    static uint8_t linkFlag = 0;
+    static uint8_t disConnTick = 0;
     if (primaryServerIsReady() == 0)
     {
-        bleDevTerminate();
-        return;
+		noNetFlag = 1;
+		LogMessage(DEBUG_ALL, "NO NET.............");
+    }
+    else
+    {
+		noNetFlag = 0;
     }
 
     switch (bleSchedule.fsm)
     {
         case BLE_SCHEDULE_IDLE:
+        	linkFlag = 0;
             ind = ind % DEVICE_MAX_CONNECT_COUNT;
             //查找是否有未链接的设备，需要进行链接
             for (; ind < DEVICE_MAX_CONNECT_COUNT; ind++)
             {
                 if (devInfoList[ind].use && devInfoList[ind].connHandle == INVALID_CONNHANDLE)
                 {
-                    bleCentralStartConnect(devInfoList[ind].addr, devInfoList[ind].addrType);
-                    bleSchduleChangeFsm(BLE_SCHEDULE_WAIT);
-                    break;
+					linkFlag = 1;
+					break;
                 }
+            }
+			//没有设备需要连接了，维护链路逻辑
+            if (noNetFlag)
+            {
+				LogPrintf(DEBUG_ALL, "linkFlag:%d", linkFlag);
+				//有链路需要连接
+				if (linkFlag)
+				{
+					noNetTick++;
+					if (noNetTick > ((sysparam.bleAutoDisc * 60) / 2))
+					{
+						bleCentralStartConnect(devInfoList[ind].addr, devInfoList[ind].addrType);
+	                	bleSchduleChangeFsm(BLE_SCHEDULE_WAIT);
+						noNetTick = 0;
+						break;
+						
+					}
+					disConnTick = 0;
+				}
+				//无链路需要连接
+				else
+				{
+					if (disConnTick++ >= 10)
+					{
+						disConnTick = 0;
+						bleDevTerminate();
+					}
+					noNetTick = 0;
+				}
+            }
+            else
+            {
+            	if (linkFlag)
+            	{
+	            	bleCentralStartConnect(devInfoList[ind].addr, devInfoList[ind].addrType);
+	                bleSchduleChangeFsm(BLE_SCHEDULE_WAIT);
+					noNetTick = 0;
+					disConnTick = 0;
+					break;
+				}
             }
             break;
         case BLE_SCHEDULE_WAIT:
