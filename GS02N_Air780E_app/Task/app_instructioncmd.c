@@ -58,6 +58,7 @@ const instruction_s insCmdTable[] =
     {QFOTA_INS, "QFOTA"},
     {BLEEN_INS, "BLEEN"},
     {AGPSEN_INS, "AGPSEN"},
+    {SETBATRATE_INS, "SETBATRATE"},
     {SN_INS, "*"},
 };
 
@@ -1572,7 +1573,21 @@ static void doAgpsenInstrution(ITEM *item, char *message)
 		sprintf(message, "Agpsen is %s", sysparam.agpsen ? "On" : "Off");
 		paramSaveAll();
 	}
+}
 
+static void doSetBatRateInstruction(ITEM *item, char *message)
+{
+	if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+	{
+		sprintf(message, "Bat high rate is %.2f, low rate is %.2f", sysparam.batLowLevel, sysparam.batHighLevel);
+	}
+	else
+	{
+		sysparam.batLowLevel = atof(item->item_data[1]);
+		sysparam.batHighLevel = atof(item->item_data[2]);
+		sprintf(message, "Update bat high rate to %.2f, low rate to %.2f", sysparam.batLowLevel, sysparam.batHighLevel);
+		paramSaveAll();
+	}
 }
 /*--------------------------------------------------------------------------------------*/
 static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param)
@@ -1715,6 +1730,9 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
         	break;
        	case AGPSEN_INS:
        		doAgpsenInstrution(item, message);
+       		break;
+       	case SETBATRATE_INS:
+			doSetBatRateInstruction(item, message);
        		break;
         default:
             if (mode == SMS_MODE)

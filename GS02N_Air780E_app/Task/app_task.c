@@ -677,6 +677,16 @@ void alarmRequestTask(void)
         protocolSend(NORMAL_LINK, PROTOCOL_16, &alarm);
     }
 
+    //震动报警
+    if (sysinfo.alarmRequest & ALARM_SHUTTLE_REQUEST)
+    {
+		alarmRequestClear(ALARM_SHUTTLE_REQUEST);
+		LogMessage(DEBUG_ALL, "alarmRequestTask==>shuttle Alarm");
+		terminalAlarmSet(TERMINAL_WARNNING_SHUTTLE);
+		alarm = 0;
+		protocolSend(NORMAL_LINK, PROTOCOL_16, &alarm);
+    }
+
     //SOS报警
     if (sysinfo.alarmRequest & ALARM_SOS_REQUEST)
     {
@@ -1170,7 +1180,7 @@ static void voltageCheckTask(void)
     float x;
     x = portGetAdcVol(CH_EXTIN_13);
     sysinfo.outsidevoltage = x * sysparam.adccal;
-
+	//LogPrintf(DEBUG_ALL, "OUTSIDE:%f %f", sysinfo.outsidevoltage, x);
     //低电报警
     if (sysinfo.outsidevoltage < sysinfo.lowvoltage)
     {

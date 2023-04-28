@@ -58,6 +58,7 @@ typedef enum{
     QFOTA_INS,
     BLEEN_INS,
     AGPSEN_INS,
+    SETBATRATE_INS,
 
 }INSTRUCTIONID;
 
