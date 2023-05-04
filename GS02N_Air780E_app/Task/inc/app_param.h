@@ -22,7 +22,10 @@
 #define APP_PARAM_FLAG          0x1A
 #define BOOT_PARAM_FLAG         0xB0
 
-#define EEPROM_VERSION									"VT02S+_Air780_V1.2.7"
+
+
+#define EEPROM_VERSION									"VT02S+_Air780_V1.2.11"
+
 
 
 #define JT808_PROTOCOL_TYPE			8
