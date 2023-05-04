@@ -1073,7 +1073,7 @@ static void bleScheduleTask(void)
     if (primaryServerIsReady() == 0)
     {
 		noNetFlag = 1;
-		LogMessage(DEBUG_ALL, "NO NET.............");
+		//LogMessage(DEBUG_ALL, "NO NET.............");
     }
     else
     {
@@ -1097,18 +1097,20 @@ static void bleScheduleTask(void)
 			//没有设备需要连接了，维护链路逻辑
             if (noNetFlag)
             {
-				LogPrintf(DEBUG_ALL, "linkFlag:%d", linkFlag);
+				//LogPrintf(DEBUG_ALL, "linkFlag:%d", linkFlag);
 				//有链路需要连接
 				if (linkFlag)
 				{
 					noNetTick++;
-					if (noNetTick > ((sysparam.bleAutoDisc * 60) / 2))
+					if (sysparam.bleAutoDisc != 0)
 					{
-						bleCentralStartConnect(devInfoList[ind].addr, devInfoList[ind].addrType);
-	                	bleSchduleChangeFsm(BLE_SCHEDULE_WAIT);
-						noNetTick = 0;
-						break;
-						
+                        if (noNetTick > ((sysparam.bleAutoDisc * 60) / 2))
+                        {
+                            bleCentralStartConnect(devInfoList[ind].addr, devInfoList[ind].addrType);
+                            bleSchduleChangeFsm(BLE_SCHEDULE_WAIT);
+                            noNetTick = 0;
+                            break;
+                        }
 					}
 					disConnTick = 0;
 				}
