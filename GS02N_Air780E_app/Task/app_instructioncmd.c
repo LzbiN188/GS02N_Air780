@@ -132,6 +132,15 @@ static void relayOnRspTimeOut(void)
 	rspTimeOut = -1;
 }
 
+static void relayOffRspTimeOut(void)
+{
+    if (rspTimeOut != -1)
+    {
+        instructionRespone("Relay off fail:Time out");
+    }
+    rspTimeOut = -1;
+}
+
 static void doParamInstruction(ITEM *item, char *message)
 {
     uint8_t i;
@@ -1007,6 +1016,11 @@ static void doRelayInstrucion(ITEM *item, char *message, insMode_e mode, void *p
         paramSaveAll();
         bleRelaySetAllReq(BLE_EVENT_SET_DEVOFF | BLE_EVENT_CLR_CNT);
         bleRelayClearAllReq(BLE_EVENT_SET_DEVON);
+        if (rspTimeOut == -1)
+        {
+            LogMessage(DEBUG_ALL, "SET rsptimeout");
+            rspTimeOut = startTimer(300, relayOffRspTimeOut, 0);
+        }
         //strcpy(message, "Relay off success");
     }
     else
