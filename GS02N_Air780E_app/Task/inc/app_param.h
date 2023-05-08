@@ -22,7 +22,7 @@
 #define APP_PARAM_FLAG          0x1A
 #define BOOT_PARAM_FLAG         0xB0
 
-#define EEPROM_VERSION									"GS02N_Air780_V1.2.11"
+#define EEPROM_VERSION									"GS02N_Air780_V1.2.12"
 
 
 #define JT808_PROTOCOL_TYPE			8
@@ -121,6 +121,9 @@ typedef struct
     float bleVoltage;
     uint8_t relayFun;
     
+    float batLowLevel;
+    float batHighLevel;
+
 } systemParam_s;
 
 /*存在EEPROM里的动态参数*/

@@ -61,6 +61,7 @@ const instruction_s insCmdTable[] =
     {AGPSEN_INS, "AGPSEN"},
     {BLERELAYCTL_INS, "BLERELAYCTL"},
     {RELAYFUN_INS, "RELAYFUN"},
+    {SETBATRATE_INS, "SETBATRATE"},
     {SN_INS, "*"},
 };
 
@@ -1659,6 +1660,20 @@ static void doRelayFunInstruction(ITEM *item, char *message)
     }
 }
 
+static void doSetBatRateInstruction(ITEM *item, char *message)
+{
+    if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+    {
+        sprintf(message, "Bat high rate is %.2f, low rate is %.2f", sysparam.batLowLevel, sysparam.batHighLevel);
+    }
+    else
+    {
+        sysparam.batLowLevel = atof(item->item_data[1]);
+        sysparam.batHighLevel = atof(item->item_data[2]);
+        sprintf(message, "Update bat high rate to %.2f, low rate to %.2f", sysparam.batLowLevel, sysparam.batHighLevel);
+        paramSaveAll();
+    }
+}
 /*--------------------------------------------------------------------------------------*/
 static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param)
 {
@@ -1814,6 +1829,9 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
        	case RELAYFUN_INS:
        		doRelayFunInstruction(item, message);
        		break;
+        case SETBATRATE_INS:
+            doSetBatRateInstruction(item, message);
+            break;
         default:
             if (mode == SMS_MODE)
             {

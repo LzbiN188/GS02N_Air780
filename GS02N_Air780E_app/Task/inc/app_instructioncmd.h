@@ -60,7 +60,7 @@ typedef enum{
     AGPSEN_INS,
     BLERELAYCTL_INS,
     RELAYFUN_INS,
-
+    SETBATRATE_INS,
 }INSTRUCTIONID;
 
 

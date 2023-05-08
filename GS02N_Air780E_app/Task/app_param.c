@@ -110,6 +110,8 @@ void paramDefaultInit(uint8_t level)
     sysparam.bleen = 1;
     sysparam.bleRelay = 1;
     sysparam.bleVoltage = 11.5;
+    sysparam.batLowLevel = 0.0;
+    sysparam.batHighLevel = 0.0;
 
     paramSaveAll();
     dynamicParamSaveAll();
