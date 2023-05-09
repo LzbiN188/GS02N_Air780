@@ -1,10 +1,10 @@
 Task/app_mir3da.o: ../Task/app_mir3da.c \
- C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_mir3da.h \
- C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_port.h \
- C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\HAL\include/config.h \
- C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\LIB/CH58xBLE_LIB.H \
+ R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_mir3da.h \
+ R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_port.h \
+ R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\HAL\include/config.h \
+ R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\LIB/CH58xBLE_LIB.H \
  ../StdPeriphDriver/inc/CH58x_common.h \
- C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_sys.h \
+ R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_sys.h \
  ../StdPeriphDriver/inc/CH583SFR.h ../RVMSIS/core_riscv.h \
  ../StdPeriphDriver/inc/CH58x_clk.h ../StdPeriphDriver/inc/CH58x_uart.h \
  ../StdPeriphDriver/inc/CH58x_gpio.h ../StdPeriphDriver/inc/CH58x_i2c.h \
@@ -14,17 +14,17 @@ Task/app_mir3da.o: ../Task/app_mir3da.c \
  ../StdPeriphDriver/inc/CH58x_spi.h ../StdPeriphDriver/inc/CH58x_usbdev.h \
  ../StdPeriphDriver/inc/CH58x_usbhost.h ../StdPeriphDriver/inc/ISP583.h
 
-C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_mir3da.h:
+R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_mir3da.h:
 
-C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_port.h:
+R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_port.h:
 
-C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\HAL\include/config.h:
+R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\HAL\include/config.h:
 
-C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\LIB/CH58xBLE_LIB.H:
+R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\LIB/CH58xBLE_LIB.H:
 
 ../StdPeriphDriver/inc/CH58x_common.h:
 
-C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_sys.h:
+R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_sys.h:
 
 ../StdPeriphDriver/inc/CH583SFR.h:
 

@@ -1,10 +1,10 @@
 Task/app_param.o: ../Task/app_param.c \
- C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_param.h \
- C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_sys.h \
- C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\HAL\include/config.h \
- C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\LIB/CH58xBLE_LIB.H \
+ R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_param.h \
+ R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_sys.h \
+ R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\HAL\include/config.h \
+ R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\LIB/CH58xBLE_LIB.H \
  ../StdPeriphDriver/inc/CH58x_common.h \
- C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_sys.h \
+ R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_sys.h \
  ../StdPeriphDriver/inc/CH583SFR.h ../RVMSIS/core_riscv.h \
  ../StdPeriphDriver/inc/CH58x_clk.h ../StdPeriphDriver/inc/CH58x_uart.h \
  ../StdPeriphDriver/inc/CH58x_gpio.h ../StdPeriphDriver/inc/CH58x_i2c.h \
@@ -13,19 +13,19 @@ Task/app_param.o: ../Task/app_param.c \
  ../StdPeriphDriver/inc/CH58x_sys.h ../StdPeriphDriver/inc/CH58x_timer.h \
  ../StdPeriphDriver/inc/CH58x_spi.h ../StdPeriphDriver/inc/CH58x_usbdev.h \
  ../StdPeriphDriver/inc/CH58x_usbhost.h ../StdPeriphDriver/inc/ISP583.h \
- C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_db.h
+ R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_db.h
 
-C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_param.h:
+R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_param.h:
 
-C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_sys.h:
+R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_sys.h:
 
-C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\HAL\include/config.h:
+R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\HAL\include/config.h:
 
-C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\LIB/CH58xBLE_LIB.H:
+R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\LIB/CH58xBLE_LIB.H:
 
 ../StdPeriphDriver/inc/CH58x_common.h:
 
-C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_sys.h:
+R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_sys.h:
 
 ../StdPeriphDriver/inc/CH583SFR.h:
 
@@ -59,4 +59,4 @@ C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_sys.h:
 
 ../StdPeriphDriver/inc/ISP583.h:
 
-C:\Users\nimo\Desktop\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_db.h:
+R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_db.h:

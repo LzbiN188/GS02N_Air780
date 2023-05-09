@@ -518,39 +518,41 @@ void gpsRestoreDataSend(gpsRestore_s *grs, char *dest	, uint16_t *len)
 uint8_t getBatteryLevel(void)
 {
     uint8_t level = 0;
-	if (sysparam.batHighLevel == 0 || sysparam.batLowLevel == 0)
-	{
-		if (sysinfo.insidevoltage > 4.1)
-		{
-			level = 100;
-		}
-		else if (sysinfo.insidevoltage < 3.3)
-		{
-			level = 0;
-		}
-		else
-		{
-			level = (uint8_t)((sysinfo.insidevoltage - 3.3) / 0.8 * 100);
-		}
-		return level;
-	}
-	else
-	{
-		if (sysinfo.outsidevoltage > sysparam.batHighLevel)
-		{
-			level = 100;
-		}
-		else if (sysinfo.outsidevoltage < sysparam.batLowLevel)
-		{
-			level = 1;
-		}
-		else
-		{
-			level = (uint8_t)((sysinfo.outsidevoltage - 33) / 9 * 100);
-		}
-		return level;
-	}
+    if (sysparam.batHighLevel == 0 || sysparam.batLowLevel == 0)
+    {
+        if (sysinfo.insidevoltage > 4.1)
+        {
+            level = 100;
+        }
+        else if (sysinfo.insidevoltage < 3.3)
+        {
+            level = 0;
+        }
+        else
+        {
+            level = (uint8_t)((sysinfo.insidevoltage - 3.3) / 0.8 * 100);
+        }
+        return level;
+    }
+    else
+    {
+        if (sysinfo.outsidevoltage > sysparam.batHighLevel)
+        {
+            level = 100;
+        }
+        else if (sysinfo.outsidevoltage < sysparam.batLowLevel)
+        {
+            level = 1;
+        }
+        else
+        {
+            level = (uint8_t)((sysinfo.outsidevoltage - sysparam.batLowLevel) / (sysparam.batHighLevel - sysparam.batLowLevel) * 100);
+        }
+        LogPrintf(DEBUG_ALL, "Outvol:%.2f, level:[%d%]", sysinfo.outsidevoltage, level);
+        return level;
+    }
 }
+
 /**************************************************
 @bref		生成13协议
 @param
