@@ -1005,7 +1005,6 @@ static void doRelayInstrucion(ITEM *item, char *message, insMode_e mode, void *p
         lastmode = mode;
         if (rspTimeOut == -1)
         {
-        	LogMessage(DEBUG_ALL, "SET rsptimeout");
 			rspTimeOut = startTimer(300, relayOnRspTimeOut, 0);
         }
         //strcpy(message, "Relay on success");
@@ -1019,7 +1018,6 @@ static void doRelayInstrucion(ITEM *item, char *message, insMode_e mode, void *p
         bleRelayClearAllReq(BLE_EVENT_SET_DEVON);
         if (rspTimeOut == -1)
         {
-            LogMessage(DEBUG_ALL, "SET rsptimeout");
             rspTimeOut = startTimer(300, relayOffRspTimeOut, 0);
         }
         //strcpy(message, "Relay off success");
@@ -1162,6 +1160,7 @@ static void doSetBleMacInstruction(ITEM *item, char *message)
 {
     uint8_t i, j, l, ind;
     char mac[20];
+    char mac2[20];
     if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
     {
         strcpy(message, "BLELIST:");
@@ -1169,6 +1168,15 @@ static void doSetBleMacInstruction(ITEM *item, char *message)
         {
             byteToHexString(sysparam.bleConnMac[i], (uint8_t *)mac, 6);
             mac[12] = 0;
+
+            l = 5;
+            for (j = 0; j < 3; j++)
+            {
+                tmos_memcpy(mac2, &mac[j * 2], 2);
+                tmos_memcpy(&mac[j * 2], &mac[l * 2], 2);
+                tmos_memcpy(&mac[l * 2], mac2, 2);
+                l--;
+            }
             sprintf(message + strlen(message), " %s", mac);
 
         }
@@ -1194,6 +1202,20 @@ static void doSetBleMacInstruction(ITEM *item, char *message)
 //                bleRelayInsert(sysparam.bleConnMac[ind], 0);
 //                ind++;
 //            }
+
+            l = 0;
+            for (j = 0; j < 12; j += 2)
+            {
+                tmos_memcpy(mac + l, item->item_data[i] + j, 2);
+                l += 2;
+                if (j % 2 == 0 && (j + 2 < 12))
+                {
+                    mac[l++] = ':';
+                }
+            }
+            mac[l] = 0;
+            sprintf(message + strlen(message), " %s", mac);
+
             l = 5;
             for (j = 0; j < 3; j++)
             {
@@ -1208,19 +1230,6 @@ static void doSetBleMacInstruction(ITEM *item, char *message)
                 bleRelayInsert(sysparam.bleConnMac[ind], 0);
                 ind++;
             }
-
-            l = 0;
-            for (j = 0; j < 12; j += 2)
-            {
-                tmos_memcpy(mac + l, item->item_data[i] + j, 2);
-                l += 2;
-                if (j % 2 == 0 && (j + 2 < 12))
-                {
-                    mac[l++] = ':';
-                }
-            }
-            mac[l] = 0;
-            sprintf(message + strlen(message), " %s", mac);
         }
         paramSaveAll();
         if (ind == 0)

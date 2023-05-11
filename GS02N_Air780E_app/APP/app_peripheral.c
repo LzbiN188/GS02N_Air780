@@ -327,7 +327,10 @@ void appPeripheralBroadcastInfoCfg(uint8 *broadcastnmae)
 void appPeripheralCancel(void)
 {
 	uint8_t u8Value;
-	GAPRole_TerminateLink(appPeripheralConn.connectionHandle);
+	if (appPeripheralConn.connectionHandle != INVALID_CONNHANDLE || appPeripheralConn.connectionHandle != GAP_CONNHANDLE_INIT)
+	{
+	    GAPRole_TerminateLink(appPeripheralConn.connectionHandle);
+	}
 	u8Value = FALSE;
     GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8), &u8Value);
 }
@@ -622,20 +625,24 @@ static void appGaproleWaitting(gapRoleEvent_t *pEvent)
     uint8 u8Value;
     if (pEvent->gap.opcode == GAP_LINK_TERMINATED_EVENT)
     {
-        pEvent->linkTerminate.connectionHandle;
         LogPrintf(DEBUG_ALL, "-------------------------------------");
         LogPrintf(DEBUG_ALL, "*****Device Terminate*****");
         LogPrintf(DEBUG_ALL, "TerminateHandle:%d", pEvent->linkTerminate.connectionHandle);
         LogPrintf(DEBUG_ALL, "TerminateRole:%d", pEvent->linkTerminate.connRole);
         LogPrintf(DEBUG_ALL, "TerminateReason:0x%X", pEvent->linkTerminate.reason);
         LogPrintf(DEBUG_ALL, "-------------------------------------");
-        u8Value = TRUE;
         appPeripheralConn.connectionHandle = INVALID_CONNHANDLE;
-        GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8), &u8Value);
 		sysinfo.bleConnStatus = 0;
 		tmos_memset(appPeripheralConn.connMac, 0, 12);
+
     }
+    LogPrintf(DEBUG_ALL, "appGaproleWaitting==>opcode:%d",pEvent->gap.opcode);
     tmos_stop_task(appPeripheralTaskId, APP_PERIPHERAL_TERMINATE_EVENT);
+    if (sysparam.bleen)
+    {
+        u8Value = TRUE;
+        GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8), &u8Value);
+    }
 }
 /*
  * 参数更新
