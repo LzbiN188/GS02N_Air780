@@ -1720,7 +1720,7 @@ void autoSleepTask(void)
         if (flag != 0)
         {
             flag = 0;
-			//portFclkChange(0);
+			portFclkChange(0);
             LogMessage(DEBUG_ALL, "disable sleep");
         }
     }
@@ -1730,7 +1730,7 @@ void autoSleepTask(void)
         if (flag != 1)
         {
             flag = 1;
-			//portFclkChange(1);
+			portFclkChange(1);
             LogMessage(DEBUG_ALL, "enable sleep");
         }
     }
@@ -2058,7 +2058,7 @@ void myTaskPreInit(void)
     tmos_memset(&sysinfo, 0, sizeof(sysinfo));
 	//sysinfo.logLevel = DEBUG_ALL;
 
-    SetSysClock(CLK_SOURCE_PLL_60MHz);
+    SetSysClock(CLK_SOURCE_HSE_16MHz);
     portGpioSetDefCfg();
     portUartCfg(APPUSART2, 1, 115200, doDebugRecvPoll);
     portModuleGpioCfg();

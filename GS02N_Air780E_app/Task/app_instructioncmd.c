@@ -1785,7 +1785,7 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
            	doSetBleWarnParamInstruction(item, message);
            	break;
         case SETBLEMAC_INS:
-           	doSetBleMacInstruction(item, message);
+           	//doSetBleMacInstruction(item, message);
            	break;
         case RELAYSPEED_INS:
            	doRelaySpeedInstruction(item, message);
@@ -1827,7 +1827,7 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
             doFcgInstruction(item, message);
             break;
         case BLEEN_INS:
-        	doBleenInstruction(item, message);
+        	//doBleenInstruction(item, message);
         	break;
        	case AGPSEN_INS:
        		doAgpsenInstrution(item, message);
