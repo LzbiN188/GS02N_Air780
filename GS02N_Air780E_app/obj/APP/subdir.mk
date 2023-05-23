@@ -6,16 +6,19 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../APP/app_broadcaster.c \
+../APP/app_central.c \
 ../APP/app_main.c \
 ../APP/app_peripheral.c 
 
 OBJS += \
 ./APP/app_broadcaster.o \
+./APP/app_central.o \
 ./APP/app_main.o \
 ./APP/app_peripheral.o 
 
 C_DEPS += \
 ./APP/app_broadcaster.d \
+./APP/app_central.d \
 ./APP/app_main.d \
 ./APP/app_peripheral.d 
 

@@ -233,17 +233,6 @@ static void serverChangeCallBack(void)
 {
     jt808ServerReconnect();
     privateServerReconnect();
-    if (serverType == JT808_PROTOCOL_TYPE)
-    {
-        sysparam.protocol = JT808_PROTOCOL_TYPE;
-        dynamicParam.jt808isRegister = 0;
-    }
-    else
-    {
-        sysparam.protocol = ZT_PROTOCOL_TYPE;
-    }
-    paramSaveAll();
-    dynamicParamSaveAll();
 }
 
 static void doServerInstruction(ITEM *item, char *message)
@@ -267,6 +256,17 @@ static void doServerInstruction(ITEM *item, char *message)
             sysparam.ServerPort = atoi((const char *)item->item_data[3]);
             sprintf(message, "Update domain %s:%d;", sysparam.Server, sysparam.ServerPort);
         }
+        if (serverType == JT808_PROTOCOL_TYPE)
+        {
+            sysparam.protocol = JT808_PROTOCOL_TYPE;
+            dynamicParam.jt808isRegister = 0;
+        }
+        else
+        {
+            sysparam.protocol = ZT_PROTOCOL_TYPE;
+        }
+        paramSaveAll();
+        dynamicParamSaveAll();
         startTimer(30, serverChangeCallBack, 0);
     }
     else
