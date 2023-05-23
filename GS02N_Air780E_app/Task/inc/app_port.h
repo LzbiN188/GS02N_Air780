@@ -54,6 +54,10 @@
 #define GPSLNA_ON       GPIOB_SetBits(GPSLNA_PIN)
 #define GPSLNA_OFF      GPIOB_ResetBits(GPSLNA_PIN)
 
+//SOS°´¼ü
+#define SOS_PIN			GPIO_Pin_11		//PB11
+#define SOS_READ		(GPIOB_ReadPortPin(SOS_PIN) ? 1 : 0)
+
 #define VCARD_ADCPIN	GPIO_Pin_9
 
 typedef enum
@@ -99,6 +103,7 @@ void portModuleGpioCfg(void);
 void portLedGpioCfg(void);
 void portGpsGpioCfg(void);
 void portGpioSetDefCfg(void);
+void portSosGpioCfg(void);
 
 void portSysReset(void);
 

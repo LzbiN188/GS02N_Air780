@@ -267,6 +267,7 @@ static void doServerInstruction(ITEM *item, char *message)
             sysparam.ServerPort = atoi((const char *)item->item_data[3]);
             sprintf(message, "Update domain %s:%d;", sysparam.Server, sysparam.ServerPort);
         }
+        paramSaveAll();
         startTimer(30, serverChangeCallBack, 0);
     }
     else

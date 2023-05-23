@@ -1,3 +1,2 @@
----- ALARM_SHUTTLE_REQUEST Matches (2 in 2 files) ----
-motionCheckTask in app_task.c (GS02N_Air780E_app\Task) :             alarmRequestSet(ALARM_SHUTTLE_REQUEST);
-app_task.h (GS02N_Air780E_app\Task\inc) line 23 : #define ALARM_SHUTTLE_REQUEST			0x0008 //震动报警
+---- alarmRequestSet==> Matches (1 in 1 files) ----
+alarmRequestSet in app_task.c (GS02N_Air780E_app\Task) :     LogPrintf(DEBUG_ALL, "alarmRequestSet==>0x%04X", request);

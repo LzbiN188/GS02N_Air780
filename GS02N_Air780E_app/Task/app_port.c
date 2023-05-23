@@ -577,6 +577,16 @@ void portGpsGpioCfg(void)
 }
 
 /**
+ * @brief   SOS GPIO≥ı ºªØ
+ * @param
+ * @return
+ */
+void portSosGpioCfg(void)
+{
+	GPIOB_ModeCfg(SOS_PIN, GPIO_ModeIN_PU);
+}
+
+/**
  * @brief   GPIO ÷ÿ÷√
  * @param
  * @return

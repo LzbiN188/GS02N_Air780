@@ -541,6 +541,8 @@ static void gpsRequestTask(void)
             if (gpsinfo->fixstatus)
             {
                 ledStatusUpdate(SYSTEM_LED_GPSOK, 1);
+               	lbsRequestClear();
+                wifiRequestClear();
             }
             else
             {
@@ -601,6 +603,7 @@ static void gpsUplodOnePointTask(void)
         protocolSend(NORMAL_LINK, PROTOCOL_12, getCurrentGPSInfo());
         jt808SendToServer(TERMINAL_POSITION, getCurrentGPSInfo());
         gpsRequestClear(GPS_REQUEST_UPLOAD_ONE);
+        jt808UpdateAlarm(JT808_SOSALARM, 0);
     }
 
 }
@@ -1235,7 +1238,7 @@ static void voltageCheckTask(void)
         if (LostVoltageFlag == 1)
         {
             LostVoltageFlag = 0;
-			sosRequestSet();
+			//sosRequestSet();
             jt808UpdateAlarm(JT808_LOSTVOLTAGE_ALARM, 0);
             if (sysinfo.sysTick - LostVoltageTick >= 10)
             {
@@ -1529,6 +1532,19 @@ void lbsRequestSet(uint8_t ext)
     sysinfo.lbsExtendEvt |= ext;
 }
 
+/**************************************************
+@bref		清除基站上送请求
+@param
+@return
+@note
+**************************************************/
+
+void lbsRequestClear(void)
+{
+	sysinfo.lbsRequest = 0;
+    sysinfo.lbsExtendEvt = 0;
+}
+
 static void sendLbs(void)
 {
 	gpsinfo_s *gpsinfo;
@@ -1584,6 +1600,19 @@ void wifiRequestSet(uint8_t ext)
     sysinfo.wifiRequest = 1;
     sysinfo.wifiExtendEvt |= ext;
 }
+/**************************************************
+@bref		清除WIFI上送请求
+@param
+@return
+@note
+**************************************************/
+
+void wifiRequestClear(void)
+{
+	sysinfo.wifiRequest = 0;
+	sysinfo.wifiExtendEvt = 0;
+}
+
 
 /**************************************************
 @bref		WIFI上送任务
@@ -1798,6 +1827,40 @@ static void rebootEveryDay(void)
         return ;
     portSysReset();
 }
+
+/**************************************************
+@bref		按键触发SOS
+@param
+@note
+**************************************************/
+void keySosScan(void)
+{
+	static uint32_t cnt = 0;
+	static uint8_t once = 0;
+
+	if (GPIOB_ReadPortPin(SOS_PIN) == 0)
+	{
+		cnt++;
+		if (cnt >= 20 && once == 0)
+		{
+			once = 1;
+			sosRequestSet();
+			LogMessage(DEBUG_ALL, "Power Key press");
+		}		
+	}
+	//松开
+	if (GPIOB_ReadPortPin(SOS_PIN))
+	{
+		cnt = 0;
+		once = 0;
+	}
+
+}
+
+
+
+
+
 void sosRequestSet(void)
 {
     sysinfo.doSosFlag = 1;
@@ -1832,7 +1895,9 @@ static void sosRequestTask(void)
             runFsm = 1;
             runTick = 0;
             ind = 0;
+            jt808UpdateAlarm(JT808_SOSALARM, 1);
             alarmRequestSet(ALARM_SOS_REQUEST);
+            gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
             if (sysparam.sosalm == ALARM_TYPE_GPRS)
             {
                 runFsm = 99;
@@ -2031,11 +2096,13 @@ void myTaskPreInit(void)
     portAdcCfg();
     portWdtCfg();
     portGsensorPwrCtl(1);
+    portSosGpioCfg();
 	portSleepDn();
     paramInit();
     socketListInit();
     createSystemTask(ledTask, 1);
     createSystemTask(outputNode, 2);
+    createSystemTask(keySosScan, 1);
     sysinfo.sysTaskId = createSystemTask(taskRunInSecond, 10);
 
 }

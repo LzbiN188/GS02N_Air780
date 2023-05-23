@@ -5,8 +5,10 @@
 #include "app_protocol.h"
 #include "app_gps.h"
 
+#define JT808_SOSALARM				(1<<0)//SOS报警
 #define JT808_LOWVOLTAE_ALARM		(1<<7)//低电报警
 #define JT808_LOSTVOLTAGE_ALARM		(1<<8)//断电报警
+
 
 
 #define JT808_STATUS_ACC			(1<<0)//acc on
