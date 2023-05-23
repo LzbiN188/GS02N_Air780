@@ -22,7 +22,11 @@
 #define APP_PARAM_FLAG          0x1A
 #define BOOT_PARAM_FLAG         0xB0
 
+<<<<<<< Updated upstream
 #define EEPROM_VERSION									"GS02N_Air780_V1.2.13NB"
+=======
+#define EEPROM_VERSION									"GS02N_Air780_V1.2.13"
+>>>>>>> Stashed changes
 
 
 #define JT808_PROTOCOL_TYPE			8
