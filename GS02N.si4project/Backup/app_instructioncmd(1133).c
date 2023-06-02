@@ -1538,27 +1538,27 @@ static void doFcgInstruction(ITEM *item, char *message)
 
 static void doBleenInstruction(ITEM *item, char *message)
 {
-//	if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
-//	{
-//		sprintf(message, "Bleen is %s", sysparam.bleen ? "On" : "Off");
-//	}
-//	else
-//	{
-//		sysparam.bleen = atoi(item->item_data[1]);
-//		if (sysparam.bleen == 1)
-//		{	
-//			char broadCastNmae[30];
-//			sprintf(broadCastNmae, "%s-%s", "AUTO", dynamicParam.SN + 9);
-//			appPeripheralBroadcastInfoCfg(broadCastNmae);
-//		}
-//		else if (sysparam.bleen == 0)
-//		{
-//			appPeripheralCancel();
-//		}
-//
-//		sprintf(message, "Bleen is %s", sysparam.bleen ? "On" : "Off");
-//		paramSaveAll();
-//	}
+	if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+	{
+		sprintf(message, "Bleen is %s", sysparam.bleen ? "On" : "Off");
+	}
+	else
+	{
+		sysparam.bleen = atoi(item->item_data[1]);
+		if (sysparam.bleen == 1)
+		{	
+			char broadCastNmae[30];
+			sprintf(broadCastNmae, "%s-%s", "AUTO", dynamicParam.SN + 9);
+			appPeripheralBroadcastInfoCfg(broadCastNmae);
+		}
+		else if (sysparam.bleen == 0)
+		{
+			appPeripheralCancel();
+		}
+
+		sprintf(message, "Bleen is %s", sysparam.bleen ? "On" : "Off");
+		paramSaveAll();
+	}
 }
 
 static void doAgpsenInstrution(ITEM *item, char *message)
