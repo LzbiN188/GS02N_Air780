@@ -1671,27 +1671,27 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
         case BLESERVER_INS:
             doBleServerInstruction(item, message);
             break;
-        case RELAY_INS:
-           doRelayInstrucion(item, message);
-           break;
-        case READPARAM_INS:
-           doReadParamInstruction(item, message);
-           break;
-        case SETBLEPARAM_INS:
-           doSetBleParamInstruction(item, message);
-           break;
-        case SETBLEWARNPARAM_INS:
-           doSetBleWarnParamInstruction(item, message);
-           break;
-        case SETBLEMAC_INS:
-           doSetBleMacInstruction(item, message);
-           break;
-        case RELAYSPEED_INS:
-           doRelaySpeedInstruction(item, message);
-           break;
-        case RELAYFORCE_INS:
-           doRelayForceInstrucion(item, message);
-           break;
+//        case RELAY_INS:
+//           doRelayInstrucion(item, message);
+//           break;
+//        case READPARAM_INS:
+//           doReadParamInstruction(item, message);
+//           break;
+//        case SETBLEPARAM_INS:
+//           doSetBleParamInstruction(item, message);
+//           break;
+//        case SETBLEWARNPARAM_INS:
+//           doSetBleWarnParamInstruction(item, message);
+//           break;
+//        case SETBLEMAC_INS:
+//           doSetBleMacInstruction(item, message);
+//           break;
+//        case RELAYSPEED_INS:
+//           doRelaySpeedInstruction(item, message);
+//           break;
+//        case RELAYFORCE_INS:
+//           doRelayForceInstrucion(item, message);
+//           break;
         case BF_INS:
            doBFInstruction(item, message);
            break;
@@ -1725,9 +1725,9 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
         case FCG_INS:
             doFcgInstruction(item, message);
             break;
-        case BLEEN_INS:
-        	doBleenInstruction(item, message);
-        	break;
+//        case BLEEN_INS:
+//        	doBleenInstruction(item, message);
+//        	break;
        	case AGPSEN_INS:
        		doAgpsenInstrution(item, message);
        		break;

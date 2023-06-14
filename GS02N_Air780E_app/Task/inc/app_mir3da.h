@@ -8,9 +8,27 @@
 #ifndef __MIR3DA_h
 #define __MIR3DA_h
 
+#include <stdio.h>
+
+#include "app_port.h"
+#include "app_sys.h"
+#include "app_param.h"
 
 /*******************************************************************************
-Macro definitions - Register define for Gsensor asic
+Gsensor 
+********************************************************************************/
+#define GSENSOR_ID_DA217				0x13
+#define GSENSOR_ID_QMA6100P				0x90
+
+
+/*******************************************************************************
+Gsensor I2Cµÿ÷∑
+********************************************************************************/
+#define QMA6100P_ADDR					0x12
+#define DA217_ADDR						0x26
+
+/*******************************************************************************
+DA217	Macro definitions - Register define for Gsensor asic
 ********************************************************************************/
 #define NSA_REG_SPI_I2C                 0x00
 #define NSA_REG_WHO_AM_I                0x01
@@ -51,6 +69,75 @@ Macro definitions - Register define for Gsensor asic
 #define NSA_REG_STEP_CONGIF3			0x31
 #define NSA_REG_STEP_CONGIF4			0x32
 #define NSA_REG_STEP_FILTER             0x33
+
+/*******************************************************************************
+QMA6100P	Macro definitions - Register define for Gsensor asic
+********************************************************************************/
+#define QMA6100P_REG_CHIP_ID            0x00
+
+#define QMA6100P_REG_XOUTL              0x01
+#define QMA6100P_REG_XOUTH              0x02
+#define QMA6100P_REG_YOUTL              0x03
+#define QMA6100P_REG_YOUTH              0x04
+#define QMA6100P_REG_ZOUTL              0x05
+#define QMA6100P_REG_ZOUTH              0x06
+
+#define QMA6100P_REG_STEP_CNT_L         0x07
+#define QMA6100P_REG_STEP_CNT_M         0x08
+#define QMA6100P_REG_STEP_CNT_H         0x0d
+
+#define QMA6100P_REG_INT_STATUS_0       0x09
+#define QMA6100P_REG_INT_STATUS_1       0x0a
+#define QMA6100P_REG_INT_STATUS_2       0x0b
+#define QMA6100P_REG_INT_STATUS_3       0x0c
+
+#define QMA6100P_REG_FIFO_STATE         0x0e
+
+#define QMA6100P_REG_RANGE              0x0f
+
+#define QMA6100P_REG_BW_ODR             0x10
+
+#define QMA6100P_REG_POWER_MANAGE       0x11
+
+#define QMA6100P_REG_STEP_SAMPLE_CNT    0x12
+#define QMA6100P_REG_STEP_PRECISION     0x13
+#define QMA6100P_REG_STEP_TIME_LOW      0x14
+#define QMA6100P_REG_STEP_TIME_UP       0x15
+
+#define QMA6100P_REG_INT_EN_0           0x16
+#define QMA6100P_REG_INT_EN_1           0x17
+#define QMA6100P_REG_INT_EN_2           0x18
+
+#define QMA6100P_REG_INT1_MAP_0         0x19
+#define QMA6100P_REG_INT1_MAP_1         0x1a
+#define QMA6100P_REG_INT2_MAP_0         0x1b
+#define QMA6100P_REG_INT2_MAP_1         0x1c
+
+#define QMA6100P_REG_INTPIN_CFG         0x20
+
+#define QMA6100P_REG_INT_CFG            0x21
+
+#define QMA6100P_REG_MOT_CFG0			0x2c
+#define QMA6100P_REG_MOT_CFG1			0x2d
+#define QMA6100P_REG_MOT_CFG2			0x2e
+
+
+
+#define QMA6100P_REG_OS_CUST_X          0x27
+#define QMA6100P_REG_OS_CUST_Y          0x28
+#define QMA6100P_REG_OS_CUST_Z          0x29
+
+#define QMA6100P_REG_RST_MOT			0x30
+
+#define QMA6100P_REG_NVM                0x33
+#define QMA6100P_REG_RESET              0x36
+
+
+#define QMA6100P_REG_DRDY_BIT           0x10    // enable 1
+
+#define QMA6100P_REG_AMD_X_BIT          0x01
+#define QMA6100P_REG_AMD_Y_BIT          0x02
+#define QMA6100P_REG_AMD_Z_BIT          0x04
 
 
 /*******************************************************************************
@@ -93,13 +180,17 @@ s8_m mir3da_read_data(s16_m *x, s16_m *y, s16_m *z);
 s8_m mir3da_open_interrupt(u8_m th);
 s8_m mir3da_close_interrupt(void);
 s8_m mir3da_set_enable(u8_m enable);
-s8_m read_gsensor_id(void);
+u8_m read_gsensor_id(void);
 s8_m readInterruptConfig(void);
 
 void startStep(void);
 void stopStep(void);
 u16_m getStep(void);
 void clearStep(void);
+
+
+s8_m qma6100p_init(void);
+s8_m da217_init(void);
 
 
 #endif

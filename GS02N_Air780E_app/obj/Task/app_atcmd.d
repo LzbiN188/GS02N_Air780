@@ -18,10 +18,11 @@ Task/app_atcmd.o: ../Task/app_atcmd.c \
  R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_instructioncmd.h \
  R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_kernal.h \
  R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_mir3da.h \
- R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_net.h \
  R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_port.h \
- R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_param.h \
  R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_sys.h \
+ R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_param.h \
+ R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_net.h \
+ R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_param.h \
  R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_port.h \
  R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_socket.h \
  R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_server.h \
@@ -86,13 +87,15 @@ R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_kernal.h:
 
 R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_mir3da.h:
 
-R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_net.h:
-
 R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_port.h:
+
+R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_sys.h:
 
 R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_param.h:
 
-R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_sys.h:
+R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_net.h:
+
+R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_param.h:
 
 R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\Task\inc/app_port.h:
 

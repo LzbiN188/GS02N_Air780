@@ -826,8 +826,6 @@ void portGsensorCtl(uint8_t onoff)
         sysinfo.gsensorOnoff = 1;
         GSPWR_ON;
         mir3da_init();
-        mir3da_open_interrupt(10);
-        mir3da_set_enable(1);
 
         GPIOB_ModeCfg(GSINT_PIN, GPIO_ModeIN_PU);
         GPIOB_ITModeCfg(GSINT_PIN, GPIO_ITMode_FallEdge);
