@@ -7,7 +7,7 @@
 C_SRCS += \
 ../Task/aes.c \
 ../Task/app_atcmd.c \
-../Task/app_bleRelay.c \
+../Task/app_ble.c \
 ../Task/app_db.c \
 ../Task/app_encrypt.c \
 ../Task/app_gps.c \
@@ -27,7 +27,7 @@ C_SRCS += \
 OBJS += \
 ./Task/aes.o \
 ./Task/app_atcmd.o \
-./Task/app_bleRelay.o \
+./Task/app_ble.o \
 ./Task/app_db.o \
 ./Task/app_encrypt.o \
 ./Task/app_gps.o \
@@ -47,7 +47,7 @@ OBJS += \
 C_DEPS += \
 ./Task/aes.d \
 ./Task/app_atcmd.d \
-./Task/app_bleRelay.d \
+./Task/app_ble.d \
 ./Task/app_db.d \
 ./Task/app_encrypt.d \
 ./Task/app_gps.d \

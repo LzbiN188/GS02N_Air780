@@ -93,13 +93,6 @@ void paramDefaultInit(uint8_t level)
     dynamicParam.noNmeaRstCnt = 0;
     sysparam.sosalm = ALARM_TYPE_NONE;
 	
-    sysparam.bleRfThreshold = 48;
-    sysparam.bleOutThreshold = 1500;
-    sysparam.bleAutoDisc = 0;
-    sysparam.blePreShieldVoltage = 48;
-    sysparam.blePreShieldDetCnt = 10;
-    sysparam.blePreShieldHoldTime = 1;
-    sysparam.relaySpeed = 20;
     sysparam.protectVoltage = 4.6;
     sysparam.bf = 0;
     sysparam.gsdettime=0;
@@ -108,7 +101,7 @@ void paramDefaultInit(uint8_t level)
     sysparam.hiddenServOnoff = 1;
     sysparam.agpsen = 1;
     sysparam.bleen = 1;
-    sysparam.bleRelay = 1;
+
     sysparam.bleVoltage = 11.5;
     sysparam.batLowLevel = 0.0;
     sysparam.batHighLevel = 0.0;

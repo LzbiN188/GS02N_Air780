@@ -12,7 +12,6 @@
 #include "app_socket.h"
 #include "app_server.h"
 #include "aes.h"
-#include "app_bleRelay.h"
 #include "app_jt808.h"
 #include "app_task.h"
 #include "app_central.h"
@@ -152,7 +151,7 @@ static void doAtdebugCmd(uint8_t *buf, uint16_t len)
     }
     else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"BLESCAN"))
     {
-		bleCentralStartDiscover();
+		centralScanRequestSet();
     }
     else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"AA"))
     {
@@ -490,31 +489,7 @@ static void atCmdFmpcExtvolParser(void)
 
 static void atCmdBleconnParser(uint8_t *buf, uint16_t len)
 {
-	uint8_t ind = 0, j = 0, l;
-	char mac[20];
-	bleRelayDeleteAll();
-	tmos_memset(sysparam.bleConnMac, 0, sizeof(sysparam.bleConnMac));
-    ind = 0;
 
-    //aa bb cc dd ee ff
-    //ff ee dd cc bb aa
-
-    l = 5;
-    for (j = 0; j < 3; j++)
-    {
-        tmos_memcpy(mac, buf + (j * 2), 2);
-        tmos_memcpy(buf + (j * 2), buf + (l * 2), 2);
-        tmos_memcpy(buf + (l * 2), mac, 2);
-        l--;
-    }
-    if (ind < 2)
-    {
-        changeHexStringToByteArray(sysparam.bleConnMac[0], buf, 6);
-        bleRelayInsert(sysparam.bleConnMac[0], 0);
-        ind++;
-    }
-    LogPrintf(DEBUG_FACTORY, "+FMPC:Connect ble %s", buf);
-    startTimer(150, bleRelayDeleteAll, 0);
     
 }
 

@@ -434,3 +434,64 @@ void stringToLowwer(char *str, uint16_t strlen)
     }
 }
 
+/*
+ * item_data[][]：第一个括号是多少段数据的 第二个括号是每一段数据具体内容
+ * */
+void instructionItemParser(ITEM *item, uint8 *str, uint16 len)
+{
+    uint16 i, data_len;
+    char debug[50];
+    item->item_cnt = 0;
+    data_len = 0;
+    //逗号分隔
+    memset(item, 0, sizeof(ITEM));
+    for (i = 0; i < ITEMCNTMAX; i++)
+    {
+        item->item_data[i][0] = 0;
+    }
+    for (i = 0; i < len; i++)
+    {
+        if (str[i] == ',' || str[i] == '#' || str[i] == '\r' || str[i] == '\n' || str[i] == '=')
+        {
+            if (item->item_data[item->item_cnt][0] != 0)
+            {
+                item->item_cnt++;
+                data_len = 0;
+                if (item->item_cnt >= ITEMCNTMAX)
+                {
+                    break; ;
+                }
+            }
+        }
+        else
+        {
+            item->item_data[item->item_cnt][data_len] = str[i];
+            data_len++;
+            if (i + 1 == len)
+            {
+                item->item_cnt++;
+            }
+            if (data_len >= ITEMSIZEMAX)
+            {
+                return ;
+            }
+            item->item_data[item->item_cnt][data_len] = 0;//每一个字符串后加结束符
+        }
+    }
+    snprintf(debug, 50, "Item cnt=%d", item->item_cnt);
+    LogPrintf(DEBUG_ALL, debug);
+    //转大写
+    if (item->item_cnt > 0)
+    {
+        data_len = strlen(item->item_data[0]);
+        for (i = 0; i < data_len; i++)
+        {
+            if (item->item_data[0][i] >= 'a' && item->item_data[0][i] <= 'z')
+            {
+                item->item_data[0][i] = item->item_data[0][i] - 'a' + 'A';
+            }
+        }
+    }
+}
+
+

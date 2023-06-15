@@ -22,7 +22,7 @@
 #define APP_PARAM_FLAG          0x1A
 #define BOOT_PARAM_FLAG         0xB0
 
-#define EEPROM_VERSION									"GS02N-4RT_Air780_V1.2.15"
+#define EEPROM_VERSION									"GS02N-4MT_Air780_V1.2.15"
 
 
 #define JT808_PROTOCOL_TYPE			8
@@ -72,16 +72,7 @@ typedef struct
     uint8_t jt808Server[50];
     uint8_t bleServer[50];
 
-    uint8_t bleAutoDisc;
-    uint8_t bleRfThreshold;
-    uint8_t blePreShieldVoltage;
-    uint8_t blePreShieldDetCnt;
-    uint8_t blePreShieldHoldTime;
-    uint8_t relayCtl;
 
-
-    uint8_t bleConnMac[2][6];
-    uint8_t relaySpeed;
     uint8_t bf;
     int8_t utc;
 
@@ -117,13 +108,14 @@ typedef struct
     uint8_t agpsen;
     uint8_t cm2;
 
-    uint8_t bleRelay;
     float bleVoltage;
     uint8_t relayFun;
     
     float batLowLevel;
     float batHighLevel;
 
+    uint8_t scanAddr[10][6];
+ 
 } systemParam_s;
 
 /*存在EEPROM里的动态参数*/

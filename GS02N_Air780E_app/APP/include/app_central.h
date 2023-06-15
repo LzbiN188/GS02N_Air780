@@ -10,71 +10,84 @@
 
 #include "config.h"
 
-#define SERVICE_UUID                    0xFFE0
-#define CHAR_UUID                       0xFFE1
+#define APP_START_EVENT             				0x0001
+#define APP_DISCOVER_SERVICES_EVENT                 0x0002
+#define APP_DISCOVER_CHAR_EVENT						0x0004
+#define APP_DISCOVER_NOTIFY_EVENT					0x0008
+#define APP_NOTIFY_ENABLE_EVENT						0x0010
+#define APP_WRITEDATA_EVENT							0x1000
+#define APP_LINK_TIMEOUT_EVENT                      0x0020
 
-#define DEVICE_MAX_CONNECT_COUNT        2
+#define SCAN_LIST_SIZE              25
 
-#define BLE_TASK_START_EVENT            0x0001
-#define BLE_TASK_NOTIFYEN_EVENT         0x0002
-#define BLE_TASK_SENDTEST_EVENT         0x0004
-#define BLE_TASK_CONTIMEOUT_EVENT       0x0008
-#define BLE_TASK_SCHEDULE_EVENT         0x0010
+#define BLE_SCAN_INTERVAL           180
+
+
+
 typedef struct
 {
-    uint8 addr[B_ADDR_LEN];
-    uint8 addrType;
-    uint8 eventType;
+    uint8_t devAddr[B_ADDR_LEN]; //!< Device address of link
+    uint8_t devAddrType;         //!< Device address type: @ref GAP_ADDR_TYPE_DEFINES
+    uint8_t connRole;            //!< Connection formed as Master or Slave
+    uint8_t clockAccuracy;       //!< Clock Accuracy
+    uint8_t findIt;
+    uint16_t connInterval;       //!< Connection Interval
+    uint16_t connLatency;        //!< Connection Latency
+    uint16_t connTimeout;        //!< Connection Timeout
+    uint16_t connectionHandle;   //!< Connection Handle from controller used to ref the device
+    uint16_t findUUID;
+	uint16_t findStart;
+	uint16_t findEnd;
+	uint16_t notifyHandle;
+	uint16_t writeHandle;
+
+} centralConnInfo_s;
+
+typedef struct
+{
+    uint8 addr[6];
     uint8 broadcaseName[31];
+    uint8 request;
+    uint8 elec;
+    uint8 userId;
+    uint8 type;
+    uint8 version;
+    uint8 lockStatus;
+    uint8 scanCnt;
+    uint8 lost;
+    uint8 scanMinute;
     int8  rssi;
-} deviceScanInfo_s;
+    uint8 addrtype;
+    uint8 chainStatus;
+
+}scanDevInfo_s;
 
 typedef struct
 {
-    uint8_t connStatus      :1;
-    uint8_t findServiceDone :1;
-    uint8_t notifyDone      :1;
-    uint8_t use             :1;
-    uint8_t addr[6];
-    uint8_t addrType;
-
-    uint16_t connHandle;
-    uint16_t startHandle;
-    uint16_t endHandle;
-    uint16_t charHandle;
-    uint16_t notifyHandle;
-} deviceConnInfo_s;
-
-typedef struct
-{
-    uint8_t fsm;
-    uint16_t runTick;
-} bleScheduleInfo_s;
+    scanDevInfo_s devlist[SCAN_LIST_SIZE];
+    uint8_t devcnt;
+    uint8_t targetDev[6];
+}scanList_s;
 
 
+extern  tmosTaskID appCentralTaskId;
 
-typedef enum
-{
-    BLE_SCHEDULE_IDLE,
-    BLE_SCHEDULE_WAIT,
-    BLE_SCHEDULE_DONE,
-    BLE_SCHEDULE_NONET,
-} bleFsm;
+void appCentralInit(void);
+void appCentralStartScan(void);
+void appCentralStopScan(void);
+void appCentralEstablish(uint8_t * mac);
+void appCentralTeiminate(void);
+uint8 appCentralWriteData(uint16 handle, uint8 *data, uint8 len);
 
+void appShowScanList(char *message);
+void appUpdateScanList(void);
+void centralScanRequestSet(void);
+void centralScanRequestClear(void);
+int appDevListCheck(void);
+void appCentralScanTask(void);
 
-extern tmosTaskID bleCentralTaskId;
-void bleCentralInit(void);
-void bleCentralStartDiscover(void);
-void bleCentralStartConnect(uint8_t *addr, uint8_t addrType);
-void bleCentralDisconnect(uint16_t connHandle);
-uint8 bleCentralSend(uint16_t connHandle, uint16 attrHandle, uint8 *data, uint8 len);
-void bleDevTerminate(void);
-deviceConnInfo_s *bleDevGetInfo(uint8_t *addr);
-uint8_t *bleDevGetAddrByHandle(uint16_t connHandle);
+scanList_s *getDevScanlist(void);
 
-
-int8_t bleDevConnAdd(uint8_t *addr, uint8_t addrType);
-int8_t bleDevConnDel(uint8_t *addr);
-void bleDevConnDelAll(void);
+uint8_t appCentralSendData(uint8_t *data, uint8_t len);
 
 #endif /* APP_INCLUDE_APP_CENTRAL_H_ */

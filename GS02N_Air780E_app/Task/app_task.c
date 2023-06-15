@@ -13,7 +13,7 @@
 #include "app_socket.h"
 #include "app_server.h"
 #include "app_jt808.h"
-#include "app_bleRelay.h"
+#include "app_ble.h"
 #include "app_peripheral.h"
 
 #define SYS_LED1_ON       LED1_ON
@@ -1222,26 +1222,7 @@ static void voltageCheckTask(void)
             lbsRequestSet(DEV_EXTEND_OF_MY);
             wifiRequestSet(DEV_EXTEND_OF_MY);
             gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
-            if (sysparam.bleRelay != 0 && bleCutFlag != 0)
-            {
-				LogMessage(DEBUG_ALL, "ble relay on immediately");
-				sysparam.relayCtl = 1;
-				paramSaveAll();
-				if (sysparam.relayFun)
-				{
-					relayAutoClear();
-					bleRelayClearAllReq(BLE_EVENT_SET_DEVOFF);
-                    bleRelaySetAllReq(BLE_EVENT_SET_DEVON);
-				}
-				else
-				{
-					relayAutoRequest();
-				}
-            }
-            else
-            {
-				LogMessage(DEBUG_ALL, "relay on was disable");
-            }
+
         }
     }
     else if (sysinfo.outsidevoltage > 6.0)
@@ -1378,6 +1359,7 @@ static void modeStart(void)
     //wifiRequestSet(DEV_EXTEND_OF_MY);
     gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
     ledStatusUpdate(SYSTEM_LED_RUN, 1);
+    centralScanRequestSet();
     modulePowerOn();
     netResetCsqSearch();
     changeModeFsm(MODE_RUNING);
@@ -1736,87 +1718,6 @@ void autoSleepTask(void)
     }
 }
 
-/**************************************************
-@bref       relayAutoRequest
-@param
-@note
-**************************************************/
-
-void relayAutoRequest(void)
-{
-    sysinfo.doRelayFlag = 1;
-}
-
-/**************************************************
-@bref       relayAutoClear
-@param
-@note
-**************************************************/
-
-void relayAutoClear(void)
-{
-    sysinfo.doRelayFlag = 0;
-}
-
-/**************************************************
-@bref       继电器自动控制
-@param
-@note
-**************************************************/
-static void doRelayOn(void)
-{
-    relayAutoClear();
-    bleRelayClearAllReq(BLE_EVENT_SET_DEVOFF);
-    bleRelaySetAllReq(BLE_EVENT_SET_DEVON);
-    LogMessage(DEBUG_ALL, "do relay on");
-}
-
-void relayAutoCtrlTask(void)
-{
-    static uint8_t runTick = 0;
-    gpsinfo_s *gpsinfo;
-    char message[50];
-    if (sysinfo.doRelayFlag == 0)
-    {
-        runTick = 0;
-        return  ;
-    }
-    if (getTerminalAccState() == 0)
-    {
-        //设备静止了，立即断油电，本机relay控制线断，如果有蓝牙，也一块断
-        doRelayOn();
-        return;
-    }
-    if (sysparam.relaySpeed == 0)
-    {
-        //没有配置速度规则，那就等acc off才断
-        instructionRespone("Relay on: Acc on");
-        return;
-    }
-    if (sysinfo.gpsOnoff == 0)
-    {
-    	instructionRespone("Relay on: No gps");
-        return;
-    }
-    gpsinfo = getCurrentGPSInfo();
-    if (gpsinfo->fixstatus == 0)
-    {
-    	instructionRespone("Relay on: No gps");
-        return;
-    }
-    if (gpsinfo->speed > sysparam.relaySpeed)
-    {
-    	sprintf(message, "Relay on: Overspeed %d km/h", sysparam.relaySpeed);
-    	instructionRespone(message);
-        runTick = 0;
-        return;
-    }
-    if (++runTick >= 5)
-    {
-        runTick = 0;
-        doRelayOn();
-    }
-}
 
 
 /**************************************************
@@ -2008,7 +1909,9 @@ void taskRunInSecond(void)
     sysModeRunTask();
     serverManageTask();
     autoSleepTask();
-    relayAutoCtrlTask();
+    appCentralScanTask();
+    //bleProcessTask();
+
     sosRequestTask();
 }
 
@@ -2056,7 +1959,7 @@ void doDebugRecvPoll(uint8_t *msg, uint16_t len)
 void myTaskPreInit(void)
 {
     tmos_memset(&sysinfo, 0, sizeof(sysinfo));
-	//sysinfo.logLevel = DEBUG_ALL;
+	sysinfo.logLevel = DEBUG_ALL;
 
     SetSysClock(CLK_SOURCE_PLL_60MHz);
     portGpioSetDefCfg();

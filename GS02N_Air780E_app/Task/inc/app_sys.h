@@ -92,6 +92,14 @@ typedef struct
     float lowvoltage;
 
 	uint8_t moduleRstCnt;
+
+    uint8_t scanNow     : 1;//扫描中
+    uint8_t autoScan    : 1;//自动扫描
+    uint8_t linkConn    : 1;//连接状态
+    uint8_t linking     : 1;//正在连接中
+    uint8_t linkRetry   : 1;//重连
+    uint8_t masterScanReq : 1;
+    uint8_t linkAddr[7];
 } SystemInfoTypedef;
 
 extern SystemInfoTypedef sysinfo;
@@ -120,5 +128,6 @@ void strToUppper(char *data, uint16_t len);
 void updateRTCtimeRequest(void);
 void byteArrayInvert(uint8 *data, uint8 dataLen);
 void stringToLowwer(char *str, uint16_t strlen);
+void instructionItemParser(ITEM *item, uint8 *str, uint16 len);
 
 #endif

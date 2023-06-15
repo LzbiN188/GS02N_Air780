@@ -14,6 +14,7 @@
 #include "app_peripheral.h"
 #include "app_db.h"
 #include "app_jt808.h"
+#include "app_central.h"
 
 static uint8_t instructionid[4];
 static uint8_t bleinstructionid[4];
@@ -48,6 +49,28 @@ static int createProtocolHead(char *dest, unsigned char Protocol_type)
     dest[pdu_len++] = 0;
     dest[pdu_len++] = Protocol_type;
     return pdu_len;
+}
+
+/**************************************************
+@bref       7979协议头
+@param
+@return
+@note
+**************************************************/
+
+static int createProtocolHead7979(char *dest, unsigned char Protocol_type)
+{
+    int pdu_len = 0;
+
+    if(dest == 0)
+        return 0;
+    dest[pdu_len++] = 0x79;
+    dest[pdu_len++] = 0x79;
+    dest[pdu_len++] = 0;
+    dest[pdu_len++] = 0;
+    dest[pdu_len++] = Protocol_type;
+    return pdu_len;
+
 }
 /**************************************************
 @bref		7878协议尾
@@ -367,8 +390,8 @@ static void sendTcpDataDebugShow(uint8_t link, char *txdata, int txlen)
 {
     int debuglen;
     char srclen;
-    char senddata[300];
-    debuglen = txlen > 128 ? 128 : txlen;
+    char senddata[1000];
+    debuglen = txlen;// > 128 ? 128 : txlen;
     sprintf(senddata, "Socket[%d] Send:", link);
     srclen = tmos_strlen(senddata);
     byteToHexString((uint8_t *)txdata, (uint8_t *)senddata + srclen, (uint16_t) debuglen);
@@ -866,6 +889,85 @@ int createProtocol8A(unsigned short Serial, char *DestBuf)
     return pdu_len;
 }
 
+/**************************************************
+@bref       生成0B协议
+@param
+@return
+@note
+**************************************************/
+
+int creatProtocol0B(unsigned short Serial, char *DestBuf, scanList_s *blelist)
+{
+    int pdu_len;
+    uint8_t i;
+    uint8_t rssi, status;
+    uint8_t cnt;
+    pdu_len = createProtocolHead7979(DestBuf, 0x0B);
+    //主机状态
+    DestBuf[pdu_len++] = 0x13;
+    DestBuf[pdu_len++] = 0x01;
+    DestBuf[pdu_len++] = 0x00;//待定
+    //n组蓝牙信息
+    DestBuf[pdu_len++] = 0x14;
+    DestBuf[pdu_len++] = 0x01;
+    DestBuf[pdu_len++] = 00;
+
+    for (i = 0; i < blelist->devcnt; i++)
+    {
+        cnt++;
+        //mac
+        DestBuf[pdu_len++] = 0x15;
+        DestBuf[pdu_len++] = 0x06;
+        tmos_memcpy(DestBuf + pdu_len, blelist->devlist[i].addr, 6);
+        pdu_len += 6;
+        //type
+        DestBuf[pdu_len++] = 0x16;
+        DestBuf[pdu_len++] = 0x01;
+        DestBuf[pdu_len++] = blelist->devlist[i].type;
+
+        if (blelist->devlist[i].rssi < 0)
+        {
+            rssi = blelist->devlist[i].rssi * -1;
+            rssi |= 0x80;
+        }
+        else
+        {
+            rssi = blelist->devlist[i].rssi;
+        }
+        //rssi
+        DestBuf[pdu_len++] = 0x17;
+        DestBuf[pdu_len++] = 0x01;
+        DestBuf[pdu_len++] = rssi;
+        //data
+        //物流锁
+        if (blelist->devlist[i].type == 2)
+        {
+            status = 0;
+            if (blelist->devlist[i].request)
+            {
+                status |= 0x01;
+            }
+            if (blelist->devlist[i].lockStatus)
+            {
+                status |= 0x02;
+            }
+            DestBuf[pdu_len++] = 0x19;
+            DestBuf[pdu_len++] = 0x01;
+            DestBuf[pdu_len++] = status;
+        }
+        //螺帽
+        else if (blelist->devlist[i].type == 1)
+        {
+            DestBuf[pdu_len++] = 0x18;
+            DestBuf[pdu_len++] = 0x01;
+            DestBuf[pdu_len++] = blelist->devlist[i].elec;
+        }
+    }
+    DestBuf[10] = cnt;
+    pdu_len = createProtocolTail_7979(DestBuf, pdu_len, Serial);
+    return pdu_len;
+
+}
 
 /**************************************************
 @bref		生成序列号
@@ -956,7 +1058,7 @@ void protocolSend(uint8_t link, PROTOCOLTYPE protocol, void *param)
     gpsinfo_s *gpsinfo;
     insParam_s *insParam;
     recordUploadInfo_s *recInfo = NULL;
-    char txdata[400];
+    char txdata[500];
     int txlen = 0;
     char *debugP;
 
@@ -1004,6 +1106,9 @@ void protocolSend(uint8_t link, PROTOCOLTYPE protocol, void *param)
             break;
         case PROTOCOL_8A:
             txlen = createProtocol8A(createProtocolSerial(), txdata);
+            break;
+        case PROTOCOL_0B:
+            txlen = creatProtocol0B(createProtocolSerial(), txdata, (scanList_s *)param);
             break;
         case PROTOCOL_F3:
             txlen = createProtocolF3(txdata, (WIFIINFO *)param);

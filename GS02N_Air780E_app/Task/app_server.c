@@ -15,6 +15,7 @@
 #include "app_db.h"
 #include "app_jt808.h"
 #include "app_task.h"
+#include "app_ble.h"
 
 static netConnectInfo_s privateServConn, bleServConn, hiddenServConn;
 static jt808_Connect_s jt808ServConn;
@@ -297,8 +298,13 @@ void privateServerConnTask(void)
                 protocolInfoResiter(getBatteryLevel(), sysinfo.outsidevoltage > 5.0 ? sysinfo.outsidevoltage : sysinfo.insidevoltage,
                                     dynamicParam.startUpCnt, dynamicParam.runTime);
                 protocolSend(NORMAL_LINK, PROTOCOL_13, NULL);
+                bleUpload();
             }
             privateServConn.heartbeattick++;
+            if (privateServConn.heartbeattick % (sysparam.heartbeatgap - 30) == 0)
+            {
+                centralScanRequestSet();
+            }
             if (getTcpNack())
             {
                 querySendData(NORMAL_LINK);

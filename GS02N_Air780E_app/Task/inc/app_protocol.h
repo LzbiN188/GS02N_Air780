@@ -17,6 +17,7 @@ typedef enum{
 	PROTOCOL_F1,//ICCID
 	PROTOCOL_F3,
 	PROTOCOL_8A,
+	PROTOCOL_0B,//¿∂—¿…®√Ë–≈œ¢
 }PROTOCOLTYPE;
 
 
