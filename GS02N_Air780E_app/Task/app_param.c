@@ -39,6 +39,23 @@ void dynamicParamGetAll(void)
 	EEPROM_READ(APP_DYNAMIC_PARAM_ADDR, &dynamicParam, sizeof(dynamicParam_s));
 }
 
+void agpsDataSaveAll(uint16_t offset, uint8_t *data ,uint16_t len)
+{
+	EEPROM_ERASE(APP_AGPS_DATA_ADDR + offset, len);
+	EEPROM_WRITE(APP_AGPS_DATA_ADDR + offset, data, len);
+}
+
+void agpsDataGetAll(uint16_t offset, uint8_t *data, uint16_t len)
+{
+	EEPROM_READ(APP_AGPS_DATA_ADDR + offset, data, len);
+}
+
+void agpsDataClearAll(void)
+{
+	EEPROM_ERASE(APP_AGPS_DATA_ADDR, EEPROM_AGPS_SIZE_MAX);
+}
+
+
 void paramDefaultInit(uint8_t level)
 {
     LogMessage(DEBUG_ALL, "paramDefaultInit");

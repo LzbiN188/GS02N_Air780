@@ -8,7 +8,8 @@
 /*
  * DataFlash 分布
  * [0~1)        Total:1KB   bootloader
- * [1~9)        Total:8KB   systemparam
+ * [1~6)        Total:5KB   systemparam
+ * [6~9)		Total:3KB	agpsdata
  * [9~10)		Total:1KB	dynamicparam
  * [10~30)      Total:20KB  database
  * [30~31)		Total:1KB	databaseInfo
@@ -18,9 +19,12 @@
 //目前预留前1K字节给bootloader，所以app从0x400开始
 #define BOOT_USER_PARAM_ADDR    0x00
 #define APP_USER_PARAM_ADDR     0x400  //实际是0x00070000+APP_USER_PARAM_ADDR
+#define APP_AGPS_DATA_ADDR		0x1800
 #define APP_DYNAMIC_PARAM_ADDR	0x2400 //实际是0x00070000+APP_DYNAMIC_PARAM_ADDR
 #define APP_PARAM_FLAG          0x1A
 #define BOOT_PARAM_FLAG         0xB0
+
+#define EEPROM_AGPS_SIZE_MAX	3*1024
 
 #define EEPROM_VERSION									"GS02N-4RT_Air780_V1.2.15"
 
@@ -161,6 +165,13 @@ void paramGetAll(void);
 
 void dynamicParamSaveAll(void);
 void dynamicParamGetAll(void);
+
+void agpsDataSaveAll(uint16_t offset, uint8_t *data ,uint16_t len);
+void agpsDataGetAll(uint16_t offset, uint8_t *data, uint16_t len);
+void agpsDataClearAll(void);
+
+
+
 
 void paramInit(void);
 void paramDefaultInit(uint8_t type);

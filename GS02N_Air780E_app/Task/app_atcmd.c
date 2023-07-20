@@ -77,7 +77,6 @@ static void doAtdebugCmd(uint8_t *buf, uint16_t len)
     ITEM item;
     stringToItem(&item, buf, len);
     strToUppper(item.item_data[0], strlen(item.item_data[0]));
-
     if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"SUSPEND"))
     {
         LogMessage(DEBUG_LOW, "Suspend all task");
@@ -156,11 +155,15 @@ static void doAtdebugCmd(uint8_t *buf, uint16_t len)
     }
     else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"AA"))
     {
-		sysinfo.debugflag = 1;
+
     }
     else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"BB"))
     {
-		sysinfo.debugflag = 0;
+
+    }
+    else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"CC"))
+    {
+
     }
     else
     {

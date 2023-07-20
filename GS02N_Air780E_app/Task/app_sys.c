@@ -397,7 +397,7 @@ void strToUppper(char *data, uint16_t len)
 
 void updateRTCtimeRequest(void)
 {
-    sysinfo.rtcUpdate = 0;
+    sysinfo.rtcUpdate = 1;
 }
 
 void byteArrayInvert(uint8 *data, uint8 dataLen)

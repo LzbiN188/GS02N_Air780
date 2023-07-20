@@ -73,6 +73,7 @@ void bleServerAddInfo(bleInfo_s dev);
 void showBleList(void);
 void bleSerLoginReady(void);
 
+void agpsDataInit(void);
 void agpsRequestSet(void);
 void agpsRequestClear(void);
 

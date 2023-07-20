@@ -964,6 +964,15 @@ void bleServerConnTask(void)
     }
 }
 
+
+void agpsDataInit(void)
+{
+	sysinfo.agpsDestRecvLen = 0;
+    sysinfo.agpsHasRecvLen = 0;
+    sysinfo.agpsWriteOffset = 0;
+    sysinfo.agpsReadOffset = 0;
+    sysinfo.agpsCompleteFlag = 0;
+}
 /**************************************************
 @bref		agps请求
 @param
@@ -976,12 +985,15 @@ void bleServerConnTask(void)
 void agpsRequestSet(void)
 {
     sysinfo.agpsRequest = 1;
+	agpsDataInit();
+
     LogMessage(DEBUG_ALL, "agpsRequestSet==>OK");
 }
 
 void agpsRequestClear(void)
 {
     sysinfo.agpsRequest = 0;
+    agpsDataInit();
     LogMessage(DEBUG_ALL, "agpsRequestClear==>OK");
 }
 
@@ -990,49 +1002,133 @@ void agpsRequestClear(void)
 @param
 @return
 @note
+AGNSS data from CASIC.
+DataLength: 2746.
+Limitation: 28/1000.
+
 **************************************************/
 
 static void agpsSocketRecv(char *data, uint16_t len)
 {
-    LogPrintf(DEBUG_ALL, "Agps Reject %d Bytes", len);
-    //LogMessageWL(DEBUG_ALL, data, len);
-    portUartSend(&usart3_ctl, data, len);
+    LogPrintf(DEBUG_ALL, "Agps Reject %d Bytes", len, data);
+
+	uint8_t *rebuf;
+	uint16_t relen, titlLen;
+	int index;
+	char restore[20];
+	
+	
+    index = my_getstrindex(data, "AGNSS data from CASIC", len);
+    if (index >= 0)
+    {
+		index = my_getstrindex(data, "DataLength: ", len);
+		if (index >= 0)
+		{
+			rebuf = data + index + 12;
+			relen = len - index - 12;
+			index = getCharIndex(rebuf, relen, '.');
+			if (index < 0)
+			{
+				/*重连agps*/
+				LogMessage(DEBUG_ALL, "agps data error:no DataLength");
+				agpsDataInit();
+				socketDel(AGPS_LINK);
+				return;
+			}
+			memcpy(restore, rebuf, index);
+			restore[index] = 0;
+			sysinfo.agpsDestRecvLen = atoi(restore);
+			
+			rebuf += index;
+			relen -= index;
+			index = my_getstrindex(rebuf, "Limitation", relen);
+			if (index < 0)
+			{
+				/*重连agps*/
+				agpsDataInit();
+				LogMessage(DEBUG_ALL, "agps data error:no Limitation");
+				return;
+			}
+			rebuf += index;
+			relen -= index;
+			index = getCharIndex(rebuf, relen, '\n');
+			rebuf += index + 1;
+			relen -= index + 1;
+			titlLen = len - relen;
+			LogPrintf(DEBUG_ALL, "titlLen:%d", titlLen);
+			sysinfo.agpsDestRecvLen += titlLen;
+			LogPrintf(DEBUG_ALL, "agpRecvLen:%d", sysinfo.agpsDestRecvLen);
+		}
+    }
+	if (sysinfo.agpsDestRecvLen != 0)
+	{
+		sysinfo.agpsHasRecvLen += len;
+		//LogPrintf(DEBUG_ALL, "agpsHasRecvLen:%d, offset:%d", sysinfo.agpsHasRecvLen, sysinfo.agpsWriteOffset);
+		LogPrintf(DEBUG_ALL, ">>>>>>>>>>>>>>>>>>> agnss progress: %.2f%% <<<<<<<<<<<<<<<<<<", sysinfo.agpsHasRecvLen * 100.0/ sysinfo.agpsDestRecvLen);
+		agpsDataSaveAll(sysinfo.agpsWriteOffset, data, len);
+		sysinfo.agpsWriteOffset += len;
+		if (ABS(sysinfo.agpsDestRecvLen - sysinfo.agpsHasRecvLen) <= 10)
+		{
+			LogMessage(DEBUG_ALL, "agps complete!!!");
+			sysinfo.agpsCompleteFlag = 1;
+		}
+		else
+		{
+			if (isAgpsDataRecvComplete() == 0)
+			{
+				LogMessage(DEBUG_ALL, "agps data error:");
+				agpsDataInit();
+				socketDel(AGPS_LINK);
+			}
+		}
+	}
 }
 
 static void agpsServerConnTask(void)
 {
     static uint8_t agpsFsm = 0;
     static uint8_t runTick = 0;
-    char agpsBuff[150];
+    char agpsBuff[513];
+    uint8_t debug[1024+1];
+    uint16_t debuglen;
     int ret;
     gpsinfo_s *gpsinfo;
+    static uint16_t sendLen, i;
 
     if (sysparam.agpsen == 0)
     {
 		sysinfo.agpsRequest = 0;
+		if (socketGetUsedFlag(AGPS_LINK) == 1)
+		{
+			socketDel(AGPS_LINK);
+		}
 		return;
     }
     if (sysinfo.agpsRequest == 0)
     {
+    	if (socketGetUsedFlag(AGPS_LINK) == 1)
+		{
+			socketDel(AGPS_LINK);
+		}
         return;
     }
 
     gpsinfo = getCurrentGPSInfo();
-
     if (isModuleRunNormal() == 0)
     {
         return ;
     }
-    if (gpsinfo->fixstatus || sysinfo.gpsOnoff == 0)
-    {
-        socketDel(AGPS_LINK);
-        agpsRequestClear();
-        return;
-    }
+//    if (gpsinfo->fixstatus || sysinfo.gpsOnoff == 0)
+//    {
+//        socketDel(AGPS_LINK);
+//        agpsRequestClear();
+//        return;
+//    }
     if (socketGetUsedFlag(AGPS_LINK) != 1)
     {
         agpsFsm = 0;
         ret = socketAdd(AGPS_LINK, sysparam.agpsServer, sysparam.agpsPort, agpsSocketRecv);
+        agpsDataInit();
         if (ret != 1)
         {
             LogPrintf(DEBUG_ALL, "agps add socket err[%d]", ret);
@@ -1048,26 +1144,59 @@ static void agpsServerConnTask(void)
     switch (agpsFsm)
     {
         case 0:
-            if (gpsinfo->fixstatus == 0)
-            {
-                sprintf(agpsBuff, "user=%s;pwd=%s;cmd=full;", sysparam.agpsUser, sysparam.agpsPswd);
-                socketSendData(AGPS_LINK, (uint8_t *) agpsBuff, strlen(agpsBuff));
-            }
+//            if (gpsinfo->fixstatus == 0)
+//            {
+//                sprintf(agpsBuff, "user=%s;pwd=%s;cmd=full;", sysparam.agpsUser, sysparam.agpsPswd);
+//                socketSendData(AGPS_LINK, (uint8_t *) agpsBuff, strlen(agpsBuff));
+//            }
             agpsFsm = 1;
             runTick = 0;
+            i = 0;
             break;
         case 1:
-            if (++runTick >= 15)
+            if (++runTick >= 60)
             {
-            	if (isAgpsDataRecvComplete() == 0)
+            	if (sysinfo.agpsCompleteFlag == 0)
             	{
 	                agpsFsm = 0;
 	                runTick = 0;
 	                socketDel(AGPS_LINK);
 	                wifiRequestSet(DEV_EXTEND_OF_MY);
 	                agpsRequestClear();
-                }
+	            }
+                
             }
+			if (sysinfo.agpsCompleteFlag)
+			{
+				if (sysinfo.agpsDestRecvLen == 0)
+				{
+
+					return;
+				}
+//				do 
+//				{
+					sendLen = (sysinfo.agpsDestRecvLen - i) > 1024 ? 1024 : (sysinfo.agpsDestRecvLen - i);
+					LogPrintf(DEBUG_ALL, "%d %d %d %d", sendLen, sysinfo.agpsDestRecvLen, i, sysinfo.agpsDestRecvLen - i);
+					agpsDataGetAll(i, agpsBuff, sendLen);
+					portUartSend(&usart3_ctl, agpsBuff, sendLen);
+					debuglen = sendLen > 512 ? 512 : sendLen;
+					byteToHexString(agpsBuff, debug, debuglen);
+					debug[debuglen*2] = 0;
+					LogMessage(DEBUG_ALL, ">>>>");
+					LogMessageWL(DEBUG_ALL, debug, debuglen * 2);
+					i += sendLen;
+					
+//				}while(i < sysinfo.agpsDestRecvLen);
+				if (i >= sysinfo.agpsDestRecvLen)
+				{
+					sysinfo.agpsCompleteFlag = 0;
+					socketDel(AGPS_LINK);
+	                wifiRequestSet(DEV_EXTEND_OF_MY);
+	                agpsRequestClear();
+	                agpsFsm = 0;
+	                runTick = 0;
+				}
+			}
             break;
         default:
             agpsFsm = 0;

@@ -92,6 +92,11 @@ typedef struct
     float lowvoltage;
 
 	uint8_t moduleRstCnt;
+	uint16_t agpsDestRecvLen;
+	uint16_t agpsHasRecvLen;
+	uint16_t agpsReadOffset;
+	uint16_t agpsWriteOffset;
+	uint8_t agpsCompleteFlag			: 1;
 } SystemInfoTypedef;
 
 extern SystemInfoTypedef sysinfo;

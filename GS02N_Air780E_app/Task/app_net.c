@@ -528,7 +528,7 @@ static void moduleExitFly(void)
 static void qirdCmdSend(uint8_t link)
 {
     char param[10];
-    sprintf(param, "2,%d,500", link);
+    sprintf(param, "2,%d,512", link);
     moduleState.curQirdId = link;
     sendModuleCmd(CIPRXGET_CMD, param);
 }
@@ -1936,7 +1936,7 @@ OK
 uint8_t ciprxgetParser(uint8_t *buf, uint16_t len)
 {
     int index;
-    char restore[513];
+    char restore[1025]={0};
     uint8_t *rebuf, type, link, ret = 0;
     int16_t relen;
     uint16_t readLen, unreadLen, debugLen;
@@ -1990,14 +1990,16 @@ uint8_t ciprxgetParser(uint8_t *buf, uint16_t len)
                 {
                     if (readLen != 0)
                     {
-                        debugLen = readLen > 256 ? 256 : readLen;
+                        debugLen = readLen > 512 ? 512 : readLen;
                         byteToHexString(rebuf, restore, debugLen);
+                        restore[debugLen * 2] = 0;
 //                        if (link == 4)
 //                        {
 //							LogMessageWL(DEBUG_ALL, rebuf, relen);
 //                        }
-                        restore[debugLen * 2] = 0;
-                        LogPrintf(DEBUG_ALL, "TCP RECV (%d)[%d]:%s", link, readLen, restore);
+                        
+                        LogPrintf(DEBUG_ALL, "TCP RECV (%d)[%d]:", link, readLen);
+                        LogMessageWL(DEBUG_ALL, restore, debugLen * 2);
                         if (link == 4)
                         {
                         	socketRecv(link, rebuf, readLen);

@@ -56,6 +56,7 @@ UART_RXTX_CTL usart3_ctl = {0};
 static int8_t pushUartRxData(UART_RXTX_CTL *uartctl, uint8_t *buf, uint16_t len)
 {
     uint16_t spare, sparetoend;
+    uint8_t id = 0;
     if (uartctl->rxend > uartctl->rxbegin)
     {
         spare = uartctl->rxbufsize - (uartctl->rxend - uartctl->rxbegin);
@@ -70,7 +71,23 @@ static int8_t pushUartRxData(UART_RXTX_CTL *uartctl, uint8_t *buf, uint16_t len)
     }
     if (len > spare - 1)
     {
-        LogMessage(DEBUG_ALL, "pushUartRxData==>no space");
+    	if (uartctl == &usart0_ctl)
+    	{
+			id = 0;
+    	}
+    	else if (uartctl == &usart1_ctl)
+    	{
+			id = 1;
+    	}
+    	else if (uartctl == &usart2_ctl)
+    	{
+			id = 2;
+    	}
+    	else if (uartctl == &usart3_ctl)
+    	{
+			id = 3;
+    	}
+        LogPrintf(DEBUG_ALL, "pushUartRxData==>uart[%d]no space", id);
         return -1;
     }
 
