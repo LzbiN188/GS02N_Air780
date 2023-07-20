@@ -502,7 +502,7 @@ static void gpsClose(void)
     ledStatusUpdate(SYSTEM_LED_GPSOK, 0);
     if (primaryServerIsReady())
     {
-        moduleSleepCtl(1);
+        modulePsmCtl(1);
     }
     LogMessage(DEBUG_ALL, "gpsClose");
 }
@@ -1691,6 +1691,7 @@ void autoSleepTask(void)
         {
             flag = 0;
 			portFclkChange(0);
+			tmos_start_reload_task(sysinfo.taskId, APP_TASK_POLLUART_EVENT, MS1_TO_SYSTEM_TIME(50));
             LogMessage(DEBUG_ALL, "disable sleep");
         }
     }
@@ -1701,6 +1702,7 @@ void autoSleepTask(void)
         {
             flag = 1;
 			portFclkChange(1);
+			tmos_stop_task(sysinfo.taskId, APP_TASK_POLLUART_EVENT);
             LogMessage(DEBUG_ALL, "enable sleep");
         }
     }
@@ -2020,9 +2022,9 @@ void doDebugRecvPoll(uint8_t *msg, uint16_t len)
 void myTaskPreInit(void)
 {
     tmos_memset(&sysinfo, 0, sizeof(sysinfo));
-	//sysinfo.logLevel = DEBUG_ALL;
+	sysinfo.logLevel = DEBUG_ALL;
 
-    SetSysClock(CLK_SOURCE_HSE_16MHz);
+    SetSysClock(CLK_SOURCE_PLL_60MHz);
     portGpioSetDefCfg();
     portUartCfg(APPUSART2, 1, 115200, doDebugRecvPoll);
     portModuleGpioCfg();
@@ -2086,15 +2088,15 @@ void myTaskInit(void)
     sysinfo.taskId = TMOS_ProcessEventRegister(myTaskEventProcess);
     tmos_start_reload_task(sysinfo.taskId, APP_TASK_KERNAL_EVENT, MS1_TO_SYSTEM_TIME(100));
     tmos_start_reload_task(sysinfo.taskId, APP_TASK_POLLUART_EVENT, MS1_TO_SYSTEM_TIME(50));
-//    if (sysparam.bleen == 1)
-//    {
-//        char broadCastNmae[30];
-//        sprintf(broadCastNmae, "%s-%s", "AUTO", dynamicParam.SN + 9);
-//        appPeripheralBroadcastInfoCfg(broadCastNmae);
-//    }
-//    else if (sysparam.bleen == 0)
-//    {
-//        appPeripheralCancel();
-//    }
+    if (sysparam.bleen == 1)
+    {
+        char broadCastNmae[30];
+        sprintf(broadCastNmae, "%s-%s", "AUTO", dynamicParam.SN + 9);
+        appPeripheralBroadcastInfoCfg(broadCastNmae);
+    }
+    else if (sysparam.bleen == 0)
+    {
+        appPeripheralCancel();
+    }
 }
 

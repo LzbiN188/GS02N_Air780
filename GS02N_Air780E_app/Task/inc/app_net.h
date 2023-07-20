@@ -89,6 +89,10 @@ typedef enum
     WIFISCAN_CMD,
     CFG_CMD,
     CIICR_CMD,
+    IPR_CMD,
+    POWERMODE_CMD,
+    CIFSR_CMD,
+    CSTT_CMD,
 } atCmdType_e;
 
 
@@ -201,6 +205,7 @@ void moduleRecvParser(uint8_t *buf, uint16_t bufsize);
 void netResetCsqSearch(void);
 int socketSendData(uint8_t link, uint8_t *data, uint16_t len);
 void moduleSleepCtl(uint8_t onoff);
+void modulePsmCtl(uint8_t onoff);
 
 void moduleGetCsq(void);
 void moduleGetLbs(void);

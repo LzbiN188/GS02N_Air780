@@ -80,7 +80,11 @@ const atCmd_s cmdtable[] =
     {CFGRI_CMD, "AT+CFGRI"},
     {WIFISCAN_CMD, "AT+WIFISCAN"},
     {CFG_CMD, "AT+CFG"},
-	{CIICR_CMD, "AT+CMD"},
+	{CIICR_CMD, "AT+CIICR"},
+	{IPR_CMD, "AT+IPR"},
+	{POWERMODE_CMD, "AT+POWERMODE"},
+	{CIFSR_CMD, "AT+CIFSR"},
+	{CSTT_CMD, "AT+CSTT"},
 };
 
 /**************************************************
@@ -349,7 +353,7 @@ void modulePowerOn(void)
     LogMessage(DEBUG_ALL, "modulePowerOn");
     moduleInit();
     sysinfo.moduleRstFlag = 1;
-    portUartCfg(APPUSART0, 1, 115200, moduleRecvParser);
+    portUartCfg(APPUSART0, 1, 9600, moduleRecvParser);
     POWER_ON;
     PWRKEY_HIGH;
     RSTKEY_HIGH;
@@ -489,8 +493,8 @@ static void netSetCgdcong(char *apn)
 static void netSetApn(char *apn, char *apnname, char *apnpassword)
 {
     char param[100];
-    sprintf(param, "1,1,\"%s\",\"%s\",\"%s\"", apn, apnname, apnpassword);
-    sendModuleCmd(QICSGP_CMD, param);
+    sprintf(param, "\"%s\",\"%s\",\"%s\"", apn, apnname, apnpassword);
+    sendModuleCmd(CSTT_CMD, param);
 }
 
 
@@ -588,6 +592,8 @@ void netConnectTask(void)
                 moduleCtrl.atCount = 0;
                 moduleState.atResponOK = 0;
                 moduleState.cpinResponOk = 0;
+                modulePsmCtl(0);
+                sendModuleCmd(CGSN_CMD, NULL);
                 changeProcess(CPIN_STATUS);
             }
             else
@@ -618,8 +624,8 @@ void netConnectTask(void)
                 moduleState.cpinResponOk = 0;
                 moduleState.csqOk = 0;
                 sendModuleCmd(AT_CMD, NULL);
-                netSetCgdcong((char *)sysparam.apn);
-                netSetApn((char *)sysparam.apn, (char *)sysparam.apnuser, (char *)sysparam.apnpassword);
+//                netSetCgdcong((char *)sysparam.apn);
+//                netSetApn((char *)sysparam.apn, (char *)sysparam.apnuser, (char *)sysparam.apnpassword);
                 changeProcess(CSQ_STATUS);
 
             }
@@ -643,7 +649,6 @@ void netConnectTask(void)
                 moduleCtrl.csqCount = 0;
                 sendModuleCmd(CGREG_CMD, "2");
                 sendModuleCmd(CEREG_CMD, "2");
-                sendModuleCmd(CIPSHUT_CMD, NULL);
                 changeProcess(CGREG_STATUS);
                 netResetCsqSearch();
             }
@@ -684,6 +689,7 @@ void netConnectTask(void)
             {
                 moduleCtrl.cgregCount = 0;
                 moduleState.cgregOK = 0;
+                sendModuleCmd(CIPSHUT_CMD, NULL);
                 changeProcess(CONFIG_STATUS);
             }
             else
@@ -725,6 +731,10 @@ void netConnectTask(void)
             sendModuleCmd(CIPQSEND_CMD, "1");
             sendModuleCmd(CIPRXGET_CMD, "5");
             sendModuleCmd(CFG_CMD, "\"urcdelay\",100");
+            sendModuleCmd(CIMI_CMD, NULL);
+            sendModuleCmd(ICCID_CMD, NULL);
+            netSetApn((char *)sysparam.apn, (char *)sysparam.apnuser, (char *)sysparam.apnpassword);
+            sendModuleCmd(CIICR_CMD, NULL);
             changeProcess(QIACT_STATUS);
             break;
         case QIACT_STATUS:
@@ -732,21 +742,13 @@ void netConnectTask(void)
             {
                 moduleState.qipactOk = 0;
                 moduleCtrl.qipactCount = 0;
-                changeProcess(NORMAL_STATUS);
-                sendModuleCmd(AT_CMD, NULL);
-                sendModuleCmd(CGSN_CMD, NULL);
+                changeProcess(NORMAL_STATUS);                
+                sendModuleCmd(CIFSR_CMD, NULL);
             }
             else
             {
-                if (moduleState.qipactSet == 0)
-                {
-                    moduleState.qipactSet = 1;
-                    sendModuleCmd(CGATT_CMD, "1");
-                }
-                else
-                {
-                    sendModuleCmd(CGATT_CMD, "?");
-                }
+                sendModuleCmd(CGATT_CMD, "?");
+                
                 if (moduleState.fsmtick >= 45)
                 {
                     LogMessage(DEBUG_ALL, "try QIPACT again");
@@ -1037,97 +1039,6 @@ static void qipactParser(uint8_t *buf, uint16_t len)
     }
 }
 
-/**************************************************
-@bref		socket数据接收解析
-@param
-@return
-@note
-+QIURC: "closed",0
-+QIURC: "pdpdeact",1
-+QIURC: "recv",1,10
-xx\0\0萓
-
-**************************************************/
-
-static void qiurcParser(uint8_t *buf, uint16_t len)
-{
-    char *rebuf;
-    char resbuf[513];
-    int index, relen, recvLen;
-    int sockId, debugLen;
-    rebuf = buf;
-    relen = len;
-    index = my_getstrindex((char *)rebuf, "+QIURC:", relen);
-    if (index < 0)
-        return;
-    while (index >= 0)
-    {
-        index += 9;
-        rebuf += index;
-        relen -= index;
-        if (my_strpach(rebuf, "closed"))
-        {
-            rebuf += 8;
-            relen -= 8;
-            index = getCharIndex(rebuf, relen, '\r');
-            if (index >= 1 && index <= 2)
-            {
-                memcpy(resbuf, rebuf, index);
-                resbuf[index] = 0;
-                sockId = atoi(resbuf);
-                LogPrintf(DEBUG_ALL, "Socket[%d] Close", sockId);
-                socketSetConnState(sockId, SOCKET_CONN_IDLE);
-            }
-            rebuf += index;
-            relen -= index;
-        }
-        else if (my_strpach(rebuf, "pdpdeact"))
-        {
-            rebuf += 8;
-            relen -= 8;
-            LogMessage(DEBUG_ALL, "Socket all closed");
-            moduleSleepCtl(0);
-            socketResetConnState();
-            changeProcess(AT_STATUS);
-        }
-        else if (my_strpach(rebuf, "recv"))
-        {
-            rebuf += 6;
-            relen -= 6;
-            index = getCharIndex(rebuf, relen, ',');
-            if (index >= 1 && index <= 2)
-            {
-                memcpy(resbuf, rebuf, index);
-                resbuf[index] = 0;
-                sockId = atoi(resbuf);
-                LogPrintf(DEBUG_ALL, "Socket[%d] recv data", sockId);
-                switch (sockId)
-                {
-                    case NORMAL_LINK:
-                        moduleState.normalLinkQird = 1;
-                        break;
-                    case BLE_LINK:
-                        moduleState.bleLinkQird = 1;
-                        break;
-                    case JT808_LINK:
-                        moduleState.jt808LinkQird = 1;
-                        break;
-                    case HIDDEN_LINK:
-                        moduleState.hideLinkQird = 1;
-                        break;
-                    case AGPS_LINK:
-                        moduleState.agpsLinkQird = 1;
-                        break;
-                }
-            }
-        }
-
-        index = my_getstrindex((char *)rebuf, "+QIURC:", relen);
-    }
-}
-
-
-
 
 /**************************************************
 @bref		短信接收
@@ -1225,88 +1136,6 @@ static void cmgrParser(uint8_t *buf, uint16_t len)
         instructionParser((uint8_t *)restore, index, SMS_MODE, &insparam);
     }
 }
-
-/**************************************************
-@bref		AT+QISEND	指令解析
-@param
-@return
-@note
-+QISEND: 212,212,0
-
-**************************************************/
-
-static void qisendParser(uint8_t *buf, uint16_t len)
-{
-    int index;
-    uint8_t *rebuf;
-    uint8_t i, datalen, cnt, sockId;
-    uint16_t relen;
-    char restore[51];
-
-    index = my_getstrindex((char *)buf, "ERROR", len);
-    if (index >= 0)
-    {
-        //不能很好区分到底是哪条链路出现错误
-        socketResetConnState();
-        moduleSleepCtl(0);
-        changeProcess(CGREG_STATUS);
-        return ;
-    }
-    index = my_getstrindex((char *)buf, "+QISEND:", len);
-    if (index < 0)
-    {
-        return ;
-    }
-
-    rebuf = buf + index + 9;
-    relen = len - index - 9;
-    index = getCharIndex(rebuf, relen, '\n');
-    datalen = 0;
-    cnt = 0;
-    if (index > 0 && index < 50)
-    {
-        restore[0] = 0;
-        for (i = 0; i < index; i++)
-        {
-            if (rebuf[i] == ',' || rebuf[i] == '\r' || rebuf[i] == '\n')
-            {
-                if (restore[0] != 0)
-                {
-                    restore[datalen] = 0;
-                    cnt++;
-                    datalen = 0;
-                    switch (cnt)
-                    {
-                        case 1:
-                            moduleState.tcpTotal = atoi(restore);
-                            break;
-                        case 2:
-                            moduleState.tcpAck = atoi(restore);
-                            break;
-                        case 3:
-                            moduleState.tcpNack = atoi(restore);
-                            break;
-                    }
-                    restore[0] = 0;
-                }
-            }
-            else
-            {
-                restore[datalen] = rebuf[i];
-                datalen++;
-                if (datalen >= 50)
-                {
-                    return ;
-                }
-
-            }
-        }
-    }
-}
-
-
-
-
 
 /**************************************************
 @bref		QWIFISCAN	指令解析
@@ -2358,7 +2187,7 @@ void netResetCsqSearch(void)
 int socketSendData(uint8_t link, uint8_t *data, uint16_t len)
 {
     int ret = 0;
-    char param[10];
+    char param[300];
 
     if (socketGetConnStatus(link) == 0)
     {
@@ -2384,15 +2213,40 @@ int socketSendData(uint8_t link, uint8_t *data, uint16_t len)
 **************************************************/
 void moduleSleepCtl(uint8_t onoff)
 {
-    char param[5];
-    if (onoff == 0)
-    {
-        return;
-    }
-    sprintf(param, "%d", onoff);
-    sendModuleCmd(AT_CMD, NULL);
-    sendModuleCmd(CSCLK_CMD, param);
+//    char param[5];
+//    if (onoff == 0)
+//    {
+//        return;
+//    }
+//    sprintf(param, "%d", onoff);
+//    sendModuleCmd(AT_CMD, NULL);
+//    sendModuleCmd(CSCLK_CMD, param);
 }
+
+/**************************************************
+@bref		模组超低功耗控制
+@param
+@return
+@note
+**************************************************/
+
+void modulePsmCtl(uint8_t onoff)
+{
+	char param[10] = {0};
+
+	if (onoff)
+	{
+		strcpy(param, "\"PSM+\"");
+		sendModuleCmd(POWERMODE_CMD, param);
+	}
+	else
+	{
+		strcpy(param, "\"CLOSE\"");
+		sendModuleCmd(POWERMODE_CMD, param);
+	}
+}
+
+
 
 /**************************************************
 @bref		获取CSQ

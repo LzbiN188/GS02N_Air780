@@ -138,7 +138,7 @@ void privateServerLoginSuccess(void)
 {
     privateServConn.loginCount = 0;
     privateServConn.heartbeattick = 0;
-    moduleSleepCtl(1);
+    modulePsmCtl(1);
     ledStatusUpdate(SYSTEM_LED_NETOK, 1);
     privateServerChangeFsm(SERV_READY);
 }

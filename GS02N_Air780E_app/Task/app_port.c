@@ -820,25 +820,25 @@ uint8_t iicWriteData(uint8_t addr, uint8_t reg, uint8_t data)
 void portGsensorCtl(uint8_t onoff)
 {
 
-    portIICCfg();
-    if (onoff)
-    {
-        sysinfo.gsensorOnoff = 1;
-        GSPWR_ON;
-        mir3da_init();
-
-        GPIOB_ModeCfg(GSINT_PIN, GPIO_ModeIN_PU);
-        GPIOB_ITModeCfg(GSINT_PIN, GPIO_ITMode_FallEdge);
-        PFIC_EnableIRQ(GPIO_B_IRQn);
-    }
-    else
-    {
-        sysinfo.gsensorOnoff = 0;
-        GSPWR_OFF;
-        GPIOB_ModeCfg(GSINT_PIN, GPIO_ModeIN_PD);
-        R16_PB_INT_EN &= ~GSINT_PIN;
-    }
-    LogPrintf(DEBUG_ALL, "gsensor %s", onoff ? "On" : "Off");
+//    portIICCfg();
+//    if (onoff)
+//    {
+//        sysinfo.gsensorOnoff = 1;
+//        GSPWR_ON;
+//        mir3da_init();
+//
+//        GPIOB_ModeCfg(GSINT_PIN, GPIO_ModeIN_PU);
+//        GPIOB_ITModeCfg(GSINT_PIN, GPIO_ITMode_FallEdge);
+//        PFIC_EnableIRQ(GPIO_B_IRQn);
+//    }
+//    else
+//    {
+//        sysinfo.gsensorOnoff = 0;
+//        GSPWR_OFF;
+//        GPIOB_ModeCfg(GSINT_PIN, GPIO_ModeIN_PD);
+//        R16_PB_INT_EN &= ~GSINT_PIN;
+//    }
+//    LogPrintf(DEBUG_ALL, "gsensor %s", onoff ? "On" : "Off");
 
 }
 
@@ -1177,18 +1177,18 @@ void portWdtFeed(void)
 
 void portFclkChange(uint8_t type)
 {
-    if (type)
-    {
-    	SetSysClock(CLK_SOURCE_PLL_60MHz);
-    }
-    else
-    {
-        SetSysClock(CLK_SOURCE_HSE_16MHz);
-    }
-    //主频改变，修改波特率计算值
-    UART0_BaudRateCfg(115200);
-    UART1_BaudRateCfg(115200);
-    UART2_BaudRateCfg(115200);
-    UART3_BaudRateCfg(115200);
+//    if (type)
+//    {
+//    	SetSysClock(CLK_SOURCE_PLL_60MHz);
+//    }
+//    else
+//    {
+//        SetSysClock(CLK_SOURCE_HSE_16MHz);
+//    }
+//    //主频改变，修改波特率计算值
+//    UART0_BaudRateCfg(115200);
+//    UART1_BaudRateCfg(115200);
+//    UART2_BaudRateCfg(115200);
+//    UART3_BaudRateCfg(115200);
 }
 
