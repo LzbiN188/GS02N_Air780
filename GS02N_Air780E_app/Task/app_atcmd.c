@@ -154,13 +154,13 @@ static void doAtdebugCmd(uint8_t *buf, uint16_t len)
     {
 		bleCentralStartDiscover();
     }
-    else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"AA"))
+    else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"COLD"))
     {
-		sysinfo.debugflag = 1;
+		hdGpsColdStart();
     }
-    else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"BB"))
+    else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"HOT"))
     {
-		sysinfo.debugflag = 0;
+		hdGpsHotStart();
     }
     else
     {

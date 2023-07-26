@@ -98,4 +98,15 @@ GPSFIFO *getGSPfifo(void);
 /*------------------------------------------------------*/
 void gpsUploadPointToServer(void);
 
+/*------------------------------------------------------*/
+
+void hdGpsColdStart(void);
+void hdGpsHotStart(void);
+void hdGpsGsvCtl(uint8_t onoff);
+
+int32_t gnss_inject_location(int32_t latitude, int32_t longitude, float altitude, float accuracy);
+
+int32_t gnss_eph_inject_data(uint8_t *data, int32_t length);
+
+
 #endif

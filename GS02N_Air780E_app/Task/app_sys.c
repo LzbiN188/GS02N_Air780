@@ -434,3 +434,26 @@ void stringToLowwer(char *str, uint16_t strlen)
     }
 }
 
+/**************************************************
+@bref		打印原始字节数据
+@param
+@return
+@note
+**************************************************/
+void showByteData(uint8_t *mark, uint8_t *buf, uint16_t len)
+{
+	if (len <= 0 || len > 512)
+	{
+		LogMessage(DEBUG_ALL, "showByteData==>error");
+		return;
+	}
+	char debug[1025];
+	uint16_t debuglen;
+	byteToHexString(buf, debug, len);
+	debug[len * 2] = 0;
+	LogMessage(DEBUG_ALL, mark);
+	LogMessageWL(DEBUG_ALL, debug, len*2);
+	
+}
+
+

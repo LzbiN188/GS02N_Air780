@@ -23,7 +23,7 @@
 
 #define FILE_READ_SIZE		400
 
-
+#define SOCKET_QIRD_SIZE_MAX	512
 
 #define MODULE_RX_BUFF_SIZE		768
 

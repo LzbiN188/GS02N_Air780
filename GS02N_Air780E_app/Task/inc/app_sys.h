@@ -120,5 +120,8 @@ void strToUppper(char *data, uint16_t len);
 void updateRTCtimeRequest(void);
 void byteArrayInvert(uint8 *data, uint8 dataLen);
 void stringToLowwer(char *str, uint16_t strlen);
+void showByteData(uint8_t *mark, uint8_t *buf, uint16_t len);
+
+
 
 #endif

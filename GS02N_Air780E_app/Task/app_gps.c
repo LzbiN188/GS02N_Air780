@@ -621,7 +621,7 @@ void updateLocalRTCTime(datetime_s *datetime)
 {
     datetime_s localtime;
     localtime = changeUTCTimeToLocalTime(*datetime, sysparam.utc);
-    portUpdateRtcDateTime(localtime.year, localtime.month, localtime.day, localtime.hour, localtime.minute,
+    portUpdateRtcOffset(localtime.year, localtime.month, localtime.day, localtime.hour, localtime.minute,
                           localtime.second);
 
     if (sysparam.MODE == MODE1 || sysparam.MODE == MODE21)
@@ -881,6 +881,205 @@ void gpsUploadPointToServer(void)
         }
     }
 }
+
+//华大指令集
+/*------------------------------------------------*/
+/**************************************************
+@bref		华大GPS冷启动指令
+@param
+@return
+@note
+**************************************************/
+
+void hdGpsColdStart(void)
+{
+	char cmd[] = {0xF1, 0xD9, 0x06, 0x40, 0x01, 0x00, 0x01, 0x48, 0x22};
+	portUartSend(&usart3_ctl, cmd, sizeof(cmd));
+	LogMessage(DEBUG_ALL, "GPS config cold start");
+}
+
+/**************************************************
+@bref		华大GPS热启动指令
+@param
+@return
+@note
+**************************************************/
+void hdGpsHotStart(void)
+{
+	char cmd[] = {0xF1, 0xD9, 0x06, 0x40, 0x01, 0x00, 0x03, 0x4A, 0x24};
+	portUartSend(&usart3_ctl, cmd, sizeof(cmd));
+	LogMessage(DEBUG_ALL, "GPS config hot start");
+}
+
+/**************************************************
+@bref		华大GPS GSV指令
+@param
+@return
+@note
+**************************************************/
+void hdGpsGsvCtl(uint8_t onoff)
+{
+	char cmd1[] = {0xF1, 0xD9, 0x06, 0x01, 0x03, 0x00, 0xF0, 0x04, 0x01, 0xFF, 0x18};//打开
+	char cmd2[] = {0xF1, 0xD9, 0x06, 0x01, 0x03, 0x00, 0xF0, 0x04, 0x00, 0xFE, 0x17};//关闭
+	if (onoff)
+	{
+		portUartSend(&usart3_ctl, cmd1, sizeof(cmd1));
+		LogMessage(DEBUG_ALL, "GPS open gsv");
+	}
+	else
+	{
+		portUartSend(&usart3_ctl, cmd2, sizeof(cmd2));
+		LogMessage(DEBUG_ALL, "GPS close gsv");
+	}
+}
+
+
+//华大agnss写入
+/*------------------------------------------------*/
+
+static int32_t message_package(uint8_t *dst, uint8_t *src, int32_t src_len)
+{
+    int32_t i = 0;
+    int8_t checksum1 = 0;
+    int8_t checksum2 = 0;
+
+    /* message header */
+    for (i = 0; i < 4; i++)
+    {
+        dst[i] = *(src + i);
+    }
+
+    /* message len */
+    dst[4] = src_len;
+    dst[5] = 0;
+
+    /* payload */
+    for( i = 0 ; i < src_len; i++)
+    {
+        dst[6 + i] = *(src + 4) ;
+        src++;
+    }
+
+    /* check sum */
+    for(i = 2; i < (6 + dst[4]); i++)
+    {
+        checksum1 += dst[i];
+        checksum2 += checksum1;
+    }
+
+    dst[src_len + 6] = checksum1;
+    dst[src_len + 7] = checksum2;
+
+    return src_len + 8;
+}
+
+/**************************************************
+@bref		华大agnss位置注入
+@param
+@return
+@note
+**************************************************/
+
+int32_t gnss_inject_location(int32_t latitude, int32_t longitude, float altitude, float accuracy)
+{
+    uint8_t cmd[21] = { 0 }; /* packet head+payload */
+    uint32_t acc = (uint32_t)(fabs(accuracy));
+    uint32_t alti = (uint32_t)(altitude * 100); // m--->cm
+    uint32_t i = 0;
+    uint8_t message[25] = {0}; /* payload:17 + packet pad:8 */
+
+    memset(cmd, 0, sizeof(cmd));
+    cmd[0] = 0xF1;
+    cmd[1] = 0xD9;
+    cmd[2] = 0x0B;
+    cmd[3] = 0x10;
+
+    /* LLA : 1 */
+    cmd[4] = 0x01;
+
+    /* lat : 4 */
+    for (i = 0; i < 4; i++)
+    {
+        cmd[5 + i] = (latitude >> (i * 8)) & 0xff;
+    }
+
+    /* long : 4 */
+    for (i = 0; i < 4; i++)
+    {
+        cmd[9 + i] = (longitude >> (i * 8)) & 0xff;
+    }
+
+    /* alti : 4 */
+    for (i = 0; i < 4; i++)
+    {
+        cmd[13 + i] = (alti >> (i * 8)) & 0xff;
+    }
+
+    /* accuracy : 4 */
+    for (i = 0; i < 4; i++)
+    {
+        cmd[17 + i] = (acc >> (i * 8)) & 0xff;
+    }
+
+
+    int32_t len = message_package(message, cmd, sizeof(cmd) - 4);
+
+    LogPrintf(DEBUG_ALL, "%02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
+                message[0],message[1],message[2],message[3],message[4],message[5],message[6],message[7],
+                message[8],message[9],message[10],message[11],message[12],message[13],message[14],
+                message[15],message[16],message[17],message[18],message[19],message[20],
+                message[21],message[22],message[23],message[24]);
+
+    portUartSend(&usart3_ctl, message, len);
+
+    return 0;
+}
+
+/*星历注入*/ 
+/**
+* @brief get the eph frame and send to HD80xx
+* @param data: the pointer of the eph data file
+* @param len : the total length of eph data file(eg:the length of HD_GPS_BD.hdb )
+* @retval 0: successs -1 error
+*/
+int32_t gnss_eph_inject_data(uint8_t *data, int32_t length)
+{
+    uint32_t i = 0;
+    uint32_t frame_len = 0;
+
+    if (length < 2) {
+        return -1;
+    }
+
+    while(i < (length - 1))
+    {
+        /*
+ |________________________________________________________________________________________________|
+ |              ALLYSTAR Binary Message Packet                                                    |
+ |________________________________________________________________________________________________|
+ | Start sequence  | Message ID       |  Payload length  |      Payload      | End sequence       |
+ |________________________________________________________________________________________________|
+ | Hex F1   Hex D9 | Group ID  Sub ID | Length in Little | Message dependant |  16 Bit checksum   |
+ |(1 byte) (1 byte)| (1 byte) (1 byte)|  Endian(2 bytes) |   (0 - N bytes)   |{CK1, CK2}(2 bytes) |
+ |________________________________________________________________________________________________|
+        */
+        if((data[i] == 0xF1) && (data[i + 1] == 0xD9))
+        {
+            // get each eph frame length
+            frame_len = (data[i + 4] | (data[i + 5] << 8));
+            portUartSend(&usart3_ctl, data + i, frame_len + 8);
+            showByteData("inject agnss>>", data + i, frame_len + 8);
+            DelayMs(10); // just example, use wait 3ms instead of ACK
+            i = i + frame_len + 8;
+        }
+        else
+        {
+            i++;
+        }
+    }
+
+    return 0;
+}	
 
 
 

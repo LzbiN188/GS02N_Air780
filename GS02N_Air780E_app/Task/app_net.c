@@ -528,7 +528,7 @@ static void moduleExitFly(void)
 static void qirdCmdSend(uint8_t link)
 {
     char param[10];
-    sprintf(param, "2,%d,500", link);
+    sprintf(param, "2,%d,%d", link, SOCKET_QIRD_SIZE_MAX);
     moduleState.curQirdId = link;
     sendModuleCmd(CIPRXGET_CMD, param);
 }
@@ -1928,6 +1928,7 @@ uint8_t isAgpsDataRecvComplete(void)
 +CIPRXGET: 2,0,20,0
 xx\02
 xx\02
++CIPRXGET: 2,0,0,0
 
 
 OK
@@ -1936,7 +1937,7 @@ OK
 uint8_t ciprxgetParser(uint8_t *buf, uint16_t len)
 {
     int index;
-    char restore[513];
+    char restore[1025] = {0};
     uint8_t *rebuf, type, link, ret = 0;
     int16_t relen;
     uint16_t readLen, unreadLen, debugLen;
@@ -1990,21 +1991,22 @@ uint8_t ciprxgetParser(uint8_t *buf, uint16_t len)
                 {
                     if (readLen != 0)
                     {
-                        debugLen = readLen > 256 ? 256 : readLen;
+                        debugLen = readLen > 512 ? 512 : readLen;
                         byteToHexString(rebuf, restore, debugLen);
 //                        if (link == 4)
 //                        {
 //							LogMessageWL(DEBUG_ALL, rebuf, relen);
 //                        }
                         restore[debugLen * 2] = 0;
-                        LogPrintf(DEBUG_ALL, "TCP RECV (%d)[%d]:%s", link, readLen, restore);
+                        LogPrintf(DEBUG_ALL, "TCP RECV (%d)[%d]>>>>", link, readLen);
+                        LogMessageWL(DEBUG_ALL, restore, debugLen * 2);
                         if (link == 4)
                         {
-                        	socketRecv(link, rebuf, readLen);
+                        	socketRecv(link, (char *)rebuf, readLen);
                         }
                         else 
                         {
-							socketRecv(link, rebuf, relen);//relenÌæ´úreadLen
+							socketRecv(link, (char *)rebuf, relen);//relenÌæ´úreadLen
                         }
                     }
                 }

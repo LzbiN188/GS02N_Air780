@@ -208,6 +208,7 @@ static void socketSchChange(SocketSchedule_e fsm)
 
 void socketSchedule(void)
 {
+	static uint8_t tick = 0;
     switch (sockSchInfo.runFsm)
     {
         case SOCKET_SCHEDULE_IDLE:
@@ -229,6 +230,7 @@ void socketSchedule(void)
             {
                 LogPrintf(DEBUG_ALL, "try to connect [%d]:%s", sockSchInfo.ind, socketList[sockSchInfo.ind].server);
                 socketSchChange(SOCKET_SCHEDULE_CONN);
+                tick = 0;
             }
         case SOCKET_SCHEDULE_CONN:
             if (sockSchInfo.runTick++ == 0)
@@ -240,7 +242,11 @@ void socketSchedule(void)
             if (socketList[sockSchInfo.ind].connOK == SOCKET_CONN_SUCCESS)
             {
                 LogPrintf(DEBUG_ALL, "Socket[%d] connect success", sockSchInfo.ind);
-                socketSchChange(SOCKET_SCHEDULE_END);
+                if (++tick >= 5)
+                {
+                	socketSchChange(SOCKET_SCHEDULE_END);
+                	tick = 0;
+                }
             }
             else if (socketList[sockSchInfo.ind].connOK == SOCKET_CONN_ERR)
             {

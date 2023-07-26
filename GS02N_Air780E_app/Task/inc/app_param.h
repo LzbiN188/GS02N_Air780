@@ -22,7 +22,7 @@
 #define APP_PARAM_FLAG          0x1A
 #define BOOT_PARAM_FLAG         0xB0
 
-#define EEPROM_VERSION									"GS02N-4RT_Air780_V1.2.15"
+#define EEPROM_VERSION									"GS02N-4RT_ML304A_V1.2.15"
 
 
 #define JT808_PROTOCOL_TYPE			8
@@ -124,6 +124,9 @@ typedef struct
     float batLowLevel;
     float batHighLevel;
 
+    double lastlat;//历史纬度
+    double lastlon;//历史经度
+
 } systemParam_s;
 
 /*存在EEPROM里的动态参数*/
@@ -139,6 +142,7 @@ typedef struct
     uint8_t jt808AuthLen;
 
 	uint16_t noNmeaRstCnt;
+	int32_t rtcOffset;
 }dynamicParam_s;
 
 
