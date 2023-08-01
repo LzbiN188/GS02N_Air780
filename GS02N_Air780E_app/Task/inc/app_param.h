@@ -22,7 +22,7 @@
 #define APP_PARAM_FLAG          0x1A
 #define BOOT_PARAM_FLAG         0xB0
 
-#define EEPROM_VERSION									"GS02N-4RT_ML304A_V1.2.15"
+#define EEPROM_VERSION									"GS02N-4RT_Air780E_HD_V1.2.15"
 
 
 #define JT808_PROTOCOL_TYPE			8

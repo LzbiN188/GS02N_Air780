@@ -464,7 +464,7 @@ static void hdGpsCfg(void)
 	//hdGpsHotStart();
 	DelayMs(3);
 	hdGpsGsvCtl(0);
-	startTimer(10, hdGpsInjectLocation, 0);
+	//startTimer(10, hdGpsInjectLocation, 0);
 }
 
 /**************************************************
