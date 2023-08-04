@@ -59,6 +59,8 @@ typedef enum{
     BLEEN_INS,
     AGPSEN_INS,
     SETBATRATE_INS,
+    CSQTIME_INS,
+    
 
 }INSTRUCTIONID;
 

@@ -123,6 +123,12 @@ void paramInit(void)
     {
         paramDefaultInit(0);
     }
+    if (sysparam.otaUpdateFlag != OTA_PARAM_UPDATE_FLAG)
+    {
+		sysparam.otaUpdateFlag = OTA_PARAM_UPDATE_FLAG;
+		sysparam.csqTime = 300;
+		paramSaveAll();
+    }
     sysinfo.lowvoltage = sysparam.lowvoltage / 10.0;
     dbInfoRead();
 }

@@ -89,6 +89,10 @@ typedef enum
     WIFISCAN_CMD,
     CFG_CMD,
     CIICR_CMD,
+    CIFSR_CMD,
+    CSTT_CMD,
+    CPNETAPN_CMD,
+    UPGRADE_CMD,
 } atCmdType_e;
 
 

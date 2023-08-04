@@ -40,7 +40,7 @@ endif
 
 # Add inputs and outputs from these tool invocations to the build variables 
 SECONDARY_FLASH += \
-GS02N_app.hex \
+GS02N_app.bin \
 
 SECONDARY_LIST += \
 GS02N_app.lst \
@@ -56,8 +56,8 @@ all: GS02N_app.elf secondary-outputs
 GS02N_app.elf: $(OBJS) $(USER_OBJS)
 	@	@	riscv-none-embed-gcc -march=rv32imac -mabi=ilp32 -mcmodel=medany -msmall-data-limit=8 -mno-save-restore -Os -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections  -g -T "../Ld/Link.ld" -nostartfiles -Xlinker --gc-sections -L"../" -L"R:\CODE\CHcode\CH582\GS02N_Air780E\GS02N_Air780E_app\LIB" -L"../StdPeriphDriver" -Xlinker --print-memory-usage -Wl,-Map,"GS02N_app.map" --specs=nano.specs -u _printf_float --specs=nosys.specs -o "GS02N_app.elf" $(OBJS) $(USER_OBJS) $(LIBS)
 	@	@
-GS02N_app.hex: GS02N_app.elf
-	@	riscv-none-embed-objcopy -O ihex "GS02N_app.elf"  "GS02N_app.hex"
+GS02N_app.bin: GS02N_app.elf
+	@	riscv-none-embed-objcopy -O binary "GS02N_app.elf"  "GS02N_app.bin"
 	@	@
 GS02N_app.lst: GS02N_app.elf
 	@	riscv-none-embed-objdump --all-headers --demangle --disassemble "GS02N_app.elf" > "GS02N_app.lst"

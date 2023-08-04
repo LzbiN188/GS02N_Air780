@@ -1010,10 +1010,18 @@ static void agpsServerConnTask(void)
     if (sysparam.agpsen == 0)
     {
 		sysinfo.agpsRequest = 0;
+		if (socketGetUsedFlag(AGPS_LINK) == 1)
+		{
+			socketDel(AGPS_LINK);
+		}
 		return;
     }
     if (sysinfo.agpsRequest == 0)
     {
+    	if (socketGetUsedFlag(AGPS_LINK) == 1)
+		{
+			socketDel(AGPS_LINK);
+		}
         return;
     }
 

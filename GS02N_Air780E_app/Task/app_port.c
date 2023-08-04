@@ -860,21 +860,279 @@ void portRtcCfg(void)
 }
 
 /**
- * @brief   读取RTC时间
- * @param
- * @return
+ * 
+ * @brief 获取RTC时间偏正值
+ * @return int32_t
+ * @date 2023-06-13
+ * @author lvvv
+ * 
+ * @details 
+ * @note 
+ * @par 修改日志:
+ * <table>
+ * <tr><th>Date 			<th>Author		   <th>Description
+ * <tr><td>2023-6-13	    <td>lvvv 			<td>新建
+ * </table>
  */
+
+int32_t portGetRtcOffset(void)
+{
+    return dynamicParam.rtcOffset;
+}
+
+
+/**
+ * 
+ * @brief 获取偏正后的RTC时间
+ * @return 
+ * @date 2023-06-13
+ * @author lvvv
+ * 
+ * @details 
+ * @note 
+ * @par 修改日志:
+ * <table>
+ * <tr><th>Date 			<th>Author		   <th>Description
+ * <tr><td>2023-6-13	   <td>lvvv 			  <td>新建
+ * </table>
+ */
+
+uint32_t portGetTimestamp(void)
+{
+    uint32_t  t;
+    uint16_t  day, sec2, t32k;
+
+    day = R32_RTC_CNT_DAY & 0x3FFF;
+    sec2 = R16_RTC_CNT_2S; 
+    
+    t32k = RTC_GetCycle32k();
+
+    t = day*86400+(sec2<<1) + ((t32k<0x8000)?0:1);
+
+    t += portGetRtcOffset();
+
+    return t;
+}
+
+/**
+ * 
+ * @brief Timestamp转换时间
+ * @return 
+ * @date 2023-06-13
+ * @author lvvv
+ * 
+ * @details 
+ * @note 
+ * @par 修改日志:
+ * <table>
+ * <tr><th>Date 			<th>Author		   <th>Description
+ * <tr><td>2023-6-13	   	<td>lvvv 			<td>新建
+ * </table>
+ */
+
+void portConvertTimestampToTime(system_date_s *tm, uint32_t sec_time)
+{
+  // calculate the time less than a day - hours, minutes, seconds
+  {
+    uint32_t day = sec_time % DAY;
+    tm->second = day % 60UL;
+    tm->minute = (day % 3600UL) / 60UL;
+    tm->hour = day / 3600UL;
+    //LogPrintf(DEBUG_ALL, "sec_time:%d h:%d, m:%d, s:%d", sec_time, tm->hour, tm->minute, tm->second);
+  }
+  // Fill in the calendar - day, month, year
+  {
+    uint16_t numDays = sec_time / DAY;
+    tm->year = BEGYEAR;
+    
+    while ( numDays >= (IsLeapYear(tm->year) ? 366 : 365) )
+    {
+      numDays -= YearLength( tm->year );
+      tm->year++;
+    }
+
+    tm->month = 0;
+    while ( numDays >= monthLength( IsLeapYear( tm->year ), tm->month ) )
+    {
+      numDays -= monthLength( IsLeapYear( tm->year ), tm->month );
+      tm->month++;
+    }
+ 
+    tm->date = numDays;
+  }
+  //offset
+  tm->date +=1;
+  tm->month +=1;
+}
+
+/**
+ * 
+ * @brief  时间转换成timestamp
+ * @return  timestamp
+ * @date 2023-06-13
+ * @author lvvv
+ * 
+ * @details 
+ * @note 
+ * @par 修改日志:
+ * <table>
+ * <tr><th>Date 			<th>Author		   <th>Description
+ * <tr><td>2023-6-13	   	<td>lvvv 			<td>新建
+ * </table>
+ */
+uint32_t portConvertTimeToTimestamp(system_date_s *tm)
+{
+	uint32_t seconds;
+
+  //offset
+  tm->date -=1;
+  tm->month -=1;
+ 
+  /* Seconds for the partial day */
+  seconds = (((tm->hour * 60UL) + tm->minute) * 60UL) + tm->second;
+ 
+  /* Account for previous complete days */
+  {
+    /* Start with complete days in current month */
+    uint16_t days = tm->date;
+ 
+    /* Next, complete months in current year */
+    {
+      int8_t month = tm->month;
+      while ( --month >= 0 )
+      {
+        days += monthLength( IsLeapYear( tm->year ), month );
+      }
+    }
+ 
+    /* Next, complete years before current year */
+    {
+      uint16_t year = tm->year;
+      while ( --year >= BEGYEAR )
+      {
+        days += YearLength( year );
+      }
+    }
+ 
+    /* Add total seconds before partial day */
+    seconds += (days * DAY);
+  }
+ 
+  return ( seconds );
+}
+
+/**
+ * 
+ * @brief 保存timestamp
+ * @return 
+ * @date 2023-06-13
+ * @author lvvv
+ * 
+ * @details 
+ *  set local rtc cnt in seconds
+ *	the max timestamp in hardware is (0x3fff*86400)+(86400-1) about 44 year
+ *	when use this in ble, TMOS_TimerInit must be executed after it. 
+ *	and this will cause ble connection lost
+ * @note 
+ * @par 修改日志:
+ * <table>
+ * <tr><th>Date 			<th>Author		   <th>Description
+ * <tr><td>2023-6-13	   	<td>lvvv 			<td>新建
+ * </table>
+ */
+void portSetTimestamp(uint32_t timestamp)
+{
+	
+    uint32_t  t;
+    uint16_t  day, sec2, t32k;
+
+    day = R32_RTC_CNT_DAY & 0x3FFF;
+    sec2 = R16_RTC_CNT_2S;
+
+    t32k = RTC_GetCycle32k();
+
+    t = day*86400+(sec2<<1) + ((t32k<0x8000)?0:1);
+
+    int32_t offset = timestamp - t;
+
+	dynamicParam.rtcOffset = offset;
+	dynamicParamSaveAll();
+}
+
+
+/**
+ * 
+ * @brief 获取偏正后的RTC时间
+ * @return 
+ * @date 2023-06-13
+ * @author lvvv
+ * 
+ * @details 
+ * @note 
+ * @par 修改日志:
+ * <table>
+ * <tr><th>Date 			<th>Author		   <th>Description
+ * <tr><td>2023-6-13	   <td>lvvv 			  <td>新建
+ * </table>
+ */
+
 void portGetRtcDateTime(uint16_t *year, uint8_t *month, uint8_t *date, uint8_t *hour, uint8_t *minute, uint8_t *second)
 {
-    uint16_t a, b, c, d, e, f;
-    RTC_GetTime(&a, &b, &c, &d, &e, &f);
-    *year = a;
-    *month = b;
-    *date = c;
-    *hour = d;
-    *minute = e;
-    *second = f;
+	system_date_s	datetime;
+	uint32_t timestamp = portGetTimestamp();
+	portConvertTimestampToTime(&datetime, timestamp);																
+	*year   = datetime.year;
+	*month  = datetime.month;
+	*date   = datetime.date;
+	*hour   = datetime.hour;
+	*minute = datetime.minute;
+	*second = datetime.second;
 }
+
+/**
+ * 
+ * @brief 修改RTCoffset值
+ * @return 
+ * @date 2023-06-13
+ * @author lvvv
+ * 
+ * @details 更改时间只需要调节offset值即可,不需要改变rtc硬件寄存器的时间,解决使用蓝牙协议栈更新RTC时间会复位的问题
+ * @note 
+ * @par 修改日志:
+ * <table>
+ * <tr><th>Date 			<th>Author		   <th>Description
+ * <tr><td>2023-6-13	    <td>lvvv 			  <td>新建
+ * </table>
+ */
+
+ void portUpdateRtcOffset(uint8_t year, uint8_t month, uint8_t date, uint8_t hour, uint8_t minute, uint8_t second)
+ {
+ 	uint16_t a;
+ 	uint8_t b, c, d, e, f;
+	uint32_t sec1, sec2;
+	system_date_s datetime;
+	uint32_t timestamp;
+	portGetRtcDateTime(&a, &b, &c, &d, &e, &f);
+    sec1 = d * 3600 + e * 60 + f;
+    sec2 = hour * 3600 + minute * 60 + second;
+    if ((year + 2000) != a || b != month || c != date || abs(sec1 - sec2) >= 60)
+    {
+		datetime.year   = year + 2000;
+		datetime.month  = month;
+		datetime.date   = date;
+		datetime.hour   = hour;
+		datetime.minute = minute;
+		datetime.second = second;
+		timestamp = portConvertTimeToTimestamp(&datetime);
+		portSetTimestamp(timestamp);
+		LogPrintf(DEBUG_ALL, "update time==>%02d/%02d/%02d-%02d:%02d:%02d", datetime.year, datetime.month, datetime.date, datetime.hour, datetime.minute, datetime.second);
+    }
+    else
+    {
+		LogPrintf(DEBUG_ALL, "current Datetime==>%02d/%02d/%02d %02d:%02d:%02d", a, b, c, d, e, f);
+    }
+ }
+
 
 /**
  * @brief   更新RTC时间

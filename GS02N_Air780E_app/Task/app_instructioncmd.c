@@ -59,6 +59,7 @@ const instruction_s insCmdTable[] =
     {BLEEN_INS, "BLEEN"},
     {AGPSEN_INS, "AGPSEN"},
     {SETBATRATE_INS, "SETBATRATE"},
+    {CSQTIME_INS, "CSQTIME"},
     {SN_INS, "*"},
 };
 
@@ -1474,7 +1475,7 @@ static void doQgmrInstruction(ITEM *item, char *message)
 
 static void doQfotaInstruction(ITEM *item, char *message)
 {
-//    char param[120];
+    char param[120];
 //    if (item->item_cnt < 2)
 //    {
 //        strcpy(message, "Please enter the upgrade url");
@@ -1482,7 +1483,8 @@ static void doQfotaInstruction(ITEM *item, char *message)
 //    }
 //    sprintf(message, "Fota URL:%s", item->item_data[1]);
 //    sprintf(param, "\"%s\",1,50,100", item->item_data[1]);
-//    sendModuleCmd(QFOTADL_CMD, param);
+    sendModuleCmd(UPGRADE_CMD, NULL);
+    
 }
 
 static void doMotionDetInstruction(ITEM *item, char *message)
@@ -1589,6 +1591,25 @@ static void doSetBatRateInstruction(ITEM *item, char *message)
 		paramSaveAll();
 	}
 }
+
+static void doCsqTimeInstruction(ITEM *item, char *message)
+{
+	if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+	{
+		sprintf(message, "Search csq time is %d s", sysparam.csqTime);
+	}
+	else
+	{
+		sysparam.csqTime = atoi(item->item_data[1]);
+		if (sysparam.csqTime == 0)
+		{
+			sysparam.csqTime = 90;
+		}
+		sprintf(message, "Update csq time to %d s", sysparam.csqTime);
+		paramSaveAll();
+	}
+}
+
 /*--------------------------------------------------------------------------------------*/
 static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param)
 {
@@ -1733,6 +1754,9 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
        		break;
        	case SETBATRATE_INS:
 			doSetBatRateInstruction(item, message);
+       		break;
+       	case CSQTIME_INS:
+			doCsqTimeInstruction(item, message);
        		break;
         default:
             if (mode == SMS_MODE)

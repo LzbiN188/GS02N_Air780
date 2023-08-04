@@ -80,7 +80,11 @@ const atCmd_s cmdtable[] =
     {CFGRI_CMD, "AT+CFGRI"},
     {WIFISCAN_CMD, "AT+WIFISCAN"},
     {CFG_CMD, "AT+CFG"},
-	{CIICR_CMD, "AT+CMD"},
+	{CIICR_CMD, "AT+CIICR"},
+	{CIFSR_CMD, "AT+CIFSR"},
+	{CSTT_CMD, "AT+CSTT"},
+	{CPNETAPN_CMD, "AT+CPNETAPN"},
+	{UPGRADE_CMD, "AT+UPGRADE"},
 };
 
 /**************************************************
@@ -224,7 +228,7 @@ void outputNode(void)
         free(currentnode->data);
         free(currentnode);
         if (currentnode->currentcmd == QICLOSE_CMD || currentnode->currentcmd == CMGS_CMD || 
-        		currentnode->currentcmd == WIFISCAN_CMD)
+        		currentnode->currentcmd == WIFISCAN_CMD || currentnode->currentcmd == UPGRADE_CMD)
         {
             lockFlag = 1;
             if (currentnode->currentcmd == QICLOSE_CMD)
@@ -234,6 +238,10 @@ void outputNode(void)
             else if (currentnode->currentcmd == WIFISCAN_CMD)
             {
 				tickRange = 75;
+            }
+            else if (currentnode->currentcmd == UPGRADE_CMD)
+            {
+				tickRange = 100;
             }
             else
             {
@@ -472,7 +480,7 @@ void closeSocket(uint8_t link)
 @note
 **************************************************/
 
-static void netSetCgdcong(char *apn)
+static void netSetCgdcong(char *apn, char *apnname, char *apnpassword)
 {
     char param[100];
     sprintf(param, "1,\"IP\",\"%s\"", apn);
@@ -489,8 +497,8 @@ static void netSetCgdcong(char *apn)
 static void netSetApn(char *apn, char *apnname, char *apnpassword)
 {
     char param[100];
-    sprintf(param, "1,1,\"%s\",\"%s\",\"%s\"", apn, apnname, apnpassword);
-    sendModuleCmd(QICSGP_CMD, param);
+    sprintf(param, "\"%s\",\"%s\",\"%s\"", apn, apnname, apnpassword);
+    sendModuleCmd(CSTT_CMD, param);
 }
 
 
@@ -588,6 +596,7 @@ void netConnectTask(void)
                 moduleCtrl.atCount = 0;
                 moduleState.atResponOK = 0;
                 moduleState.cpinResponOk = 0;
+                //sendModuleCmd(CMGF_CMD, "1");                       /*TEXTģʽ*/
                 changeProcess(CPIN_STATUS);
             }
             else
@@ -617,11 +626,8 @@ void netConnectTask(void)
             {
                 moduleState.cpinResponOk = 0;
                 moduleState.csqOk = 0;
-                sendModuleCmd(AT_CMD, NULL);
-                netSetCgdcong((char *)sysparam.apn);
-                netSetApn((char *)sysparam.apn, (char *)sysparam.apnuser, (char *)sysparam.apnpassword);
+                netSetCgdcong((char *)sysparam.apn, (char *)sysparam.apnuser, (char *)sysparam.apnpassword);               
                 changeProcess(CSQ_STATUS);
-
             }
             else
             {
@@ -643,14 +649,14 @@ void netConnectTask(void)
                 moduleCtrl.csqCount = 0;
                 sendModuleCmd(CGREG_CMD, "2");
                 sendModuleCmd(CEREG_CMD, "2");
-                sendModuleCmd(CIPSHUT_CMD, NULL);
+                //sendModuleCmd(CIPSHUT_CMD, NULL);
                 changeProcess(CGREG_STATUS);
                 netResetCsqSearch();
             }
             else
             {
                 sendModuleCmd(CSQ_CMD, NULL);
-                if (moduleCtrl.csqTime == 0)
+                if (moduleCtrl.csqTime == 0 || moduleCtrl.csqTime == 0xFF)
                 {
                     moduleCtrl.csqTime = 90;
                 }
@@ -684,13 +690,14 @@ void netConnectTask(void)
             {
                 moduleCtrl.cgregCount = 0;
                 moduleState.cgregOK = 0;
+                //sendModuleCmd(CIPSHUT_CMD, NULL);
                 changeProcess(CONFIG_STATUS);
             }
             else
             {
                 sendModuleCmd(CGREG_CMD, "?");
                 sendModuleCmd(CEREG_CMD, "?");
-                if (moduleState.fsmtick >= 90)
+                if (moduleState.fsmtick >= sysparam.csqTime)
                 {
                     moduleCtrl.cgregCount++;
                     if (moduleCtrl.cgregCount >= 2)
@@ -725,6 +732,11 @@ void netConnectTask(void)
             sendModuleCmd(CIPQSEND_CMD, "1");
             sendModuleCmd(CIPRXGET_CMD, "5");
             sendModuleCmd(CFG_CMD, "\"urcdelay\",100");
+            sendModuleCmd(CIMI_CMD, NULL);
+            sendModuleCmd(CGSN_CMD, NULL);
+            sendModuleCmd(ICCID_CMD, NULL);
+            //netSetApn((char *)sysparam.apn, (char *)sysparam.apnuser, (char *)sysparam.apnpassword);
+            //sendModuleCmd(CIICR_CMD, NULL);
             changeProcess(QIACT_STATUS);
             break;
         case QIACT_STATUS:
@@ -732,9 +744,8 @@ void netConnectTask(void)
             {
                 moduleState.qipactOk = 0;
                 moduleCtrl.qipactCount = 0;
+                //sendModuleCmd(CIFSR_CMD, NULL);
                 changeProcess(NORMAL_STATUS);
-                sendModuleCmd(AT_CMD, NULL);
-                sendModuleCmd(CGSN_CMD, NULL);
             }
             else
             {
@@ -1867,32 +1878,32 @@ void cipstartRspParser(uint8_t *buf, uint16_t len)
         socketSetConnState(5, SOCKET_CONN_SUCCESS);
     }
 
-    index = my_getstrindex(rebuf, "0, CONNECT FAIL", relen);
+    index = my_getstrindex(rebuf, "0, CLOSE OK", relen);
     if (index >= 0)
     {
         socketSetConnState(0, SOCKET_CONN_ERR);
     }
-    index = my_getstrindex(rebuf, "1, CONNECT FAIL", relen);
+    index = my_getstrindex(rebuf, "1, CLOSE OK", relen);
     if (index >= 0)
     {
         socketSetConnState(1, SOCKET_CONN_ERR);
     }
-    index = my_getstrindex(rebuf, "2, CONNECT FAIL", relen);
+    index = my_getstrindex(rebuf, "2, CLOSE OK", relen);
     if (index >= 0)
     {
         socketSetConnState(2, SOCKET_CONN_ERR);
     }
-    index = my_getstrindex(rebuf, "3, CONNECT FAIL", relen);
+    index = my_getstrindex(rebuf, "3, CLOSE OK", relen);
     if (index >= 0)
     {
         socketSetConnState(3, SOCKET_CONN_ERR);
     }
-    index = my_getstrindex(rebuf, "4, CONNECT FAIL", relen);
+    index = my_getstrindex(rebuf, "4, CLOSE OK", relen);
     if (index >= 0)
     {
         socketSetConnState(4, SOCKET_CONN_ERR);
     }
-    index = my_getstrindex(rebuf, "5, CONNECT FAIL", relen);
+    index = my_getstrindex(rebuf, "5, CLOSE OK", relen);
     if (index >= 0)
     {
         socketSetConnState(5, SOCKET_CONN_ERR);
@@ -1911,6 +1922,7 @@ void cipstartParser(uint8_t *buf, uint16_t len)
     socketDelAll();
     changeProcess(CPIN_STATUS);
     sendModuleCmd(CIPSHUT_CMD, NULL);
+    //moduleReset();
 }
 
 uint8_t isAgpsDataRecvComplete(void)
@@ -2345,7 +2357,7 @@ void moduleRecvParser(uint8_t *buf, uint16_t bufsize)
 
 void netResetCsqSearch(void)
 {
-    moduleCtrl.csqTime = 90;
+    moduleCtrl.csqTime = sysparam.csqTime;
 }
 
 /**************************************************
