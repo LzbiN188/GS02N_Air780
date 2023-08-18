@@ -200,14 +200,15 @@ static void atCmdNmeaParser(uint8_t *buf, uint16_t len)
     char buff[80];
     if (my_strstr((char *)buf, "ON", len))
     {
-        strcpy(buff, "$PCAS03,0,0,0,1,1,0,0,0,0,0,0,0,0,0*02\r\n");
-        portUartSend(&usart3_ctl, buff, strlen(buff));
+		hdGpsGsvCtl(1);
+
         LogMessage(DEBUG_FACTORY, "NMEA ON OK");
         sysinfo.nmeaOutPutCtl = 1;
         gpsRequestSet(GPS_REQUEST_DEBUG);
     }
     else
     {
+    	hdGpsGsvCtl(0);
         LogMessage(DEBUG_FACTORY, "NMEA OFF OK");
         gpsRequestClear(GPS_REQUEST_ALL);
         sysinfo.nmeaOutPutCtl = 0;
@@ -297,16 +298,12 @@ static void atCmdFmpcNmeaParser(uint8_t *buf, uint16_t len)
     if (my_strstr((char *)buf, "ON", len))
     {
         sysinfo.nmeaOutPutCtl = 1;
-        //开启AGPS有效性检测
-   		sprintf(buff, "$PCAS03,,,,,,,,,,,1*1F\r\n");
-    	portUartSend(&usart3_ctl, (uint8_t *)buff, strlen(buff));
+		hdGpsGsvCtl(1);
         LogMessage(DEBUG_FACTORY, "NMEA OPEN");
     }
     else
     {
-//    	//关闭AGPS有效性检测
-   		sprintf(buff, "$PCAS03,,,,,,,,,,,0*1E\r\n");
-    	portUartSend(&usart3_ctl, (uint8_t *)buff, strlen(buff));
+		hdGpsGsvCtl(0);
         sysinfo.nmeaOutPutCtl = 0;
         LogMessage(DEBUG_FACTORY, "NMEA CLOSE");
     }

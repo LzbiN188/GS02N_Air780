@@ -77,7 +77,7 @@ void paramDefaultInit(uint8_t level)
         strcpy((char *)sysparam.agpsServer, "agps.domilink.com");
         strcpy((char *)sysparam.agpsUser, "123");
         strcpy((char *)sysparam.agpsPswd, "123");
-        sysparam.agpsPort = 10188;
+        sysparam.agpsPort = 10189;
 
     }
     dynamicParam.runTime = 0;

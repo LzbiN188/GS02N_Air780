@@ -1069,7 +1069,7 @@ int32_t gnss_eph_inject_data(uint8_t *data, int32_t length)
             frame_len = (data[i + 4] | (data[i + 5] << 8));
             portUartSend(&usart3_ctl, data + i, frame_len + 8);
             showByteData("inject agnss>>", data + i, frame_len + 8);
-            DelayMs(10); // just example, use wait 3ms instead of ACK
+            DelayMs(3); // just example, use wait 3ms instead of ACK
             i = i + frame_len + 8;
         }
         else

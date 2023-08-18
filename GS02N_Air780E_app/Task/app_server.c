@@ -1032,8 +1032,6 @@ static void agpsSocketRecv(char *data, uint16_t len)
 				//showByteData("nowdata send>>", rebuf + i, frame_len + 8);
 				remain_len -= frame_len + 8;
 				i = i + frame_len + 8;
-				DelayMs(5);
-				//这里可以加一个清空agpsRestore
 				memset(agpsRestore, 0, HD_PERH_GPS_MAX + 1);
 			}
 			//要发的数据大于剩余数据长度了，数据在下一包里面
@@ -1085,7 +1083,7 @@ static void agpsServerConnTask(void)
     {
         return ;
     }
-    if (/*gpsinfo->fixstatus || */sysinfo.gpsOnoff == 0)
+    if (gpsinfo->fixstatus || sysinfo.gpsOnoff == 0)
     {
         socketDel(AGPS_LINK);
         agpsRequestClear();

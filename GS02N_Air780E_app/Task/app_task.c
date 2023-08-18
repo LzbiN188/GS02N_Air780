@@ -462,7 +462,7 @@ static void hdGpsCfg(void)
 {
 	hdGpsColdStart();
 	//hdGpsHotStart();
-	DelayMs(3);
+	DelayMs(1);
 	hdGpsGsvCtl(0);
 	startTimer(10, hdGpsInjectLocation, 0);
 }
@@ -499,13 +499,19 @@ static void gpsOpen(void)
 static void gpsWait(void)
 {
     static uint8_t runTick = 0;
+    static uint8_t first = 0;
     if (++runTick >= 3)
     {
         runTick = 0;
         gpsChangeFsmState(GPSOPENSTATUS);
         if (gpsRequestOtherGet(GPS_REQUEST_BLE))
         {
-			agpsRequestSet();
+        	if (sysinfo.sysTick - sysinfo.agpsTick >= 7200 || first == 0)
+        	{
+        		first = 1;
+        		sysinfo.agpsTick = sysinfo.sysTick;
+				agpsRequestSet();
+			}
         }
     }
 }
