@@ -58,6 +58,7 @@ typedef struct
 	uint8_t wifisendflag			: 1;
 	uint8_t bleConnStatus			: 1;
 	uint8_t lowBatFlag				: 1;
+	uint8_t ephemerisFlag			: 1;
     uint8_t lbsExtendEvt;
     uint8_t wifiExtendEvt;
     uint8_t ringWakeUpTick;

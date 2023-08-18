@@ -17,6 +17,7 @@ typedef enum{
 	PROTOCOL_F1,//ICCID
 	PROTOCOL_F3,
 	PROTOCOL_8A,
+	PROTOCOL_A0,
 }PROTOCOLTYPE;
 
 
@@ -76,6 +77,7 @@ void gpsRestoreDataSend(gpsRestore_s *grs, char *dest	, uint16_t *len);
 
 void save123InstructionId(void);
 void reCover123InstructionId(void);
+void createProtocolA0(char *DestBuf, uint16_t *len);
 
 void getInsid(void);
 void setInsId(void);

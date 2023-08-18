@@ -1001,86 +1001,87 @@ static void agpsSocketRecv(char *data, uint16_t len)
 
 static void agpsServerConnTask(void)
 {
-    static uint8_t agpsFsm = 0;
-    static uint8_t runTick = 0;
-    char agpsBuff[150];
-    int ret;
-    gpsinfo_s *gpsinfo;
+	static uint8_t agpsFsm = 0;
+	static uint8_t runTick = 0;
+	char agpsBuff[150] = {0};
+	uint16_t agpsLen;
+	int ret;
+	gpsinfo_s *gpsinfo;
 
-    if (sysparam.agpsen == 0)
-    {
+	if (sysparam.agpsen == 0)
+	{
 		sysinfo.agpsRequest = 0;
-		if (socketGetUsedFlag(AGPS_LINK) == 1)
+		agpsFsm = 0;
+		if (socketGetUsedFlag(AGPS_LINK))
 		{
 			socketDel(AGPS_LINK);
 		}
 		return;
-    }
-    if (sysinfo.agpsRequest == 0)
-    {
-    	if (socketGetUsedFlag(AGPS_LINK) == 1)
+	}
+	if (sysinfo.agpsRequest == 0)
+	{
+		agpsFsm = 0;
+		if (socketGetUsedFlag(AGPS_LINK))
 		{
 			socketDel(AGPS_LINK);
 		}
-        return;
-    }
+		return;
+	}
 
-    gpsinfo = getCurrentGPSInfo();
+	gpsinfo = getCurrentGPSInfo();
 
-    if (isModuleRunNormal() == 0)
-    {
-        return ;
-    }
-    if (gpsinfo->fixstatus || sysinfo.gpsOnoff == 0)
-    {
-        socketDel(AGPS_LINK);
-        agpsRequestClear();
-        return;
-    }
-    if (socketGetUsedFlag(AGPS_LINK) != 1)
-    {
-        agpsFsm = 0;
-        ret = socketAdd(AGPS_LINK, sysparam.agpsServer, sysparam.agpsPort, agpsSocketRecv);
-        if (ret != 1)
-        {
-            LogPrintf(DEBUG_ALL, "agps add socket err[%d]", ret);
-            agpsRequestClear();
-        }
-        return;
-    }
-    if (socketGetConnStatus(AGPS_LINK) != SOCKET_CONN_SUCCESS)
-    {
-        LogMessage(DEBUG_ALL, "wait agps server ready");
-        return;
-    }
-    switch (agpsFsm)
-    {
-        case 0:
-            if (gpsinfo->fixstatus == 0)
-            {
-                sprintf(agpsBuff, "user=%s;pwd=%s;cmd=full;", sysparam.agpsUser, sysparam.agpsPswd);
-                socketSendData(AGPS_LINK, (uint8_t *) agpsBuff, strlen(agpsBuff));
-            }
-            agpsFsm = 1;
-            runTick = 0;
-            break;
-        case 1:
-            if (++runTick >= 15)
-            {
-            	if (isAgpsDataRecvComplete() == 0)
-            	{
-	                agpsFsm = 0;
-	                runTick = 0;
-	                socketDel(AGPS_LINK);
-	                wifiRequestSet(DEV_EXTEND_OF_MY);
-	                agpsRequestClear();
-                }
-            }
-            break;
-        default:
-            agpsFsm = 0;
-            break;
-    }
+	if (isModuleRunNormal() == 0)
+	{
+		return ;
+	}
+	if (gpsinfo->fixstatus || sysinfo.gpsOnoff == 0)
+	{
+		socketDel(AGPS_LINK);
+		agpsRequestClear();
+		return;
+	}
+	if (socketGetUsedFlag(AGPS_LINK) != 1)
+	{
+		agpsFsm = 0;
+		ret = socketAdd(AGPS_LINK, sysparam.agpsServer, sysparam.agpsPort, agpsSocketRecv);
+		if (ret != 1)
+		{
+			LogPrintf(DEBUG_ALL, "agps add socket err[%d]", ret);
+			agpsRequestClear();
+		}
+		return;
+	}
+	if (socketGetConnStatus(AGPS_LINK) != SOCKET_CONN_SUCCESS)
+	{
+		agpsFsm = 0;
+		LogMessage(DEBUG_ALL, "wait agps server ready");
+		return;
+	}
+	switch (agpsFsm)
+	{
+		case 0:
+			createProtocolA0(agpsBuff, &agpsLen);
+			socketSendData(AGPS_LINK, (uint8_t *) agpsBuff, agpsLen);
+			agpsFsm = 1;
+			runTick = 0;
+			break;
+		case 1:
+			if (++runTick >= 30)
+			{
+				if (isAgpsDataRecvComplete() == 0)
+				{
+					agpsFsm = 0;
+					runTick = 0;
+					socketDel(AGPS_LINK);
+					wifiRequestSet(DEV_EXTEND_OF_MY);
+					agpsRequestClear();
+				}
+			}
+			break;
+		default:
+			agpsFsm = 0;
+			break;
+	}
 
 
 }

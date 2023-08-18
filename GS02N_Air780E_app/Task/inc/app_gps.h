@@ -60,6 +60,7 @@ typedef enum
     NMEA_GSA,
     NMEA_GGA,
     NMEA_GSV,
+    NMEA_TXT,
 } NMEATYPE;
 
 /*------------------------------------------------------*/

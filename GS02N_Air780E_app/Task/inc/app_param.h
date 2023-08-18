@@ -22,9 +22,9 @@
 #define APP_PARAM_FLAG          0x1A
 #define BOOT_PARAM_FLAG         0xB0
 
-#define EEPROM_VERSION									"GS02N-4NB_Air780E_V1.2.12"
+#define EEPROM_VERSION									"GS02N-4NB_Air780E_V1.2.13"
 
-#define OTA_PARAM_UPDATE_FLAG		0x1B
+#define OTA_PARAM_UPDATE_FLAG		0x1C
 
 
 #define JT808_PROTOCOL_TYPE			8
@@ -141,6 +141,9 @@ typedef struct
 	uint16_t noNmeaRstCnt;
 
 	int32_t rtcOffset;
+
+	float saveLat;
+	float saveLon;
 }dynamicParam_s;
 
 

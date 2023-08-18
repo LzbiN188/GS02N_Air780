@@ -407,7 +407,8 @@ static void gpsCfg(void)
     //sprintf(param, "$CCMSG,GSV,1,0,*1A\r\n");
     sprintf(param, "$PCAS03,1,0,1,0,1,0,0,0,0,0,0,0,0,0*03\r\n");
     portUartSend(&usart3_ctl, (uint8_t *)param, strlen(param));
-
+	sprintf(param, "$PCAS03,,,,,,,,,,,1*1F\r\n");
+	portUartSend(&usart3_ctl, (uint8_t *)param, strlen(param));
     LogMessage(DEBUG_ALL, "gps config nmea output");
 }
 /**************************************************
@@ -463,7 +464,7 @@ static void gpsOpen(void)
     ledStatusUpdate(SYSTEM_LED_GPSOK, 0);
     moduleSleepCtl(0);
     LogMessage(DEBUG_ALL, "gpsOpen");
-
+	sysinfo.ephemerisFlag = 0;
 }
 /**************************************************
 @bref		等待gps稳定
@@ -479,6 +480,10 @@ static void gpsWait(void)
     {
         runTick = 0;
         gpsChangeFsmState(GPSOPENSTATUS);
+        if (sysinfo.ephemerisFlag == 0)
+        {
+			agpsRequestSet();
+        }
     }
 }
 
@@ -508,6 +513,41 @@ static void gpsClose(void)
 }
 
 
+/**************************************************
+@bref		保存上一次gps位置
+@param
+@return
+@note
+**************************************************/
+void saveGpsHistory(void)
+{
+	gpsinfo_s *gpsinfo;
+    float latitude, longtitude;
+    gpsinfo = getLastFixedGPSInfo();
+    if (gpsinfo->fixstatus != 0)
+    {
+        latitude = gpsinfo->latitude;
+        longtitude = gpsinfo->longtitude;
+        if (gpsinfo->NS == 'S')
+        {
+            if (latitude > 0)
+            {
+                latitude *= -1;
+            }
+        }
+        if (gpsinfo->EW == 'W')
+        {
+            if (longtitude > 0)
+            {
+                longtitude *= -1;
+            }
+        }
+        dynamicParam.saveLat = latitude;
+        dynamicParam.saveLon = longtitude;
+        LogPrintf(DEBUG_ALL, "Save Latitude:%f,Longtitude:%f\r\n", dynamicParam.saveLat, dynamicParam.saveLon);
+		dynamicParamSaveAll();
+    }
+}
 
 /**************************************************
 @bref		gps控制任务
@@ -548,6 +588,10 @@ static void gpsRequestTask(void)
             }
             if (sysinfo.gpsRequest == 0 || (sysinfo.sysTick - sysinfo.gpsUpdatetick) >= 20)
             {
+                if (sysinfo.gpsRequest == 0)
+            	{
+					saveGpsHistory();
+            	}
                 gpsClose();
             }
             break;
