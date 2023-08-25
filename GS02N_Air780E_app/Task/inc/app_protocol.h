@@ -17,6 +17,7 @@ typedef enum{
 	PROTOCOL_F1,//ICCID
 	PROTOCOL_F3,
 	PROTOCOL_8A,
+	PROTOCOL_A0,
 }PROTOCOLTYPE;
 
 
@@ -82,6 +83,7 @@ void setInsId(void);
 
 void getLastInsid(void);
 void setLastInsid(void);
+void createProtocolA0(char *DestBuf, uint16_t *len);
 
 
 

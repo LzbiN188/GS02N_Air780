@@ -62,6 +62,7 @@ const instruction_s insCmdTable[] =
     {BLERELAYCTL_INS, "BLERELAYCTL"},
     {RELAYFUN_INS, "RELAYFUN"},
     {SETBATRATE_INS, "SETBATRATE"},
+    {CSQTIME_INS, "CSQTIME"},
     {SN_INS, "*"},
 };
 
@@ -854,7 +855,7 @@ void doFenceInstrucion(ITEM *item, char *message)
 
 void doIccidInstrucion(ITEM *item, char *message)
 {
-    sendModuleCmd(CCID_CMD, NULL);
+    sendModuleCmd(ICCID_CMD, NULL);
     sprintf(message, "ICCID:%s", getModuleICCID());
 }
 
@@ -1683,6 +1684,25 @@ static void doSetBatRateInstruction(ITEM *item, char *message)
         paramSaveAll();
     }
 }
+
+static void doCsqTimeInstruction(ITEM *item, char *message)
+{
+	if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+	{
+		sprintf(message, "Search csq time is %d s", sysparam.csqTime);
+	}
+	else
+	{
+		sysparam.csqTime = atoi(item->item_data[1]);
+		if (sysparam.csqTime == 0)
+		{
+			sysparam.csqTime = 90;
+		}
+		sprintf(message, "Update csq time to %d s", sysparam.csqTime);
+		paramSaveAll();
+	}
+}
+
 /*--------------------------------------------------------------------------------------*/
 static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param)
 {
@@ -1841,6 +1861,9 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
         case SETBATRATE_INS:
             doSetBatRateInstruction(item, message);
             break;
+        case CSQTIME_INS:
+			doCsqTimeInstruction(item, message);
+        	break;
         default:
             if (mode == SMS_MODE)
             {

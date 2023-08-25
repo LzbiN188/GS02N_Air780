@@ -258,7 +258,7 @@ void socketSchedule(void)
                 break;
             }
         case SOCKET_SCHEDULE_END:
-            if (socketList[sockSchInfo.ind].connOK != SOCKET_CONN_SUCCESS)
+            if (socketList[sockSchInfo.ind].connOK != SOCKET_CONN_SUCCESS && socketList[sockSchInfo.ind].usedFlag == 1)
             {
                 closeSocket(socketList[sockSchInfo.ind].socketId);
             }

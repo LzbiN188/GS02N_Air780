@@ -148,6 +148,7 @@ uint8_t gpsRequestOtherGet(uint32_t flag);
 void gpsTcpSendRequest(void);
 
 
+void saveGpsHistory(void);
 
 void wakeUpByInt(uint8_t     type,uint8_t sec);
 

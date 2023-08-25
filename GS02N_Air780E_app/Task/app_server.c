@@ -999,21 +999,34 @@ static void agpsSocketRecv(char *data, uint16_t len)
     portUartSend(&usart3_ctl, data, len);
 }
 
+
+
 static void agpsServerConnTask(void)
 {
     static uint8_t agpsFsm = 0;
     static uint8_t runTick = 0;
-    char agpsBuff[150];
+    char agpsBuff[150] = {0};
+    uint16_t agpsLen;
     int ret;
     gpsinfo_s *gpsinfo;
 
     if (sysparam.agpsen == 0)
     {
 		sysinfo.agpsRequest = 0;
+		agpsFsm = 0;
+    	if (socketGetUsedFlag(AGPS_LINK))
+    	{
+			socketDel(AGPS_LINK);
+    	}
 		return;
     }
     if (sysinfo.agpsRequest == 0)
     {
+    	agpsFsm = 0;
+    	if (socketGetUsedFlag(AGPS_LINK))
+    	{
+			socketDel(AGPS_LINK);
+    	}
         return;
     }
 
@@ -1042,17 +1055,20 @@ static void agpsServerConnTask(void)
     }
     if (socketGetConnStatus(AGPS_LINK) != SOCKET_CONN_SUCCESS)
     {
+    	agpsFsm = 0;
         LogMessage(DEBUG_ALL, "wait agps server ready");
         return;
     }
     switch (agpsFsm)
     {
         case 0:
-            if (gpsinfo->fixstatus == 0)
-            {
-                sprintf(agpsBuff, "user=%s;pwd=%s;cmd=full;", sysparam.agpsUser, sysparam.agpsPswd);
-                socketSendData(AGPS_LINK, (uint8_t *) agpsBuff, strlen(agpsBuff));
-            }
+//            if (gpsinfo->fixstatus == 0)
+//            {
+//                sprintf(agpsBuff, "user=%s;pwd=%s;cmd=full;", sysparam.agpsUser, sysparam.agpsPswd);
+//                socketSendData(AGPS_LINK, (uint8_t *) agpsBuff, strlen(agpsBuff));
+//            }
+			createProtocolA0(agpsBuff, &agpsLen);
+			socketSendData(AGPS_LINK, (uint8_t *) agpsBuff, agpsLen);
             agpsFsm = 1;
             runTick = 0;
             break;

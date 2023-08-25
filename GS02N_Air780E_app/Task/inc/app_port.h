@@ -56,6 +56,16 @@
 
 #define VCARD_ADCPIN	GPIO_Pin_9
 
+// (MAXCALCTICKS * 5) + (max remainder) must be <= (uint16 max),
+// so: (13105 * 5) + 7 <= 65535
+#define MAXCALCTICKS  ((uint16_t)(13105))
+ 
+//#define	BEGYEAR	        2000UL     // UTC started at 00:00:00 January 1, 2020
+ 
+#define	DAY             86400UL  // 24 hours * 60 minutes * 60 seconds
+ 
+
+
 typedef enum
 {
     APPUSART0,
@@ -113,6 +123,7 @@ void portGetRtcDateTime(uint16_t *year, uint8_t *month, uint8_t *date, uint8_t *
 void portUpdateRtcDateTime(uint8_t year, uint8_t month, uint8_t date, uint8_t hour, uint8_t minute, uint8_t second);
 int portSetNextAlarmTime(void);
 void portSetNextWakeUpTime(void);
+void portUpdateRtcOffset(uint8_t year, uint8_t month, uint8_t date, uint8_t hour, uint8_t minute, uint8_t second);
 
 void portLowPowerCfg(void);
 

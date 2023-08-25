@@ -1,5 +1,5 @@
 ################################################################################
-# MRS Version: {"version":"1.8.5","date":"2023/05/22"}
+# MRS Version: 1.9.0
 # Automatically-generated file. Do not edit!
 ################################################################################
 
@@ -7,18 +7,21 @@
 C_SRCS += \
 ../APP/app_broadcaster.c \
 ../APP/app_central.c \
+../APP/app_hid.c \
 ../APP/app_main.c \
 ../APP/app_peripheral.c 
 
 OBJS += \
 ./APP/app_broadcaster.o \
 ./APP/app_central.o \
+./APP/app_hid.o \
 ./APP/app_main.o \
 ./APP/app_peripheral.o 
 
 C_DEPS += \
 ./APP/app_broadcaster.d \
 ./APP/app_central.d \
+./APP/app_hid.d \
 ./APP/app_main.d \
 ./APP/app_peripheral.d 
 

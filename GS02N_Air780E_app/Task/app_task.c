@@ -360,6 +360,43 @@ static void gpsChangeFsmState(uint8_t state)
 }
 
 /**************************************************
+@bref		保存上一次gps位置
+@param
+@return
+@note
+**************************************************/
+void saveGpsHistory(void)
+{
+	gpsinfo_s *gpsinfo;
+	float latitude, longtitude;
+	gpsinfo = getLastFixedGPSInfo();
+	if (gpsinfo->fixstatus != 0)
+	{
+		latitude = gpsinfo->latitude;
+		longtitude = gpsinfo->longtitude;
+		if (gpsinfo->NS == 'S')
+		{
+			if (latitude > 0)
+			{
+				latitude *= -1;
+			}
+		}
+		if (gpsinfo->EW == 'W')
+		{
+			if (longtitude > 0)
+			{
+				longtitude *= -1;
+			}
+		}
+		dynamicParam.saveLat = latitude;
+		dynamicParam.saveLon = longtitude;
+		LogPrintf(DEBUG_ALL, "Save Latitude:%f,Longtitude:%f\r\n", dynamicParam.saveLat, dynamicParam.saveLon);
+		dynamicParamSaveAll();
+	}
+}
+
+
+/**************************************************
 @bref		gps数据接收
 @param
 @return
@@ -406,6 +443,8 @@ static void gpsCfg(void)
     //sprintf(param, "$CCMSG,GSV,1,0,*1A\r\n");
     sprintf(param, "$PCAS03,1,0,1,0,1,0,0,0,0,0,0,0,0,0*03\r\n");
     portUartSend(&usart3_ctl, (uint8_t *)param, strlen(param));
+	sprintf(param, "$PCAS03,,,,,,,,,,,1*1F\r\n");
+	portUartSend(&usart3_ctl, (uint8_t *)param, strlen(param));
 
     LogMessage(DEBUG_ALL, "gps config nmea output");
 }
@@ -462,6 +501,7 @@ static void gpsOpen(void)
     ledStatusUpdate(SYSTEM_LED_GPSOK, 0);
     moduleSleepCtl(0);
     LogMessage(DEBUG_ALL, "gpsOpen");
+    sysinfo.ephemerisFlag = 0;
 
 }
 /**************************************************
@@ -474,10 +514,14 @@ static void gpsOpen(void)
 static void gpsWait(void)
 {
     static uint8_t runTick = 0;
-    if (++runTick >= 6)
+    if (++runTick >= 5)
     {
         runTick = 0;
         gpsChangeFsmState(GPSOPENSTATUS);
+        if (sysinfo.ephemerisFlag == 0)
+        {
+			agpsRequestSet();
+        }
     }
 }
 
@@ -526,10 +570,6 @@ static void gpsRequestTask(void)
             if (sysinfo.gpsRequest != 0)
             {
                 gpsOpen();
-                if (gpsRequestOtherGet(GPS_REQUEST_BLE))
-                {
-					agpsRequestSet();
-                }
             }
             break;
         case GPSWATISTATUS:
@@ -547,6 +587,10 @@ static void gpsRequestTask(void)
             }
             if (sysinfo.gpsRequest == 0 || (sysinfo.sysTick - sysinfo.gpsUpdatetick) >= 20)
             {
+            	if (sysinfo.gpsRequest == 0)
+            	{
+					saveGpsHistory();
+            	}
                 gpsClose();
             }
             break;
@@ -2056,7 +2100,7 @@ void doDebugRecvPoll(uint8_t *msg, uint16_t len)
 void myTaskPreInit(void)
 {
     tmos_memset(&sysinfo, 0, sizeof(sysinfo));
-	//sysinfo.logLevel = DEBUG_ALL;
+	sysinfo.logLevel = DEBUG_ALL;
 
     SetSysClock(CLK_SOURCE_PLL_60MHz);
     portGpioSetDefCfg();

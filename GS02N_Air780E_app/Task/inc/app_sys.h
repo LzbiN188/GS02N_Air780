@@ -58,6 +58,7 @@ typedef struct
 	uint8_t bleConnStatus			: 1;
 	uint8_t lowBatProtectFlag		: 1;
 	uint8_t rspTimeout				: 1;//relay on回复超时标志位
+	uint8_t ephemerisFlag			: 1;
     uint8_t lbsExtendEvt;
     uint8_t wifiExtendEvt;
     uint8_t ringWakeUpTick;

@@ -125,6 +125,17 @@ void paramInit(void)
     {
         paramDefaultInit(0);
     }
+        if (sysparam.otaUpdateFlag != OTA_PARAM_UPDATE_FLAG)
+    {
+		sysparam.otaUpdateFlag = OTA_PARAM_UPDATE_FLAG;
+		sysparam.csqTime = 300;
+		sysparam.agpsPort = 10187;
+		dynamicParam.saveLat = 0.0;
+		dynamicParam.saveLon = 0.0;
+		paramSaveAll();
+		dynamicParamSaveAll();
+		LogPrintf(DEBUG_ALL, "OTA param update success");
+    }
     sysinfo.lowvoltage = sysparam.lowvoltage / 10.0;
     dbInfoRead();
 }

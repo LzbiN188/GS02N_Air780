@@ -80,7 +80,11 @@ const atCmd_s cmdtable[] =
     {CFGRI_CMD, "AT+CFGRI"},
     {WIFISCAN_CMD, "AT+WIFISCAN"},
     {CFG_CMD, "AT+CFG"},
-	{CIICR_CMD, "AT+CMD"},
+	{CIICR_CMD, "AT+CIICR"},
+	{CIFSR_CMD, "AT+CIFSR"},
+	{CSTT_CMD, "AT+CSTT"},
+	{CPNETAPN_CMD, "AT+CPNETAPN"},
+
 };
 
 /**************************************************
@@ -489,8 +493,8 @@ static void netSetCgdcong(char *apn)
 static void netSetApn(char *apn, char *apnname, char *apnpassword)
 {
     char param[100];
-    sprintf(param, "1,1,\"%s\",\"%s\",\"%s\"", apn, apnname, apnpassword);
-    sendModuleCmd(QICSGP_CMD, param);
+    sprintf(param, "\"%s\",\"%s\",\"%s\"", apn, apnname, apnpassword);
+    sendModuleCmd(CSTT_CMD, param);
 }
 
 
@@ -617,9 +621,7 @@ void netConnectTask(void)
             {
                 moduleState.cpinResponOk = 0;
                 moduleState.csqOk = 0;
-                sendModuleCmd(AT_CMD, NULL);
                 netSetCgdcong((char *)sysparam.apn);
-                netSetApn((char *)sysparam.apn, (char *)sysparam.apnuser, (char *)sysparam.apnpassword);
                 changeProcess(CSQ_STATUS);
 
             }
@@ -643,18 +645,13 @@ void netConnectTask(void)
                 moduleCtrl.csqCount = 0;
                 sendModuleCmd(CGREG_CMD, "2");
                 sendModuleCmd(CEREG_CMD, "2");
-                sendModuleCmd(CIPSHUT_CMD, NULL);
                 changeProcess(CGREG_STATUS);
                 netResetCsqSearch();
             }
             else
             {
                 sendModuleCmd(CSQ_CMD, NULL);
-                if (moduleCtrl.csqTime == 0)
-                {
-                    moduleCtrl.csqTime = 90;
-                }
-                if (moduleState.fsmtick >= moduleCtrl.csqTime)
+                if (moduleState.fsmtick >= sysparam.csqTime)
                 {
                     moduleCtrl.csqCount++;
                     if (moduleCtrl.csqCount >= 3)
@@ -684,13 +681,14 @@ void netConnectTask(void)
             {
                 moduleCtrl.cgregCount = 0;
                 moduleState.cgregOK = 0;
+                sendModuleCmd(CIPSHUT_CMD, NULL);
                 changeProcess(CONFIG_STATUS);
             }
             else
             {
                 sendModuleCmd(CGREG_CMD, "?");
                 sendModuleCmd(CEREG_CMD, "?");
-                if (moduleState.fsmtick >= 90)
+                if (moduleState.fsmtick >= sysparam.csqTime)
                 {
                     moduleCtrl.cgregCount++;
                     if (moduleCtrl.cgregCount >= 2)
@@ -725,6 +723,11 @@ void netConnectTask(void)
             sendModuleCmd(CIPQSEND_CMD, "1");
             sendModuleCmd(CIPRXGET_CMD, "5");
             sendModuleCmd(CFG_CMD, "\"urcdelay\",100");
+            sendModuleCmd(CIMI_CMD, NULL);
+            sendModuleCmd(CGSN_CMD, NULL);
+            sendModuleCmd(ICCID_CMD, NULL);
+            netSetApn((char *)sysparam.apn, (char *)sysparam.apnuser, (char *)sysparam.apnpassword);
+            sendModuleCmd(CIICR_CMD, NULL);
             changeProcess(QIACT_STATUS);
             break;
         case QIACT_STATUS:
@@ -732,9 +735,8 @@ void netConnectTask(void)
             {
                 moduleState.qipactOk = 0;
                 moduleCtrl.qipactCount = 0;
+                sendModuleCmd(CIFSR_CMD, NULL);
                 changeProcess(NORMAL_STATUS);
-                sendModuleCmd(AT_CMD, NULL);
-                sendModuleCmd(CGSN_CMD, NULL);
             }
             else
             {
@@ -965,8 +967,8 @@ static void iccidParser(uint8_t *buf, uint16_t len)
             }
         }
     }
-
 }
+
 
 /**************************************************
 @bref		AT+QIACT	÷∏¡ÓΩ‚Œˆ
@@ -2345,7 +2347,7 @@ void moduleRecvParser(uint8_t *buf, uint16_t bufsize)
 
 void netResetCsqSearch(void)
 {
-    moduleCtrl.csqTime = 90;
+    moduleCtrl.csqTime = sysparam.csqTime;
 }
 
 /**************************************************

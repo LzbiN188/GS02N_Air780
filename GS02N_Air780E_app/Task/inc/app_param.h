@@ -22,7 +22,16 @@
 #define APP_PARAM_FLAG          0x1A
 #define BOOT_PARAM_FLAG         0xB0
 
-#define EEPROM_VERSION									"GS02N-4RT_Air780_V1.2.15"
+#define OTA_PARAM_UPDATE_FLAG		0x1C
+
+#define VT02S_VERSION_FLAG		0
+
+#if VT02S_VERSION_FLAG
+#define EEPROM_VERSION									"VT02S+_Air780_V1.2.16"
+#else
+#define EEPROM_VERSION									"GS02N-4RT_Air780_V1.2.16"
+#endif
+
 
 
 #define JT808_PROTOCOL_TYPE			8
@@ -123,6 +132,8 @@ typedef struct
     
     float batLowLevel;
     float batHighLevel;
+    uint16_t csqTime;
+    uint8_t otaUpdateFlag;
 
 } systemParam_s;
 
@@ -139,6 +150,9 @@ typedef struct
     uint8_t jt808AuthLen;
 
 	uint16_t noNmeaRstCnt;
+	uint16_t saveLat;
+	uint16_t saveLon;
+	int32_t rtcOffset;
 }dynamicParam_s;
 
 

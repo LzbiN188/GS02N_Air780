@@ -64,3 +64,8 @@ GS02N_Air780_V1.2.15  2023/6/14
 4ST: 4G+Lowpower+TX  
 4MT: 4G+主机扫描+TX	 
 4GT: 4G+Gmouse+TX
+
+GS02N_Air780_V1.2.16  2023/8/25
+1、在此分支上做VT02S+和GS02双版本命名，通过宏定义区分
+2、升级AGPS逻辑
+3、新增指令CSQTIME，可设置模组搜网时间
