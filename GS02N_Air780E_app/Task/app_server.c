@@ -591,9 +591,9 @@ void jt808ServerConnTask(void)
         ledStatusUpdate(SYSTEM_LED_NETOK, 0);
         jt808ServerChangeFsm(JT808_REGISTER);
         jt808RegisterTcpSend(jt808ServerSocketSend);
-        jt808RegisterManufactureId((uint8_t *)"ZT");
-        jt808RegisterTerminalType((uint8_t *)"06");
-        jt808RegisterTerminalId((uint8_t *)"01");
+        jt808RegisterManufactureId((uint8_t *)"70111");
+         jt808RegisterTerminalType((uint8_t *)"BSJ-A7");
+         jt808RegisterTerminalId((uint8_t *)"0882984");
         socketAdd(JT808_LINK, sysparam.jt808Server, sysparam.jt808Port, jt808ServerSocketRecv);
         return;
     }

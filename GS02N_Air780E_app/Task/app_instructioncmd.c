@@ -724,6 +724,7 @@ void doDebugInstrucion(ITEM *item, char *message)
     sprintf(message + strlen(message), "hideLogin:%s;", hiddenServerIsReady() ? "Yes" : "No");
     sprintf(message + strlen(message), "moduleRstCnt:%d;", sysinfo.moduleRstCnt);
     sprintf(message + strlen(message), "bleConnStatus[%s]:%s", sysinfo.bleConnStatus ? "CONNECTED" : "DISCONNECTED", appPeripheralParamCallback());
+    sprintf(message + strlen(message), "socketfsm:%d");
 }
 
 void doACCCTLGNSSInstrucion(ITEM *item, char *message)

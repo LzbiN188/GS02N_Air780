@@ -80,11 +80,15 @@ const atCmd_s cmdtable[] =
     {CFGRI_CMD, "AT+CFGRI"},
     {WIFISCAN_CMD, "AT+WIFISCAN"},
     {CFG_CMD, "AT+CFG"},
-	{CIICR_CMD, "AT+CMD"},
+    {CIICR_CMD, "AT+CIICR"},
+    {CIFSR_CMD, "AT+CIFSR"},
+    {CSTT_CMD, "AT+CSTT"},
+    {CPNETAPN_CMD, "AT+CPNETAPN"},
+
 };
 
 /**************************************************
-@bref		创建指令输出队列，用于顺序输出
+@bref       创建指令输出队列，用于顺序输出
 @param
 @return
 @note
@@ -98,11 +102,11 @@ uint8_t createNode(char *data, uint16_t datalen, uint8_t currentcmd)
     WAKEMODULE;
     if (currentcmd == WIFISCAN_CMD)
     {
-		wakeUpByInt(1, 20);
+        wakeUpByInt(1, 20);
     }
     else
     {
-		wakeUpByInt(1, 15);
+        wakeUpByInt(1, 15);
     }
     if (headNode == NULL)
     {
@@ -172,7 +176,7 @@ uint8_t createNode(char *data, uint16_t datalen, uint8_t currentcmd)
 }
 
 /**************************************************
-@bref		数据队列输出
+@bref       数据队列输出
 @param
 @return
 @note
@@ -224,7 +228,7 @@ void outputNode(void)
         free(currentnode->data);
         free(currentnode);
         if (currentnode->currentcmd == QICLOSE_CMD || currentnode->currentcmd == CMGS_CMD || 
-        		currentnode->currentcmd == WIFISCAN_CMD)
+                currentnode->currentcmd == WIFISCAN_CMD)
         {
             lockFlag = 1;
             if (currentnode->currentcmd == QICLOSE_CMD)
@@ -233,11 +237,11 @@ void outputNode(void)
             }
             else if (currentnode->currentcmd == WIFISCAN_CMD)
             {
-				tickRange = 75;
+                tickRange = 75;
             }
             else
             {
-                tickRange = 25;
+                tickRange = 10;
             }
             LogMessage(DEBUG_ALL, "outputNode==>Lock");
         }
@@ -247,7 +251,7 @@ void outputNode(void)
 }
 
 /**************************************************
-@bref		模组指令发送
+@bref       模组指令发送
 @param
 @return
 @note
@@ -302,7 +306,7 @@ void sendModuleDirect(char *param)
 }
 
 /**************************************************
-@bref		初始化模块相关使用结构体
+@bref       初始化模块相关使用结构体
 @param
 @return
 @note
@@ -314,7 +318,7 @@ static void moduleInit(void)
 }
 
 /**************************************************
-@bref		是否开机按键
+@bref       是否开机按键
 @param
 @return
 @note
@@ -326,7 +330,7 @@ static void modulePressReleaseKey(void)
     LogPrintf(DEBUG_ALL, "PowerOn Done");
 }
 /**************************************************
-@bref		按下开机按键
+@bref       按下开机按键
 @param
 @return
 @note
@@ -338,7 +342,7 @@ static void modulePressPowerKey(void)
     startTimer(12, modulePressReleaseKey, 0);
 }
 /**************************************************
-@bref		模组开机
+@bref       模组开机
 @param
 @return
 @note
@@ -360,7 +364,7 @@ void modulePowerOn(void)
     socketDelAll();
 }
 /**************************************************
-@bref		释放关机按键
+@bref       释放关机按键
 @param
 @return
 @note
@@ -372,7 +376,7 @@ static void modulePowerOffProcess(void)
     LogMessage(DEBUG_ALL, "modulePowerOff Done");
 }
 /**************************************************
-@bref		模组关机
+@bref       模组关机
 @param
 @return
 @note
@@ -392,7 +396,7 @@ void modulePowerOff(void)
 }
 
 /**************************************************
-@bref		释放复位按键
+@bref       释放复位按键
 @param
 @return
 @note
@@ -404,7 +408,7 @@ static void moduleReleaseRstkey(void)
     RSTKEY_HIGH;
 }
 /**************************************************
-@bref		模组复位
+@bref       模组复位
 @param
 @return
 @note
@@ -420,7 +424,7 @@ void moduleReset(void)
 }
 
 /**************************************************
-@bref		切换联网状态机
+@bref       切换联网状态机
 @param
 @return
 @note
@@ -436,7 +440,7 @@ static void changeProcess(uint8_t fsm)
 }
 
 /**************************************************
-@bref		创建socket
+@bref       创建socket
 @param
 @return
 @note
@@ -451,7 +455,7 @@ void openSocket(uint8_t link, char *server, uint16_t port)
 }
 
 /**************************************************
-@bref		关闭socket
+@bref       关闭socket
 @param
 @return
 @note
@@ -466,7 +470,7 @@ void closeSocket(uint8_t link)
 }
 
 /**************************************************
-@bref		apn配置
+@bref       apn配置
 @param
 @return
 @note
@@ -480,7 +484,7 @@ static void netSetCgdcong(char *apn)
 }
 
 /**************************************************
-@bref		apn配置
+@bref       apn配置
 @param
 @return
 @note
@@ -489,13 +493,13 @@ static void netSetCgdcong(char *apn)
 static void netSetApn(char *apn, char *apnname, char *apnpassword)
 {
     char param[100];
-    sprintf(param, "1,1,\"%s\",\"%s\",\"%s\"", apn, apnname, apnpassword);
-    sendModuleCmd(QICSGP_CMD, param);
+    sprintf(param, "\"%s\",\"%s\",\"%s\"", apn, apnname, apnpassword);
+    sendModuleCmd(CSTT_CMD, param);
 }
 
 
 /**************************************************
-@bref		模组进入飞行模式
+@bref       模组进入飞行模式
 @param
 @return
 @note
@@ -507,7 +511,7 @@ static void moduleEnterFly(void)
 }
 
 /**************************************************
-@bref		模组进入正常模式
+@bref       模组进入正常模式
 @param
 @return
 @note
@@ -519,7 +523,7 @@ static void moduleExitFly(void)
 }
 
 /**************************************************
-@bref		发送socket读取缓存指令
+@bref       发送socket读取缓存指令
 @param
 @return
 @note
@@ -534,7 +538,7 @@ static void qirdCmdSend(uint8_t link)
 }
 
 /**************************************************
-@bref		读取缓存
+@bref       读取缓存
 @param
 @return
 @note
@@ -566,7 +570,7 @@ static void queryRecvBuffer(void)
 }
 
 /**************************************************
-@bref		联网准备任务
+@bref       联网准备任务
 @param
 @return
 @note
@@ -617,9 +621,7 @@ void netConnectTask(void)
             {
                 moduleState.cpinResponOk = 0;
                 moduleState.csqOk = 0;
-                sendModuleCmd(AT_CMD, NULL);
                 netSetCgdcong((char *)sysparam.apn);
-                netSetApn((char *)sysparam.apn, (char *)sysparam.apnuser, (char *)sysparam.apnpassword);
                 changeProcess(CSQ_STATUS);
 
             }
@@ -643,18 +645,13 @@ void netConnectTask(void)
                 moduleCtrl.csqCount = 0;
                 sendModuleCmd(CGREG_CMD, "2");
                 sendModuleCmd(CEREG_CMD, "2");
-                sendModuleCmd(CIPSHUT_CMD, NULL);
                 changeProcess(CGREG_STATUS);
                 netResetCsqSearch();
             }
             else
             {
                 sendModuleCmd(CSQ_CMD, NULL);
-                if (moduleCtrl.csqTime == 0)
-                {
-                    moduleCtrl.csqTime = 90;
-                }
-                if (moduleState.fsmtick >= moduleCtrl.csqTime)
+                if (moduleState.fsmtick >= 90)
                 {
                     moduleCtrl.csqCount++;
                     if (moduleCtrl.csqCount >= 3)
@@ -684,6 +681,7 @@ void netConnectTask(void)
             {
                 moduleCtrl.cgregCount = 0;
                 moduleState.cgregOK = 0;
+                sendModuleCmd(CIPSHUT_CMD, NULL);
                 changeProcess(CONFIG_STATUS);
             }
             else
@@ -725,6 +723,11 @@ void netConnectTask(void)
             sendModuleCmd(CIPQSEND_CMD, "1");
             sendModuleCmd(CIPRXGET_CMD, "5");
             sendModuleCmd(CFG_CMD, "\"urcdelay\",100");
+            sendModuleCmd(CIMI_CMD, NULL);
+            sendModuleCmd(CGSN_CMD, NULL);
+            sendModuleCmd(ICCID_CMD, NULL);
+            netSetApn((char *)sysparam.apn, (char *)sysparam.apnuser, (char *)sysparam.apnpassword);
+            sendModuleCmd(CIICR_CMD, NULL);
             changeProcess(QIACT_STATUS);
             break;
         case QIACT_STATUS:
@@ -732,9 +735,8 @@ void netConnectTask(void)
             {
                 moduleState.qipactOk = 0;
                 moduleCtrl.qipactCount = 0;
+                sendModuleCmd(CIFSR_CMD, NULL);
                 changeProcess(NORMAL_STATUS);
-                sendModuleCmd(AT_CMD, NULL);
-                sendModuleCmd(CGSN_CMD, NULL);
             }
             else
             {
@@ -778,7 +780,7 @@ void netConnectTask(void)
 
 
 /**************************************************
-@bref		AT+CSQ	指令解析
+@bref       AT+CSQ  指令解析
 @param
 @return
 @note
@@ -811,7 +813,7 @@ static void csqParser(uint8_t *buf, uint16_t len)
 }
 
 /**************************************************
-@bref		AT+CREG	指令解析
+@bref       AT+CREG 指令解析
 @param
 @return
 @note
@@ -894,7 +896,7 @@ static void cgregParser(uint8_t *buf, uint16_t len)
 }
 
 /**************************************************
-@bref		AT+CIMI	指令解析
+@bref       AT+CIMI 指令解析
 @param
 @return
 @note
@@ -931,7 +933,7 @@ static void cimiParser(uint8_t *buf, uint16_t len)
 
 
 /**************************************************
-@bref		AT+ICCID	指令解析
+@bref       AT+ICCID    指令解析
 @param
 @return
 @note
@@ -965,11 +967,11 @@ static void iccidParser(uint8_t *buf, uint16_t len)
             }
         }
     }
-
 }
 
+
 /**************************************************
-@bref		AT+QIACT	指令解析
+@bref       AT+QIACT    指令解析
 @param
 @return
 @note
@@ -1038,7 +1040,7 @@ static void qipactParser(uint8_t *buf, uint16_t len)
 }
 
 /**************************************************
-@bref		socket数据接收解析
+@bref       socket数据接收解析
 @param
 @return
 @note
@@ -1130,7 +1132,7 @@ static void qiurcParser(uint8_t *buf, uint16_t len)
 
 
 /**************************************************
-@bref		短信接收
+@bref       短信接收
 @param
 @return
 @note
@@ -1165,7 +1167,7 @@ static void cmtiParser(uint8_t *buf, uint16_t len)
 }
 
 /**************************************************
-@bref		CMGR	指令解析
+@bref       CMGR    指令解析
 @param
 @return
 @note
@@ -1222,12 +1224,13 @@ static void cmgrParser(uint8_t *buf, uint16_t len)
         restore[index] = 0;
         LogPrintf(DEBUG_ALL, "Message:%s", restore);
         insparam.telNum = moduleState.messagePhone;
+        //lastparam.telNum = moduleState.messagePhone;
         instructionParser((uint8_t *)restore, index, SMS_MODE, &insparam);
     }
 }
 
 /**************************************************
-@bref		AT+QISEND	指令解析
+@bref       AT+QISEND   指令解析
 @param
 @return
 @note
@@ -1309,7 +1312,7 @@ static void qisendParser(uint8_t *buf, uint16_t len)
 
 
 /**************************************************
-@bref		QWIFISCAN	指令解析
+@bref       QWIFISCAN   指令解析
 @param
 @return
 @note
@@ -1364,16 +1367,16 @@ static void wifiscanParser(uint8_t *buf, uint16_t len)
 
         index = my_getstrindex((char *)rebuf, "+WIFISCAN:", relen);
     }
-	if (wifiList.apcount != 0)
+    if (wifiList.apcount != 0)
     {
-	    gpsinfo_s *gpsinfo;
-		gpsinfo = getCurrentGPSInfo();
-		//当前已经定到位置则不发送lbs
-		if (gpsinfo->fixstatus)
-		{
-			sysinfo.wifiExtendEvt = 0;
-			return;
-		}
+        gpsinfo_s *gpsinfo;
+        gpsinfo = getCurrentGPSInfo();
+        //当前已经定到位置则不发送lbs
+        if (gpsinfo->fixstatus)
+        {
+            sysinfo.wifiExtendEvt = 0;
+            return;
+        }
         if (sysinfo.wifiExtendEvt & DEV_EXTEND_OF_MY)
         {
             protocolSend(NORMAL_LINK, PROTOCOL_F3, &wifiList);
@@ -1421,11 +1424,11 @@ static void cgsnParser(uint8_t *buf, uint16_t len)
 }
 
 /**************************************************
-@bref		QIOPEN	指令解析
+@bref       QIOPEN  指令解析
 @param
 @return
 @note
-	0, CONNECT OK
+    0, CONNECT OK
 **************************************************/
 
 static void qiopenParser(uint8_t *buf, uint16_t len)
@@ -1475,13 +1478,13 @@ static void qiopenParser(uint8_t *buf, uint16_t len)
 }
 
 /**************************************************
-@bref		+CGATT	指令解析
+@bref       +CGATT  指令解析
 @param
 @return
 @note
-	+CGATT: 1
+    +CGATT: 1
 
-	OK
+    OK
 **************************************************/
 
 static void cgattParser(uint8_t *buf, uint16_t len)
@@ -1512,12 +1515,13 @@ static void cgattParser(uint8_t *buf, uint16_t len)
 
 
 /**************************************************
-@bref		+RECEIVE	指令解析
+@bref       +RECEIVE    指令解析
 @param
 @return
 @note
 +RECEIVE: 0, 16
-xx?		\0U?
+xx
+?      \0U?
 
 **************************************************/
 
@@ -1577,11 +1581,11 @@ uint8_t receiveParser(uint8_t *buf, uint16_t len)
 
 
 /**************************************************
-@bref		QISACK	指令解析
+@bref       QISACK  指令解析
 @param
 @return
 @note
-	+QISACK: 0, 0, 0
+    +QISACK: 0, 0, 0
 **************************************************/
 
 void qisackParser(uint8_t *buf, uint16_t len)
@@ -1609,13 +1613,13 @@ void qisackParser(uint8_t *buf, uint16_t len)
 }
 
 /**************************************************
-@bref		CBC	指令解析
+@bref       CBC 指令解析
 @param
 @return
 @note
-	+CBC: 0,80,3909
+    +CBC: 0,80,3909
 
-	OK
+    OK
 **************************************************/
 
 void cbcParser(uint8_t *buf, uint16_t len)
@@ -1642,7 +1646,7 @@ void cbcParser(uint8_t *buf, uint16_t len)
 
 
 /**************************************************
-@bref		QIRD	指令解析
+@bref       QIRD    指令解析
 @param
 @return
 @note
@@ -1732,7 +1736,7 @@ static uint8_t qirdParser(uint8_t *buf, uint16_t len)
 
 
 /**************************************************
-@bref		PDP	指令解析
+@bref       PDP 指令解析
 @param
 @return
 @note
@@ -1754,7 +1758,7 @@ void deactParser(uint8_t *buf, uint16_t len)
 
 
 /**************************************************
-@bref		CMT	指令解析
+@bref       CMT 指令解析
 @param
 @return
 @note
@@ -1915,18 +1919,20 @@ void cipstartParser(uint8_t *buf, uint16_t len)
 
 uint8_t isAgpsDataRecvComplete(void)
 {
-	return moduleState.agpsLinkQird;
+    return moduleState.agpsLinkQird;
 }
 
 /**************************************************
-@bref		模组端数据接收解析器
+@bref       模组端数据接收解析器
 @param
 @return
 @note
 +CIPRXGET: 1,0
 +CIPRXGET: 2,0,20,0
-xx\02
-xx\02
+xx\0
+2
+xx\0
+2
 
 
 OK
@@ -1993,17 +1999,17 @@ uint8_t ciprxgetParser(uint8_t *buf, uint16_t len)
                         byteToHexString(rebuf, restore, debugLen);
 //                        if (link == 4)
 //                        {
-//							LogMessageWL(DEBUG_ALL, rebuf, relen);
+//                          LogMessageWL(DEBUG_ALL, rebuf, relen);
 //                        }
                         restore[debugLen * 2] = 0;
                         LogPrintf(DEBUG_ALL, "TCP RECV (%d)[%d]:%s", link, readLen, restore);
                         if (link == 4)
                         {
-                        	socketRecv(link, rebuf, readLen);
+                            socketRecv(link, rebuf, readLen);
                         }
                         else 
                         {
-							socketRecv(link, rebuf, relen);//relen替代readLen
+                            socketRecv(link, rebuf, relen);//relen替代readLen
                         }
                     }
                 }
@@ -2044,7 +2050,7 @@ uint8_t ciprxgetParser(uint8_t *buf, uint16_t len)
 }
 
 /**************************************************
-@bref		模组端数据接收解析器
+@bref       模组端数据接收解析器
 @param
 @return
 @note
@@ -2059,19 +2065,19 @@ void cipackParser(uint8_t *buf, uint16_t len)
     int16_t relen;
     rebuf = buf;
     relen = len;
-	static uint8_t cnt;
+    static uint8_t cnt;
 
-	index = my_getstrindex(rebuf, "ERROR", relen);
-	if (index >= 0)
-	{
-		cnt++;
-		if (cnt >= 5)
-		{
-			moduleReset();
-			cnt = 0;
-		}
-	}
-	
+    index = my_getstrindex(rebuf, "ERROR", relen);
+    if (index >= 0)
+    {
+        cnt++;
+        if (cnt >= 5)
+        {
+            moduleReset();
+            cnt = 0;
+        }
+    }
+
     
     index = my_getstrindex(rebuf, "+CIPACK:", relen);
     if (index < 0)
@@ -2111,7 +2117,7 @@ void cipsendParser(uint8_t *buf, uint16_t len)
 
 
 /**************************************************
-@bref		模组端数据接收解析器
+@bref       模组端数据接收解析器
 @param
 @return
 @note
@@ -2174,38 +2180,38 @@ void cipstatusParser(uint8_t *buf, uint16_t len)
 }
 
 /**************************************************
-@bref		模组异常复位检测
+@bref       模组异常复位检测
 @param
 @return
 @note
 **************************************************/
 static void moduleRstDetector(uint8_t * buf, uint16_t len)
 {
-	int index;
-	if (moduleState.powerState != 1)
-	{
-		return;
-	}
+    int index;
+    if (moduleState.powerState != 1)
+    {
+        return;
+    }
 
-	index = my_getstrindex((char *)buf, "RDY", len);
-	if (index >= 0)
-	{
-		if (sysinfo.moduleRstFlag == 1)
-		{
-			sysinfo.moduleRstFlag = 0;
-			LogMessage(DEBUG_ALL, "ignore module abnormal reset");
-			return;
-		}
+    index = my_getstrindex((char *)buf, "RDY", len);
+    if (index >= 0)
+    {
+        if (sysinfo.moduleRstFlag == 1)
+        {
+            sysinfo.moduleRstFlag = 0;
+            LogMessage(DEBUG_ALL, "ignore module abnormal reset");
+            return;
+        }
 
-		sysinfo.moduleRstCnt++;
-		LogPrintf(DEBUG_ALL, "module abnormal reset %d", sysinfo.moduleRstCnt);
+        sysinfo.moduleRstCnt++;
+        LogPrintf(DEBUG_ALL, "module abnormal reset %d", sysinfo.moduleRstCnt);
 
-	}
+    }
 }
 
 
 /**************************************************
-@bref		模组端数据接收解析器
+@bref       模组端数据接收解析器
 @param
 @return
 @note
@@ -2304,7 +2310,7 @@ void moduleRecvParser(uint8_t *buf, uint16_t bufsize)
             cipsendParser(dataRestore, len);
             break;
         case CIPRXGET_CMD:
-        	if (my_strstr((char *)dataRestore, "+CME ERROR: 3", len))
+            if (my_strstr((char *)dataRestore, "+CME ERROR: 3", len))
             {
                 switch (moduleState.curQirdId)
                 {
@@ -2326,7 +2332,7 @@ void moduleRecvParser(uint8_t *buf, uint16_t bufsize)
                 }
                 LogPrintf(DEBUG_ALL, "Link[%d] recv err", moduleState.curQirdId);
             }
-        	break;
+            break;
         default:
             break;
     }
@@ -2337,7 +2343,7 @@ void moduleRecvParser(uint8_t *buf, uint16_t bufsize)
 /*--------------------------------------------------------------*/
 
 /**************************************************
-@bref		重置信号搜索时长
+@bref       重置信号搜索时长
 @param
 @return
 @note
@@ -2349,7 +2355,7 @@ void netResetCsqSearch(void)
 }
 
 /**************************************************
-@bref		socket发送数据
+@bref       socket发送数据
 @param
 @return
 @note
@@ -2377,7 +2383,7 @@ int socketSendData(uint8_t link, uint8_t *data, uint16_t len)
     return len;
 }
 /**************************************************
-@bref		模组睡眠控制
+@bref       模组睡眠控制
 @param
 @return
 @note
@@ -2395,7 +2401,7 @@ void moduleSleepCtl(uint8_t onoff)
 }
 
 /**************************************************
-@bref		获取CSQ
+@bref       获取CSQ
 @param
 @return
 @note
@@ -2407,7 +2413,7 @@ void moduleGetCsq(void)
 }
 
 /**************************************************
-@bref		获取基站
+@bref       获取基站
 @param
 @return
 @note
@@ -2419,7 +2425,7 @@ void moduleGetLbs(void)
     sendModuleCmd(CEREG_CMD, "?");
 }
 /**************************************************
-@bref		获取WIFIscan
+@bref       获取WIFIscan
 @param
 @return
 @note
@@ -2432,7 +2438,7 @@ void moduleGetWifiScan(void)
 }
 
 /**************************************************
-@bref		发送短消息
+@bref       发送短消息
 @param
 @return
 @note
@@ -2444,11 +2450,12 @@ void sendMessage(uint8_t *buf, uint16_t len, char *telnum)
     sprintf(param, "\"%s\"", telnum);
     sendModuleCmd(CMGF_CMD, "1");
     sendModuleCmd(CMGS_CMD, param);
+    LogPrintf(DEBUG_ALL, "len:%d", len);
     buf[len] = 0x1A;
     createNode((char *)buf, len + 1, CMGS_CMD);
 }
 /**************************************************
-@bref		删除所有短消息
+@bref       删除所有短消息
 @param
 @return
 @note
@@ -2461,7 +2468,7 @@ void deleteMessage(void)
 }
 
 /**************************************************
-@bref		查询数据是否发送完毕
+@bref       查询数据是否发送完毕
 @param
 @return
 @note
@@ -2476,7 +2483,7 @@ void querySendData(uint8_t link)
 
 
 /**************************************************
-@bref		查询模组电池电压
+@bref       查询模组电池电压
 @param
 @return
 @note
@@ -2489,7 +2496,7 @@ void queryBatVoltage(void)
 }
 
 /**************************************************
-@bref		读取信号值
+@bref       读取信号值
 @param
 @return
 @note
@@ -2501,7 +2508,7 @@ uint8_t getModuleRssi(void)
 }
 
 /**************************************************
-@bref		读取IMSI
+@bref       读取IMSI
 @param
 @return
 @note
@@ -2512,7 +2519,7 @@ uint8_t *getModuleIMSI(void)
     return moduleState.IMSI;
 }
 /**************************************************
-@bref		读取IMEI
+@bref       读取IMEI
 @param
 @return
 @note
@@ -2526,7 +2533,7 @@ uint8_t *getModuleIMEI(void)
 
 
 /**************************************************
-@bref		读取ICCID
+@bref       读取ICCID
 @param
 @return
 @note
@@ -2538,7 +2545,7 @@ uint8_t *getModuleICCID(void)
 }
 
 /**************************************************
-@bref		读取MCC
+@bref       读取MCC
 @param
 @return
 @note
@@ -2550,7 +2557,7 @@ uint16_t getMCC(void)
 }
 
 /**************************************************
-@bref		读取MNC
+@bref       读取MNC
 @param
 @return
 @note
@@ -2562,7 +2569,7 @@ uint8_t getMNC(void)
 }
 
 /**************************************************
-@bref		读取LAC
+@bref       读取LAC
 @param
 @return
 @note
@@ -2574,7 +2581,7 @@ uint16_t getLac(void)
 }
 
 /**************************************************
-@bref		读取CID
+@bref       读取CID
 @param
 @return
 @note
@@ -2586,7 +2593,7 @@ uint32_t getCid(void)
 }
 
 /**************************************************
-@bref		读取未发送字节数，判断是否发送成功
+@bref       读取未发送字节数，判断是否发送成功
 @param
 @return
 @note
@@ -2611,7 +2618,7 @@ char *getQgmr(void)
 
 
 /**************************************************
-@bref		模组是否达到联网状态
+@bref       模组是否达到联网状态
 @param
 @return
 @note
@@ -2625,7 +2632,7 @@ uint8_t isModuleRunNormal(void)
 }
 
 /**************************************************
-@bref		模组达到正常开机
+@bref       模组达到正常开机
 @param
 @return
 @note
@@ -2639,7 +2646,7 @@ uint8_t isModulePowerOnOk(void)
 }
 
 /**************************************************
-@bref		挂断电话
+@bref       挂断电话
 @param
 @return
 @note
@@ -2650,7 +2657,7 @@ void stopCall(void)
     sendModuleDirect("ATH\r\n");
 }
 /**************************************************
-@bref		拨打电话
+@bref       拨打电话
 @param
 @return
 @note

@@ -5,8 +5,8 @@
 
 #include "app_port.h"
 
-#define POWER_ON			PORT_SUPPLY_ON
-#define POWER_OFF			PORT_SUPPLY_OFF
+#define POWER_ON            PORT_SUPPLY_ON
+#define POWER_OFF           PORT_SUPPLY_OFF
 
 #define PWRKEY_HIGH         PORT_PWRKEY_H
 #define PWRKEY_LOW          PORT_PWRKEY_L
@@ -14,18 +14,18 @@
 #define RSTKEY_HIGH         PORT_RSTKEY_H
 #define RSTKEY_LOW          PORT_RSTKEY_L
 //DTR
-#define WAKEMODULE			DTR_LOW
-#define SLEEPMODULE			DTR_HIGH
+#define WAKEMODULE          DTR_LOW
+#define SLEEPMODULE         DTR_HIGH
 
 
-#define GPSSAVEFILE			"gpssave.bat"
+#define GPSSAVEFILE         "gpssave.bat"
 
 
-#define FILE_READ_SIZE		400
+#define FILE_READ_SIZE      400
 
 
 
-#define MODULE_RX_BUFF_SIZE		1024
+#define MODULE_RX_BUFF_SIZE     768
 
 typedef enum
 {
@@ -74,28 +74,32 @@ typedef enum
     ATA_CMD,
     CBC_CMD,
 
-	//N
-	CIPMUX_CMD,
-	CIPSTART_CMD,
-	CIPCLOSE_CMD,
-	CIPSEND_CMD,
-	CIPQSEND_CMD,
-	CIPRXGET_CMD,
-	CIPACK_CMD,
-	CSCLK_CMD,
-	CIPSTATUS_CMD,
-	CIPSHUT_CMD,
-	CFGRI_CMD,
+    //N
+    CIPMUX_CMD,
+    CIPSTART_CMD,
+    CIPCLOSE_CMD,
+    CIPSEND_CMD,
+    CIPQSEND_CMD,
+    CIPRXGET_CMD,
+    CIPACK_CMD,
+    CSCLK_CMD,
+    CIPSTATUS_CMD,
+    CIPSHUT_CMD,
+    CFGRI_CMD,
     WIFISCAN_CMD,
     CFG_CMD,
     CIICR_CMD,
+    CIFSR_CMD,
+    CSTT_CMD,
+    CPNETAPN_CMD,
+
 } atCmdType_e;
 
 
 /*定义系统运行状态*/
 typedef enum
 {
-    AT_STATUS,	  //0
+    AT_STATUS,    //0
     CPIN_STATUS,
     CSQ_STATUS,
     CGREG_STATUS,
@@ -124,21 +128,21 @@ typedef struct cmdNode
 
 typedef struct
 {
-    uint8_t powerState			: 1;
-    uint8_t atResponOK			: 1;
-    uint8_t cpinResponOk		: 1;
-    uint8_t csqOk				: 1;
-    uint8_t cgregOK				: 1;
-    uint8_t ceregOK				: 1;
-    uint8_t qipactSet			: 1;
-    uint8_t qipactOk			: 1;
-    uint8_t noGpsFile			: 1;
+    uint8_t powerState          : 1;
+    uint8_t atResponOK          : 1;
+    uint8_t cpinResponOk        : 1;
+    uint8_t csqOk               : 1;
+    uint8_t cgregOK             : 1;
+    uint8_t ceregOK             : 1;
+    uint8_t qipactSet           : 1;
+    uint8_t qipactOk            : 1;
+    uint8_t noGpsFile           : 1;
 
-    uint8_t normalLinkQird		: 1;
-    uint8_t agpsLinkQird		: 1;
-    uint8_t bleLinkQird 		: 1;
-    uint8_t jt808LinkQird		: 1;
-    uint8_t hideLinkQird		: 1;
+    uint8_t normalLinkQird      : 1;
+    uint8_t agpsLinkQird        : 1;
+    uint8_t bleLinkQird         : 1;
+    uint8_t jt808LinkQird       : 1;
+    uint8_t hideLinkQird        : 1;
 
     uint8_t curQirdId;
     uint8_t rdyQirdId;
@@ -212,9 +216,6 @@ void querySendData(uint8_t link);
 void queryBatVoltage(void);
 
 uint8_t isAgpsDataRecvComplete(void);
-
-void sendWifi(void);
-
 
 
 uint8_t getModuleRssi(void);

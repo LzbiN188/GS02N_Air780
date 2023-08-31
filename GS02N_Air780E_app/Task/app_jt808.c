@@ -157,7 +157,7 @@ void jt808RegisterLoginInfo(uint8_t *sn, uint8_t reg, uint8_t *authCode, uint8_t
 
 void jt808RegisterManufactureId(uint8_t *id)
 {
-    memcpy(jt808_info.jt808manufacturerID, id, 5);
+    strncpy(jt808_info.jt808manufacturerID, id, 5);
 }
 /**************************************************
 @bref		◊¢≤·JT808 ÷’∂À¿‡–Õ
@@ -169,7 +169,7 @@ void jt808RegisterManufactureId(uint8_t *id)
 
 void jt808RegisterTerminalType(uint8_t *type)
 {
-    memcpy(jt808_info.jt808terminalType, type, 20);
+    strncpy(jt808_info.jt808terminalType, type, 20);
 }
 
 /**************************************************
@@ -182,7 +182,7 @@ void jt808RegisterTerminalType(uint8_t *type)
 
 void jt808RegisterTerminalId(uint8_t *id)
 {
-    memcpy(jt808_info.jt808terminalID, id, 7);
+    strncpy(jt808_info.jt808terminalID, id, 7);
 }
 
 
@@ -420,7 +420,7 @@ static uint16_t jt808Unescape(uint8_t *src, uint16_t len)
 static void jt808TerminalRegister(uint8_t *sn, uint8_t *manufacturerID, uint8_t *terminalType, uint8_t *terminalID,
                                   uint8_t color)
 {
-    uint8_t dest[128];
+    uint8_t dest[128]={0};
     uint16_t len;
     uint8_t i;
     len = jt808PackMessageHead(dest, TERMINAL_REGISTER_MSGID, sn, jt808GetSerial(), 0);
