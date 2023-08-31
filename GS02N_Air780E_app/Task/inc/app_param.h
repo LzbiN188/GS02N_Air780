@@ -27,9 +27,9 @@
 #define VT02S_VERSION_FLAG		0
 
 #if VT02S_VERSION_FLAG
-#define EEPROM_VERSION									"VT02S+_Air780_V1.2.16"
+#define EEPROM_VERSION									"VT02S+_Air780_V1.2.17"
 #else
-#define EEPROM_VERSION									"GS02N-4RT_Air780_V1.2.16"
+#define EEPROM_VERSION									"GS02N-4RT_Air780_V1.2.17"
 #endif
 
 

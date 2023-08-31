@@ -879,7 +879,7 @@ void createProtocolA0(char *DestBuf, uint16_t *len)
     int ret;
     uint16_t lat, lon;
     pdu_len = createProtocolHead(DestBuf, 0xA0);
-	ret = packIMEI(protocolInfo.IMEI, DestBuf + pdu_len);
+	ret = packIMEI(dynamicParam.SN, DestBuf + pdu_len);
     if (ret < 0)
     {
         return ;
