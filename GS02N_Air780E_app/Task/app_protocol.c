@@ -865,6 +865,56 @@ int createProtocol8A(unsigned short Serial, char *DestBuf)
     return pdu_len;
 }
 
+/**************************************************
+@bref		生成A0协议
+@param
+@return
+@note
+**************************************************/
+
+void createProtocolA0(char *DestBuf, uint16_t *len)
+{
+	int pdu_len;
+    int ret;
+    uint16_t lat, lon;
+    pdu_len = createProtocolHead(DestBuf, 0xA0);
+	ret = packIMEI(dynamicParam.SN, DestBuf + pdu_len);
+    if (ret < 0)
+    {
+        return ;
+    }
+    pdu_len += ret;
+    DestBuf[pdu_len++] = getMCC() >> 8;
+    DestBuf[pdu_len++] = getMCC();
+    DestBuf[pdu_len++] = getMNC();
+    DestBuf[pdu_len++] = getLac() >> 8;
+    DestBuf[pdu_len++] = getLac();
+    DestBuf[pdu_len++] = getCid() >> 24;
+    DestBuf[pdu_len++] = getCid() >> 16;
+    DestBuf[pdu_len++] = getCid() >> 8;
+    DestBuf[pdu_len++] = getCid();
+    lat = (uint16_t)fabsf(dynamicParam.saveLat);
+    lon = (uint16_t)fabsf(dynamicParam.saveLon);  
+    //LogPrintf(DEBUG_ALL, "Lat %f %d  Lon %f %d", dynamicParam.saveLat, lat, dynamicParam.saveLon, lon);
+    if (dynamicParam.saveLat < 0)
+    {
+		DestBuf[pdu_len] |= 0x80;
+    }
+	DestBuf[pdu_len] |= (lat >> 8) & 0xEF;
+	pdu_len++;
+	DestBuf[pdu_len++] = lat & 0xFF;
+	if (dynamicParam.saveLon < 0)
+	{
+		DestBuf[pdu_len] |= 0x80;
+	}
+	DestBuf[pdu_len] |= (lon >> 8) & 0xEF;
+	pdu_len++;
+	DestBuf[pdu_len++] = lon & 0xFF;
+    pdu_len = createProtocolTail(DestBuf, pdu_len,  createProtocolSerial());
+    sendTcpDataDebugShow(AGPS_LINK, DestBuf, pdu_len);
+    *len = pdu_len;
+}
+
 
 /**************************************************
 @bref		生成序列号

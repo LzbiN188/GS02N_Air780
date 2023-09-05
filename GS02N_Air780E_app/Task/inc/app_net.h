@@ -92,6 +92,7 @@ typedef enum
     CIFSR_CMD,
     CSTT_CMD,
     CPNETAPN_CMD,
+	CGAUTH_CMD,
 
 } atCmdType_e;
 

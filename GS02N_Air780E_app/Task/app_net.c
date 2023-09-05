@@ -84,6 +84,7 @@ const atCmd_s cmdtable[] =
     {CIFSR_CMD, "AT+CIFSR"},
     {CSTT_CMD, "AT+CSTT"},
     {CPNETAPN_CMD, "AT+CPNETAPN"},
+    {CGAUTH_CMD, "AT+CGAUTH"},
 
 };
 
@@ -490,12 +491,27 @@ static void netSetCgdcong(char *apn)
 @note
 **************************************************/
 
-static void netSetApn(char *apn, char *apnname, char *apnpassword)
+static void netSetApn(char *apn, char *apnname, char *apnpassword, uint8_t apnauthport)
+{
+    char param[100];
+    sprintf(param, "1,%d,\"%s\",\"%s\"", apnauthport, apnname, apnpassword);
+    sendModuleCmd(CGAUTH_CMD, param);
+}
+
+/**************************************************
+@bref       apn≈‰÷√
+@param
+@return
+@note
+**************************************************/
+
+static void netSetCstt(char *apn, char *apnname, char *apnpassword)
 {
     char param[100];
     sprintf(param, "\"%s\",\"%s\",\"%s\"", apn, apnname, apnpassword);
     sendModuleCmd(CSTT_CMD, param);
 }
+
 
 
 /**************************************************
@@ -622,6 +638,7 @@ void netConnectTask(void)
                 moduleState.cpinResponOk = 0;
                 moduleState.csqOk = 0;
                 netSetCgdcong((char *)sysparam.apn);
+                netSetApn((char *)sysparam.apn, (char *)sysparam.apnuser, (char *)sysparam.apnpassword, sysparam.apnAuthPort);
                 changeProcess(CSQ_STATUS);
 
             }
@@ -726,7 +743,7 @@ void netConnectTask(void)
             sendModuleCmd(CIMI_CMD, NULL);
             sendModuleCmd(CGSN_CMD, NULL);
             sendModuleCmd(ICCID_CMD, NULL);
-            netSetApn((char *)sysparam.apn, (char *)sysparam.apnuser, (char *)sysparam.apnpassword);
+            netSetCstt((char *)sysparam.apn, (char *)sysparam.apnuser, (char *)sysparam.apnpassword);
             sendModuleCmd(CIICR_CMD, NULL);
             changeProcess(QIACT_STATUS);
             break;

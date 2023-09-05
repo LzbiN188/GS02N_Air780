@@ -10,3 +10,8 @@ GS02N-4NB_Air780_V1.2.11		2023/6/14
 GS02N-4NB_Air780_V1.2.12		2023/8/31
 1、修改808终端ID、设备类型和设备ID
 2、优化联网逻辑
+
+GS02N-4NB_Air780_V1.2.13		2023/9/4
+1、修改APN账号密码的鉴权方式为CHAP，同时修改APN指令，APN,apn,userid,password,authport，最后一个参数用来修改鉴权方式：0:None，1:PAP，2：CHAP
+2、加入rtcoffset算法
+3、优化AGPS逻辑

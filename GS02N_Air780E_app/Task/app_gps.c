@@ -308,6 +308,34 @@ void parse_GGA(GPSITEM *item)
         gpsinfo->hight = atof(item->item_data[9]);
     }
 }
+
+/*
+$GPTXT,01,01,02,MS=1,33,FFDFFFFE,20,15,2440813F,23,0,00000000*17
+$GPTXT,01,01,02,MS=1,0,00000000,20,0,00000000,20,0,00000000*6F
+$GPTXT,01,01,02,MS=3,34,FFDFFFFF,20,6,10000024,23,0,00000000*5A
+字段4：时间有效性标志，MS=7或3表示时间有效
+字段5：星历有效的GPS卫星个数，大于8就表示有效星历数目较多
+字段8：星历有效的 BDS 卫星个数
+*/
+void parse_TXT(GPSITEM *item)
+{
+	uint8_t gpsvaild, ephemeriscnt;
+	if (item->item_data[4][0] != 0)
+	{
+		gpsvaild = item->item_data[4][3] - '0';
+	}
+	if (item->item_data[5][0] != 0)
+	{
+		ephemeriscnt = atoi(item->item_data[5]);
+	}
+	LogPrintf(DEBUG_ALL, "gpsvaild:%d, ephemeriscnt:%d", gpsvaild, ephemeriscnt);
+	if ((gpsvaild == 3 || gpsvaild == 7) && ephemeriscnt >= 8)
+	{
+		sysinfo.ephemerisFlag = 1;
+	}
+
+}
+
 static unsigned char parseGetNmeaType(char *str)
 {
     if (my_strstr(str, "RMC", 6))
@@ -328,6 +356,11 @@ static unsigned char parseGetNmeaType(char *str)
     if (my_strstr(str, "GSV", 6))
     {
         return NMEA_GSV;
+    }
+
+    if (my_strstr(str, "TXT", 6))
+    {
+        return NMEA_TXT;
     }
 
     return 0;
@@ -384,6 +417,9 @@ void parseGPS(uint8_t *str, uint16_t len)
         case NMEA_GSV:
             parse_GSV(&item);
             break;
+        case NMEA_TXT:
+        	parse_TXT(&item);
+        	break;
     }
 
 
@@ -621,7 +657,7 @@ void updateLocalRTCTime(datetime_s *datetime)
 {
     datetime_s localtime;
     localtime = changeUTCTimeToLocalTime(*datetime, sysparam.utc);
-    portUpdateRtcDateTime(localtime.year, localtime.month, localtime.day, localtime.hour, localtime.minute,
+    portUpdateRtcOffset(localtime.year, localtime.month, localtime.day, localtime.hour, localtime.minute,
                           localtime.second);
 
     if (sysparam.MODE == MODE1 || sysparam.MODE == MODE21)

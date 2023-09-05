@@ -551,7 +551,7 @@ void doAPNInstruction(ITEM *item, char *message)
 {
     if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
     {
-        sprintf(message, "APN:%s,APN User:%s,APN Password:%s", sysparam.apn, sysparam.apnuser, sysparam.apnpassword);
+        sprintf(message, "APN:%s,APN User:%s,APN Password:%s,APN Authport:%d", sysparam.apn, sysparam.apnuser, sysparam.apnpassword, sysparam.apnAuthPort);
     }
     else
     {
@@ -570,10 +570,14 @@ void doAPNInstruction(ITEM *item, char *message)
         {
             strcpy((char *)sysparam.apnpassword, item->item_data[3]);
         }
+        if (item->item_data[4][0] != 0 && item->item_cnt >= 5)
+        {
+			sysparam.apnAuthPort = atoi(item->item_data[4]);
+        }
 
         startTimer(300, moduleReset, 0);
         paramSaveAll();
-        sprintf(message, "Update APN:%s,APN User:%s,APN Password:%s", sysparam.apn, sysparam.apnuser, sysparam.apnpassword);
+        sprintf(message, "Update APN:%s,APN User:%s,APN Password:%s,APN Authport:%d", sysparam.apn, sysparam.apnuser, sysparam.apnpassword, sysparam.apnAuthPort);
     }
 
 }

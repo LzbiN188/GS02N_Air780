@@ -77,7 +77,7 @@ void paramDefaultInit(uint8_t level)
         strcpy((char *)sysparam.agpsServer, "agps.domilink.com");
         strcpy((char *)sysparam.agpsUser, "123");
         strcpy((char *)sysparam.agpsPswd, "123");
-        sysparam.agpsPort = 10188;
+        sysparam.agpsPort = 10187;
 
     }
     dynamicParam.runTime = 0;
@@ -110,7 +110,8 @@ void paramDefaultInit(uint8_t level)
     sysparam.bleen = 1;
     sysparam.batHighLevel = 0.0;
     sysparam.batLowLevel = 0.0;
-
+    
+	sysparam.apnAuthPort = 2;
     paramSaveAll();
     dynamicParamSaveAll();
 }
@@ -122,6 +123,17 @@ void paramInit(void)
     if (sysparam.VERSION != APP_PARAM_FLAG)
     {
         paramDefaultInit(0);
+    }
+    if (sysparam.otaParamFlag != OTA_PARAM_UPDATE_FLAG)
+    {
+		sysparam.otaParamFlag = OTA_PARAM_UPDATE_FLAG;
+		sysparam.agpsPort = 10187;
+		dynamicParam.saveLat = 0.0;
+		dynamicParam.saveLon = 0.0;
+		sysparam.apnAuthPort = 2;
+		paramSaveAll();
+		dynamicParamSaveAll();
+		LogPrintf(DEBUG_ALL, "OTA param update success");
     }
     sysinfo.lowvoltage = sysparam.lowvoltage / 10.0;
     dbInfoRead();
