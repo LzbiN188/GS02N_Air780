@@ -82,12 +82,12 @@ static void gattMessageHandler(gattMsgEvent_t *pMsgEvt)
     uint8_t uuid16[16];
     uint16 uuid, startHandle, endHandle, findHandle;
     bStatus_t status;
-    LogPrintf(DEBUG_ALL, "Handle[%d],Method[0x%02X],Status[0x%02X]", pMsgEvt->connHandle, pMsgEvt->method,
+    LogPrintf(DEBUG_BLE, "Handle[%d],Method[0x%02X],Status[0x%02X]", pMsgEvt->connHandle, pMsgEvt->method,
               pMsgEvt->hdr.status);
     switch (pMsgEvt->method)
     {
         case ATT_ERROR_RSP:
-            LogPrintf(DEBUG_ALL, "Error,Handle[%d],ReqOpcode[0x%02X],ErrCode[0x%02X]", pMsgEvt->msg.errorRsp.handle,
+            LogPrintf(DEBUG_BLE, "Error,Handle[%d],ReqOpcode[0x%02X],ErrCode[0x%02X]", pMsgEvt->msg.errorRsp.handle,
                       pMsgEvt->msg.errorRsp.reqOpcode, pMsgEvt->msg.errorRsp.errCode);
             break;
         //查找服务 BY UUID
@@ -100,13 +100,13 @@ static void gattMessageHandler(gattMsgEvent_t *pMsgEvt)
             {
                 startHandle = ATT_ATTR_HANDLE(pData, 0);
                 endHandle = ATT_GRP_END_HANDLE(pData, 0);
-                LogPrintf(DEBUG_ALL, "Start:0x%04X,End:0x%04X", startHandle, endHandle);
+                LogPrintf(DEBUG_BLE, "Start:0x%04X,End:0x%04X", startHandle, endHandle);
                 bleDevSetServiceHandle(pMsgEvt->connHandle, startHandle, endHandle);
             }
 
             if (pMsgEvt->hdr.status == bleProcedureComplete || pMsgEvt->hdr.status == bleTimeout)
             {
-                LogPrintf(DEBUG_ALL, "Discover services by UUID done!");
+                LogPrintf(DEBUG_BLE, "Discover services by UUID done!");
                 bleDevDiscoverAllChars(pMsgEvt->connHandle);
             }
             break;
@@ -137,7 +137,7 @@ static void gattMessageHandler(gattMsgEvent_t *pMsgEvt)
                             startHandle <<= 8;
                             startHandle |= pData[6 * i + 5];
 
-                            LogPrintf(DEBUG_ALL, "ServUUID: [%04X],Start:0x%04X,End:0x%04X", uuid, startHandle, endHandle);
+                            LogPrintf(DEBUG_BLE, "ServUUID: [%04X],Start:0x%04X,End:0x%04X", uuid, startHandle, endHandle);
                             break;
                         case 20:
                             memcpy(uuid16, pData + (20 * i), 16);
@@ -150,12 +150,12 @@ static void gattMessageHandler(gattMsgEvent_t *pMsgEvt)
                             startHandle |= pData[20 * i + 19];
                             byteToHexString(uuid16, debug, 16);
                             debug[32] = 0;
-                            LogPrintf(DEBUG_ALL, "ServUUID: [%s],Start:0x%04X,End:0x%04X", debug, startHandle, endHandle);
+                            LogPrintf(DEBUG_BLE, "ServUUID: [%s],Start:0x%04X,End:0x%04X", debug, startHandle, endHandle);
                             break;
                     }
                     if (uuid == SERVICE_UUID)
                     {
-                        LogPrintf(DEBUG_ALL, "Find my services uuid [%04X]", uuid);
+                        LogPrintf(DEBUG_BLE, "Find my services uuid [%04X]", uuid);
                         bleDevSetServiceHandle(pMsgEvt->connHandle, startHandle, endHandle);
                     }
                 }
@@ -163,7 +163,7 @@ static void gattMessageHandler(gattMsgEvent_t *pMsgEvt)
             }
             if (pMsgEvt->hdr.status == bleProcedureComplete || pMsgEvt->hdr.status == bleTimeout)
             {
-                LogPrintf(DEBUG_ALL, "Discover all services done!");
+                LogPrintf(DEBUG_BLE, "Discover all services done!");
                 bleDevDiscoverAllChars(pMsgEvt->connHandle);
             }
             break;
@@ -185,7 +185,7 @@ static void gattMessageHandler(gattMsgEvent_t *pMsgEvt)
                             findHandle = pData[4 * i + 2];
                             findHandle <<= 8;
                             findHandle |= pData[4 * i + 3];
-                            LogPrintf(DEBUG_ALL, "Find Handle: 0x%04X", findHandle);
+                            LogPrintf(DEBUG_BLE, "Find Handle: 0x%04X", findHandle);
                             bleDevSetNotifyHandle(pMsgEvt->connHandle, findHandle);
                             //寻找到notify的句柄，使能notify
                             tmos_set_event(bleCentralTaskId, BLE_TASK_NOTIFYEN_EVENT);
@@ -199,11 +199,11 @@ static void gattMessageHandler(gattMsgEvent_t *pMsgEvt)
                             findHandle <<= 8;
                             findHandle |= pData[7 * i + 3];
 
-                            LogPrintf(DEBUG_ALL, "CharUUID:[%04X],Handle: 0x%04X", uuid, findHandle);
+                            LogPrintf(DEBUG_BLE, "CharUUID:[%04X],Handle: 0x%04X", uuid, findHandle);
 
                             if (uuid == CHAR_UUID)
                             {
-                                LogPrintf(DEBUG_ALL, "Find my CHARUUID [%04X]", uuid);
+                                LogPrintf(DEBUG_BLE, "Find my CHARUUID [%04X]", uuid);
                                 bleDevSetCharHandle(pMsgEvt->connHandle, findHandle);
                             }
                             break;
@@ -216,14 +216,14 @@ static void gattMessageHandler(gattMsgEvent_t *pMsgEvt)
             }
             if (pMsgEvt->hdr.status == bleProcedureComplete || pMsgEvt->hdr.status == bleTimeout)
             {
-                LogPrintf(DEBUG_ALL, "Discover all chars done!");
+                LogPrintf(DEBUG_BLE, "Discover all chars done!");
                 //这里需要注意，如果没有notify，可能造成循环找notify
                 bleDevDiscoverNotify(pMsgEvt->connHandle);
             }
             break;
         //数据发送回复
         case ATT_WRITE_RSP:
-            LogPrintf(DEBUG_ALL, "Handle[%d] send %s!", pMsgEvt->connHandle, pMsgEvt->hdr.status == SUCCESS ? "success" : "fail");
+            LogPrintf(DEBUG_BLE, "Handle[%d] send %s!", pMsgEvt->connHandle, pMsgEvt->hdr.status == SUCCESS ? "success" : "fail");
             break;
         //收到notify数据
         case ATT_HANDLE_VALUE_NOTI:
@@ -231,11 +231,11 @@ static void gattMessageHandler(gattMsgEvent_t *pMsgEvt)
             dataLen = pMsgEvt->msg.handleValueNoti.len;
             byteToHexString(pData, debug, dataLen);
             debug[dataLen * 2] = 0;
-            LogPrintf(DEBUG_ALL, "Handle[%d],Recv:[%s]", pMsgEvt->connHandle, debug);
+            LogPrintf(DEBUG_BLE, "Handle[%d],Recv:[%s]", pMsgEvt->connHandle, debug);
             bleRelayRecvParser(pMsgEvt->connHandle, pData, dataLen);
             break;
         default:
-            LogPrintf(DEBUG_ALL, "It is unprocessed!!!");
+            LogPrintf(DEBUG_BLE, "It is unprocessed!!!");
             break;
     }
     GATT_bm_free(&pMsgEvt->msg, pMsgEvt->method);
@@ -257,7 +257,7 @@ static void sysMessageHandler(tmos_event_hdr_t *pMsg)
             gattMessageHandler((gattMsgEvent_t *)pMsg);
             break;
         default:
-            LogPrintf(DEBUG_ALL, "Unprocessed Event 0x%02X", pMsg->event);
+            LogPrintf(DEBUG_BLE, "Unprocessed Event 0x%02X", pMsg->event);
             break;
     }
 }
@@ -288,11 +288,11 @@ static tmosEvents bleCentralTaskEventProcess(tmosTaskID taskID, tmosEvents event
         status = GAPRole_CentralStartDevice(bleCentralTaskId, &bleBondCallBack, &bleRoleCallBack);
         if (status == SUCCESS)
         {
-			LogMessage(DEBUG_ALL, "master role init..");
+			LogMessage(DEBUG_BLE, "master role init..");
         }
         else 
         {
-			LogPrintf(DEBUG_ALL, "master role init error, ret:0x%02x", status);
+			LogPrintf(DEBUG_BLE, "master role init error, ret:0x%02x", status);
         }
         return event ^ BLE_TASK_START_EVENT;
     }
@@ -301,7 +301,7 @@ static tmosEvents bleCentralTaskEventProcess(tmosTaskID taskID, tmosEvents event
         status = bleDevSendDataTest();
         if (status == blePending)
         {
-            LogMessage(DEBUG_ALL, "send pending...");
+            LogMessage(DEBUG_BLE, "send pending...");
             tmos_start_task(bleCentralTaskId, BLE_TASK_SENDTEST_EVENT, MS1_TO_SYSTEM_TIME(100));
         }
         return event ^ BLE_TASK_SENDTEST_EVENT;
@@ -311,7 +311,7 @@ static tmosEvents bleCentralTaskEventProcess(tmosTaskID taskID, tmosEvents event
         status = bleDevEnableNotify();
         if (status == blePending)
         {
-            LogMessage(DEBUG_ALL, "notify pending...");
+            LogMessage(DEBUG_BLE, "notify pending...");
             tmos_start_task(bleCentralTaskId, BLE_TASK_NOTIFYEN_EVENT, MS1_TO_SYSTEM_TIME(100));
         }
         else
@@ -320,7 +320,7 @@ static tmosEvents bleCentralTaskEventProcess(tmosTaskID taskID, tmosEvents event
             {
                 LogMessage(DEBUG_FACTORY, "+FMPC:BLE CONNECT SUCCESS");
             }
-            LogMessage(DEBUG_ALL, "Notify done!");
+            LogMessage(DEBUG_BLE, "Notify done!");
             bleSchduleChangeFsm(BLE_SCHEDULE_DONE);
         }
         return event ^ BLE_TASK_NOTIFYEN_EVENT;
@@ -328,7 +328,7 @@ static tmosEvents bleCentralTaskEventProcess(tmosTaskID taskID, tmosEvents event
     if (event & BLE_TASK_CONTIMEOUT_EVENT)
     {
         //终止未成功链接的链路
-        LogMessage(DEBUG_ALL, "Connection fail checkout!!!");
+        LogMessage(DEBUG_BLE, "Connection fail checkout!!!");
         GAPRole_TerminateLink(INVALID_CONNHANDLE);
         return event ^ BLE_TASK_CONTIMEOUT_EVENT;
     }
@@ -358,7 +358,7 @@ static void deviceInfoEventHandler(gapDeviceInfoEvent_t *pEvent)
 
     byteToHexString(pEvent->addr, debug, B_ADDR_LEN);
     debug[B_ADDR_LEN * 2] = 0;
-    LogPrintf(DEBUG_ALL, "MAC:[%s],TYPE:0x%02X,RSSI:%d", debug, pEvent->addrType, pEvent->rssi);
+    LogPrintf(DEBUG_BLE, "MAC:[%s],TYPE:0x%02X,RSSI:%d", debug, pEvent->addrType, pEvent->rssi);
 
     memset(&scaninfo, 0, sizeof(deviceScanInfo_s));
     memcpy(scaninfo.addr, pEvent->addr, B_ADDR_LEN);
@@ -392,7 +392,7 @@ static void deviceInfoEventHandler(gapDeviceInfoEvent_t *pEvent)
                     }
                     tmos_memcpy(scaninfo.broadcaseName, pEvent->pEvtData + i + 2, dataLen - 1);
                     scaninfo.broadcaseName[dataLen - 1] = 0;
-                    LogPrintf(DEBUG_ALL, "<---->BroadName:[%s]", scaninfo.broadcaseName);
+                    LogPrintf(DEBUG_BLE, "<---->BroadName:[%s]", scaninfo.broadcaseName);
                     break;
                 default:
                     //LogPrintf(DEBUG_ALL, "UnsupportCmd:0x%02X", cmd);
@@ -417,13 +417,12 @@ void linkEstablishedEventHandler(gapEstLinkReqEvent_t *pEvent)
 
     if (pEvent->hdr.status != SUCCESS)
     {
-        LogPrintf(DEBUG_ALL, "Link established error,Status:[0x%X]", pEvent->hdr.status);
+        LogPrintf(DEBUG_BLE, "Link established error,Status:[0x%X]", pEvent->hdr.status);
         return;
     }
     byteToHexString(pEvent->devAddr, debug, 6);
     debug[12] = 0;
-    LogPrintf(DEBUG_ALL, "Device [%s] connect success", debug);
-    tmos_stop_task(bleCentralTaskId, BLE_TASK_CONTIMEOUT_EVENT);
+    LogPrintf(DEBUG_BLE, "Device [%s] connect success", debug);
     bleDevConnSuccess(pEvent->devAddr, pEvent->connectionHandle);
     bleDevDiscoverAllServices();
 }
@@ -437,7 +436,7 @@ void linkEstablishedEventHandler(gapEstLinkReqEvent_t *pEvent)
 
 void linkTerminatedEventHandler(gapTerminateLinkEvent_t *pEvent)
 {
-    LogPrintf(DEBUG_ALL, "Device disconnect,Handle [%d],Reason [0x%02X]", pEvent->connectionHandle, pEvent->reason);
+    LogPrintf(DEBUG_BLE, "Device disconnect,Handle [%d],Reason [0x%02X]", pEvent->connectionHandle, pEvent->reason);
     bleDevDisconnect(pEvent->connectionHandle);
 }
 /**-----------------------------------------------------------------**/
@@ -451,14 +450,14 @@ void linkTerminatedEventHandler(gapTerminateLinkEvent_t *pEvent)
 
 static void bleCentralEventCallBack(gapRoleEvent_t *pEvent)
 {
-    LogPrintf(DEBUG_ALL, "bleCentral Event==>[0x%02X]", pEvent->gap.opcode);
+    LogPrintf(DEBUG_BLE, "bleCentral Event==>[0x%02X]", pEvent->gap.opcode);
     switch (pEvent->gap.opcode)
     {
         case GAP_DEVICE_INIT_DONE_EVENT:
-            LogPrintf(DEBUG_ALL, "bleCentral init done!");
+            LogPrintf(DEBUG_BLE, "bleCentral init done!");
             break;
         case GAP_DEVICE_DISCOVERY_EVENT:
-            LogPrintf(DEBUG_ALL, "bleCentral discovery done!");
+            LogPrintf(DEBUG_BLE, "bleCentral discovery done!");
             break;
         case GAP_ADV_DATA_UPDATE_DONE_EVENT:
             break;
@@ -520,7 +519,7 @@ static void bleCentralEventCallBack(gapRoleEvent_t *pEvent)
 
 static void bleCentralHciChangeCallBack(uint16_t connHandle, uint16_t maxTxOctets, uint16_t maxRxOctets)
 {
-    LogPrintf(DEBUG_ALL, "Handle[%d] MTU change ,TX:%d , RX:%d", connHandle, maxTxOctets, maxRxOctets);
+    LogPrintf(DEBUG_BLE, "Handle[%d] MTU change ,TX:%d , RX:%d", connHandle, maxTxOctets, maxRxOctets);
 }
 /**************************************************
 @bref       主动读取rssi回调
@@ -531,7 +530,7 @@ static void bleCentralHciChangeCallBack(uint16_t connHandle, uint16_t maxTxOctet
 
 static void bleCentralRssiCallBack(uint16_t connHandle, int8_t newRSSI)
 {
-    LogPrintf(DEBUG_ALL, "Handle[%d] respon rssi %d dB", connHandle, newRSSI);
+    LogPrintf(DEBUG_BLE, "Handle[%d] respon rssi %d dB", connHandle, newRSSI);
 }
 /**************************************************
 @bref       主动扫描
@@ -544,7 +543,7 @@ void bleCentralStartDiscover(void)
 {
     bStatus_t status;
     status = GAPRole_CentralStartDiscovery(DEVDISC_MODE_ALL, TRUE, FALSE);
-    LogPrintf(DEBUG_ALL, "Start discovery,ret=0x%02X", status);
+    LogPrintf(DEBUG_BLE, "Start discovery,ret=0x%02X", status);
 }
 /**************************************************
 @bref       主动链接从机
@@ -562,15 +561,13 @@ void bleCentralStartConnect(uint8_t *addr, uint8_t addrType)
     byteToHexString(addr, debug, 6);
     debug[12] = 0;
     status = GAPRole_CentralEstablishLink(FALSE, FALSE, addrType, addr);
-    LogPrintf(DEBUG_ALL, "Start connect [%s](%d),ret=0x%02X", debug, addrType, status);
+    LogPrintf(DEBUG_BLE, "Start connect [%s](%d),ret=0x%02X", debug, addrType, status);
     if (status == SUCCESS)
     {
-        tmos_start_task(bleCentralTaskId, BLE_TASK_CONTIMEOUT_EVENT, MS1_TO_SYSTEM_TIME(10000));
     }
     else
     {
         LogMessage(DEBUG_ALL, "Terminate link");
-        tmos_stop_task(bleCentralTaskId, BLE_TASK_CONTIMEOUT_EVENT);
         GAPRole_TerminateLink(INVALID_CONNHANDLE);
     }
 }
@@ -586,7 +583,7 @@ void bleCentralDisconnect(uint16_t connHandle)
 {
     bStatus_t status;
     status = GAPRole_TerminateLink(connHandle);
-    LogPrintf(DEBUG_ALL, "ble terminate Handle[%X],ret=0x%02X", connHandle, status);
+    LogPrintf(DEBUG_BLE, "ble terminate Handle[%X],ret=0x%02X", connHandle, status);
 }
 
 /**************************************************
@@ -619,7 +616,7 @@ uint8 bleCentralSend(uint16_t connHandle, uint16 attrHandle, uint8 *data, uint8 
             GATT_bm_free((gattMsg_t *)&req, ATT_WRITE_REQ);
         }
     }
-    LogPrintf(DEBUG_ALL, "bleCentralSend==>Ret:0x%02X", ret);
+    LogPrintf(DEBUG_BLE, "bleCentralSend==>Ret:0x%02X", ret);
     return ret;
 }
 
@@ -660,6 +657,8 @@ int8_t bleDevConnAdd(uint8_t *addr, uint8_t addrType)
             tmos_memcpy(devInfoList[i].addr, addr, 6);
             devInfoList[i].addrType = addrType;
             devInfoList[i].connHandle = INVALID_CONNHANDLE;
+            devInfoList[i].charHandle = INVALID_CONNHANDLE;
+            devInfoList[i].notifyHandle = INVALID_CONNHANDLE;
             devInfoList[i].use = 1;
             return i;
         }
@@ -735,7 +734,7 @@ static void bleDevConnSuccess(uint8_t *addr, uint16_t connHandle)
                 devInfoList[i].charHandle = INVALID_CONNHANDLE;
                 devInfoList[i].findServiceDone = 0;
                 devInfoList[i].notifyDone = 0;
-                LogPrintf(DEBUG_ALL, "Get device conn handle [%d]", connHandle);
+                LogPrintf(DEBUG_BLE, "Get device conn handle [%d]", connHandle);
                 return;
             }
         }
@@ -766,7 +765,7 @@ static void bleDevDisconnect(uint16_t connHandle)
             devInfoList[i].notifyDone = 0;
             byteToHexString(devInfoList[i].addr, debug, 6);
             debug[12] = 0;
-            LogPrintf(DEBUG_ALL, "Device [%s] disconnect,Handle[%d]", debug, connHandle);
+            LogPrintf(DEBUG_BLE, "Device [%s] disconnect,Handle[%d]", debug, connHandle);
             return;
         }
     }
@@ -789,7 +788,7 @@ static void bleDevSetCharHandle(uint16_t connHandle, uint16_t handle)
         if (devInfoList[i].use &&  devInfoList[i].connHandle == connHandle)
         {
             devInfoList[i].charHandle = handle;
-            LogPrintf(DEBUG_ALL, "CharHandle [0x%04X]", handle);
+            LogPrintf(DEBUG_BLE, "CharHandle [0x%04X]", handle);
             return;
         }
     }
@@ -812,7 +811,7 @@ static void bleDevSetNotifyHandle(uint16_t connHandle, uint16_t handle)
         if (devInfoList[i].use &&  devInfoList[i].connHandle == connHandle && devInfoList[i].notifyHandle == INVALID_CONNHANDLE)
         {
             devInfoList[i].notifyHandle = handle;
-            LogPrintf(DEBUG_ALL, "Notify Handle:[0x%04X]", handle);
+            LogPrintf(DEBUG_BLE, "Notify Handle:[0x%04X]", handle);
             return;
         }
     }
@@ -838,7 +837,7 @@ static void bleDevSetServiceHandle(uint16_t connHandle, uint16_t findS, uint16_t
             devInfoList[i].startHandle = findS;
             devInfoList[i].endHandle = findE;
             devInfoList[i].findServiceDone = 1;
-            LogPrintf(DEBUG_ALL, "Set service handle [0x%04X~0x%04X]", findS, findE);
+            LogPrintf(DEBUG_BLE, "Set service handle [0x%04X~0x%04X]", findS, findE);
             return;
         }
     }
@@ -865,7 +864,7 @@ static void bleDevDiscoverAllServices(void)
             //status = GATT_DiscPrimaryServiceByUUID(devInfoList[i].connHandle, uuid, 2, bleCentralTaskId);
 
             status = GATT_DiscAllPrimaryServices(devInfoList[i].connHandle, bleCentralTaskId);
-            LogPrintf(DEBUG_ALL, "Discover Handle[%d] all services,ret=0x%02X", devInfoList[i].connHandle, status);
+            LogPrintf(DEBUG_BLE, "Discover Handle[%d] all services,ret=0x%02X", devInfoList[i].connHandle, status);
             return;
         }
     }
@@ -888,7 +887,7 @@ static void bleDevDiscoverAllChars(uint16_t connHandle)
         {
             status = GATT_DiscAllChars(devInfoList[i].connHandle, devInfoList[i].startHandle, devInfoList[i].endHandle,
                                        bleCentralTaskId);
-            LogPrintf(DEBUG_ALL, "Discover handle[%d] all chars,ret=0x%02X", devInfoList[i].connHandle, status);
+            LogPrintf(DEBUG_BLE, "Discover handle[%d] all chars,ret=0x%02X", devInfoList[i].connHandle, status);
             return;
         }
     }
@@ -918,7 +917,7 @@ static void bleDevDiscoverNotify(uint16_t connHandle)
             attReadByTypeReq.type.uuid[0] = LO_UINT16(GATT_CLIENT_CHAR_CFG_UUID);
             attReadByTypeReq.type.uuid[1] = HI_UINT16(GATT_CLIENT_CHAR_CFG_UUID);
             status = GATT_ReadUsingCharUUID(devInfoList[i].connHandle, &attReadByTypeReq, bleCentralTaskId);
-            LogPrintf(DEBUG_ALL, "Discover notify,ret=0x%02X", status);
+            LogPrintf(DEBUG_BLE, "Discover notify,ret=0x%02X", status);
             return;
         }
     }
@@ -942,7 +941,7 @@ static uint8_t bleDevEnableNotify(void)
         {
             data[0] = 0x01;
             data[1] = 0x00;
-            LogPrintf(DEBUG_ALL, "Handle[%d] try to notify", devInfoList[i].connHandle);
+            LogPrintf(DEBUG_BLE, "Handle(%d)[%d] try to notify", i, devInfoList[i].connHandle);
             status = bleCentralSend(devInfoList[i].connHandle, devInfoList[i].notifyHandle, data, 2);
             if (status == SUCCESS)
             {
@@ -995,7 +994,7 @@ void bleDevTerminate(void)
         if (devInfoList[i].use && devInfoList[i].connHandle != INVALID_CONNHANDLE)
         {
             status = GAPRole_TerminateLink(devInfoList[i].connHandle);
-            LogPrintf(DEBUG_ALL, "Terminate Hanle[%d]", devInfoList[i].connHandle);
+            LogPrintf(DEBUG_BLE, "Terminate Hanle[%d]", devInfoList[i].connHandle);
             return;
         }
     }
@@ -1053,7 +1052,7 @@ static void bleSchduleChangeFsm(bleFsm nfsm)
 {
     bleSchedule.fsm = nfsm;
     bleSchedule.runTick = 0;
-    LogPrintf(DEBUG_ALL, "bleSchduleChangeFsm==>%d", nfsm);
+    LogPrintf(DEBUG_BLE, "bleSchduleChangeFsm==>%d", nfsm);
 }
 
 /**************************************************
@@ -1117,7 +1116,7 @@ static void bleScheduleTask(void)
 				//无链路需要连接
 				else
 				{
-					if (disConnTick++ >= 10)
+					if (disConnTick++ >= 30)
 					{
 						disConnTick = 0;
 						bleDevTerminate();
@@ -1129,6 +1128,7 @@ static void bleScheduleTask(void)
             {
             	if (linkFlag)
             	{
+            		LogPrintf(DEBUG_BLE, "Start connect (%d)",ind);
 	            	bleCentralStartConnect(devInfoList[ind].addr, devInfoList[ind].addrType);
 	                bleSchduleChangeFsm(BLE_SCHEDULE_WAIT);
 					noNetTick = 0;
@@ -1141,7 +1141,7 @@ static void bleScheduleTask(void)
             if (bleSchedule.runTick >= 20)
             {
                 //链接超时
-                LogPrintf(DEBUG_ALL, "bleSchedule==>timeout!!!");
+                LogPrintf(DEBUG_BLE, "bleSchedule==>timeout!!!");
                 bleCentralDisconnect(devInfoList[ind].connHandle);
                 bleSchduleChangeFsm(BLE_SCHEDULE_DONE);
                 if (sysinfo.logLevel == 4)

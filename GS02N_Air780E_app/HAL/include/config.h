@@ -4,8 +4,10 @@
  * Version            : V1.2
  * Date               : 2022/01/18
  * Description        : 配置说明及默认值，建议在工程配置里的预处理中修改当前值
+ *********************************************************************************
  * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
- * SPDX-License-Identifier: Apache-2.0
+ * Attention: This software (modified or not) and binary are used for 
+ * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/
 
 /******************************************************************************/
@@ -33,10 +35,12 @@
 
  【SLEEP】
  HAL_SLEEP                                  - 是否开启睡眠功能 ( 默认:FALSE )
- WAKE_UP_RTC_MAX_TIME                       - 等待32M晶振稳定时间，根据不同睡眠类型取值可分为： 睡眠模式/下电模式  - 45(默认)
-                                                                                                                                        暂停模式    - 45
-                                                                                                                                       空闲模式    - 5
- 
+ SLEEP_RTC_MIN_TIME                         - 非空闲模式下睡眠的最小时间（单位：一个RTC周期）
+ SLEEP_RTC_MAX_TIME                         - 非空闲模式下睡眠的最大时间（单位：一个RTC周期）
+ WAKE_UP_RTC_MAX_TIME                       - 等待32M晶振稳定时间（单位：一个RTC周期）
+                                                                                                                            根据不同睡眠类型取值可分为： 睡眠模式/下电模式  - 45 (默认)
+                                                                                                                                                                                                  暂停模式    - 45
+                                                                                                                                                                                                  空闲模式    - 5
  【TEMPERATION】
  TEM_SAMPLE                                 - 是否打开根据温度变化校准的功能，单次校准耗时小于10ms( 默认:TRUE )
  
@@ -50,13 +54,13 @@
                                             - 如果配置了SNVNum参数，则需要对应修改Lib_Write_Flash函数内擦除的flash大小，大小为SNVBlock*SNVNum
 
  【RTC】
- CLK_OSC32K                                 - RTC时钟选择，如包含主机角色必须使用外部32K( 默认:0 外部(32768Hz)，1：内部(32000Hz)，2：内部(32768Hz) )
+ CLK_OSC32K                                 - RTC时钟选择，如包含主机角色必须使用外部32K( 0 外部(32768Hz)，默认:1：内部(32000Hz)，2：内部(32768Hz) )
 
  【MEMORY】
  BLE_MEMHEAP_SIZE                           - 蓝牙协议栈使用的RAM大小，不小于6K ( 默认:(1024*6) )
 
  【DATA】
- BLE_BUFF_MAX_LEN                           - 单个连接最大包长度( 默认:27 (ATT_MTU=23)，取值范围[27~251] )
+ BLE_BUFF_MAX_LEN                           - 单个连接最大包长度( 默认:27 (ATT_MTU=23)，取值范围[27~516] )
  BLE_BUFF_NUM                               - 控制器缓存的包数量( 默认:5 )
  BLE_TX_NUM_EVENT                           - 单个连接事件最多可以发多少个数据包( 默认:1 )
  BLE_TX_POWER                               - 发射功率( 默认:LL_TX_POWEER_0_DBM (0dBm) )
@@ -79,8 +83,14 @@
 #ifndef HAL_SLEEP
 #define HAL_SLEEP                           FALSE
 #endif
+#ifndef SLEEP_RTC_MIN_TIME                   
+#define SLEEP_RTC_MIN_TIME                  US_TO_RTC(1000)
+#endif
+#ifndef SLEEP_RTC_MAX_TIME                   
+#define SLEEP_RTC_MAX_TIME                  MS_TO_RTC(RTC_TO_MS(RTC_TIMER_MAX_VALUE) - 1000 * 60 * 60)
+#endif
 #ifndef WAKE_UP_RTC_MAX_TIME
-#define WAKE_UP_RTC_MAX_TIME                45
+#define WAKE_UP_RTC_MAX_TIME                US_TO_RTC(1400)
 #endif
 #ifndef HAL_KEY
 #define HAL_KEY                             FALSE
@@ -104,16 +114,16 @@
 #define BLE_SNV_ADDR                        0x77E00-FLASH_ROM_MAX_SIZE
 #endif
 #ifndef CLK_OSC32K
-#define CLK_OSC32K                          0   // 该项请勿在此修改，必须在工程配置里的预处理中修改，如包含主机角色必须使用外部32K
+#define CLK_OSC32K                          1   // 该项请勿在此修改，必须在工程配置里的预处理中修改，如包含主机角色必须使用外部32K
 #endif
 #ifndef BLE_MEMHEAP_SIZE
 #define BLE_MEMHEAP_SIZE                    (1024*7)
 #endif
 #ifndef BLE_BUFF_MAX_LEN
-#define BLE_BUFF_MAX_LEN                    107
+#define BLE_BUFF_MAX_LEN                    207
 #endif
 #ifndef BLE_BUFF_NUM
-#define BLE_BUFF_NUM                        3
+#define BLE_BUFF_NUM                        5
 #endif
 #ifndef BLE_TX_NUM_EVENT
 #define BLE_TX_NUM_EVENT                    1
@@ -125,7 +135,7 @@
 #define PERIPHERAL_MAX_CONNECTION           1
 #endif
 #ifndef CENTRAL_MAX_CONNECTION
-#define CENTRAL_MAX_CONNECTION              2
+#define CENTRAL_MAX_CONNECTION              3
 #endif
 
 extern uint32_t MEM_BUF[BLE_MEMHEAP_SIZE / 4];

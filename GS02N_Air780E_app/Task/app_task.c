@@ -2165,15 +2165,15 @@ void myTaskInit(void)
     sysinfo.taskId = TMOS_ProcessEventRegister(myTaskEventProcess);
     tmos_start_reload_task(sysinfo.taskId, APP_TASK_KERNAL_EVENT, MS1_TO_SYSTEM_TIME(100));
     tmos_start_reload_task(sysinfo.taskId, APP_TASK_POLLUART_EVENT, MS1_TO_SYSTEM_TIME(50));
-    if (sysparam.bleen == 1)
-    {	
-    	char broadCastNmae[30];
-		sprintf(broadCastNmae, "%s-%s", "AUTO", dynamicParam.SN + 9);
-    	appPeripheralBroadcastInfoCfg(broadCastNmae);
-    }
-    else if (sysparam.bleen == 0)
-    {
-		appPeripheralCancel();
-    }
+//    if (sysparam.bleen == 1)
+//    {	
+//    	char broadCastNmae[30];
+//		sprintf(broadCastNmae, "%s-%s", "AUTO", dynamicParam.SN + 9);
+//    	appPeripheralBroadcastInfoCfg(broadCastNmae);
+//    }
+//    else if (sysparam.bleen == 0)
+//    {
+//		appPeripheralCancel();
+//    }
 }
 

@@ -4,8 +4,10 @@
  * Version            : V1.2
  * Date               : 2022/01/18
  * Description        : 硬件任务处理函数及BLE和硬件初始化
+ *********************************************************************************
  * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
- * SPDX-License-Identifier: Apache-2.0
+ * Attention: This software (modified or not) and binary are used for 
+ * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/
 
 /******************************************************************************/
@@ -32,11 +34,11 @@ void Lib_Calibration_LSI(void)
 /*******************************************************************************
  * @fn      Lib_Read_Flash
  *
- * @brief   Lib 操作Flash回调
+ * @brief   Callback function used for BLE lib.
  *
- * @param   addr.
- * @param   num.
- * @param   pBuf.
+ * @param   addr - Read start address
+ * @param   num - Number of units to read (unit: 4 bytes)
+ * @param   pBuf - Buffer to store read data
  *
  * @return  None.
  */
@@ -49,17 +51,17 @@ uint32_t Lib_Read_Flash(uint32_t addr, uint32_t num, uint32_t *pBuf)
 /*******************************************************************************
  * @fn      Lib_Write_Flash
  *
- * @brief   Lib 操作Flash回调
+ * @brief   Callback function used for BLE lib.
  *
- * @param   addr.
- * @param   num.
- * @param   pBuf.
+ * @param   addr - Write start address
+ * @param   num - Number of units to write (unit: 4 bytes)
+ * @param   pBuf - Buffer with data to be written
  *
  * @return  None.
  */
 uint32_t Lib_Write_Flash(uint32_t addr, uint32_t num, uint32_t *pBuf)
 {
-    EEPROM_ERASE(addr, EEPROM_PAGE_SIZE * 2);
+    EEPROM_ERASE(addr, num * 4);
     EEPROM_WRITE(addr, pBuf, num * 4);
     return 0;
 }
@@ -78,10 +80,10 @@ void CH58X_BLEInit(void)
 {
     uint8_t     i;
     bleConfig_t cfg;
-    if (tmos_memcmp(VER_LIB, VER_FILE, strlen(VER_FILE)) == FALSE)
+    if(tmos_memcmp(VER_LIB, VER_FILE, strlen(VER_FILE)) == FALSE)
     {
-        LogPrintf(DEBUG_ALL,"head file error...");
-        while (1);
+        PRINT("head file error...\n");
+        while(1);
     }
     SysTick_Config(SysTick_LOAD_RELOAD_Msk);
     PFIC_DisableIRQ(SysTick_IRQn);
@@ -105,16 +107,16 @@ void CH58X_BLEInit(void)
     cfg.srandCB = SYS_GetSysTickCnt;
 #if(defined TEM_SAMPLE) && (TEM_SAMPLE == TRUE)
     cfg.tsCB = HAL_GetInterTempValue; // 根据温度变化校准RF和内部RC( 大于7摄氏度 )
-#if(CLK_OSC32K)
+  #if(CLK_OSC32K)
     cfg.rcCB = Lib_Calibration_LSI; // 内部32K时钟校准
-#endif
+  #endif
 #endif
 #if(defined(HAL_SLEEP)) && (HAL_SLEEP == TRUE)
     cfg.WakeUpTime = WAKE_UP_RTC_MAX_TIME;
     cfg.sleepCB = CH58X_LowPower; // 启用睡眠
 #endif
 #if(defined(BLE_MAC)) && (BLE_MAC == TRUE)
-    for (i = 0; i < 6; i++)
+    for(i = 0; i < 6; i++)
     {
         cfg.MacAddr[i] = MacAddr[5 - i];
     }
@@ -122,21 +124,21 @@ void CH58X_BLEInit(void)
     {
         uint8_t MacAddr[6];
         GetMACAddress(MacAddr);
-        for (i = 0; i < 6; i++)
+        for(i = 0; i < 6; i++)
         {
             cfg.MacAddr[i] = MacAddr[i]; // 使用芯片mac地址
         }
     }
 #endif
-    if (!cfg.MEMAddr || cfg.MEMLen < 4 * 1024)
+    if(!cfg.MEMAddr || cfg.MEMLen < 4 * 1024)
     {
-        while (1);
+        while(1);
     }
     i = BLE_LibInit(&cfg);
-    if (i)
+    if(i)
     {
-        LogPrintf(DEBUG_ALL,"LIB init error code: %x ...", i);
-        while (1);
+        PRINT("LIB init error code: %x ...\n", i);
+        while(1);
     }
 }
 
@@ -155,25 +157,24 @@ tmosEvents HAL_ProcessEvent(tmosTaskID task_id, tmosEvents events)
 {
     uint8_t *msgPtr;
 
-    if (events & SYS_EVENT_MSG)
-    {
-        // 处理HAL层消息，调用tmos_msg_receive读取消息，处理完成后删除消息。
+    if(events & SYS_EVENT_MSG)
+    { // 处理HAL层消息，调用tmos_msg_receive读取消息，处理完成后删除消息。
         msgPtr = tmos_msg_receive(task_id);
-        if (msgPtr)
+        if(msgPtr)
         {
             /* De-allocate */
             tmos_msg_deallocate(msgPtr);
         }
         return events ^ SYS_EVENT_MSG;
     }
-    if (events & LED_BLINK_EVENT)
+    if(events & LED_BLINK_EVENT)
     {
 #if(defined HAL_LED) && (HAL_LED == TRUE)
         HalLedUpdate();
 #endif // HAL_LED
         return events ^ LED_BLINK_EVENT;
     }
-    if (events & HAL_KEY_EVENT)
+    if(events & HAL_KEY_EVENT)
     {
 #if(defined HAL_KEY) && (HAL_KEY == TRUE)
         HAL_KeyPoll(); /* Check for keys */
@@ -181,20 +182,20 @@ tmosEvents HAL_ProcessEvent(tmosTaskID task_id, tmosEvents events)
         return events ^ HAL_KEY_EVENT;
 #endif
     }
-    if (events & HAL_REG_INIT_EVENT)
+    if(events & HAL_REG_INIT_EVENT)
     {
 #if(defined BLE_CALIBRATION_ENABLE) && (BLE_CALIBRATION_ENABLE == TRUE) // 校准任务，单次校准耗时小于10ms
         BLE_RegInit();                                                  // 校准RF
-#if(CLK_OSC32K)
+  #if(CLK_OSC32K)
         Lib_Calibration_LSI(); // 校准内部RC
-#endif
+  #endif
         tmos_start_task(halTaskID, HAL_REG_INIT_EVENT, MS1_TO_SYSTEM_TIME(BLE_CALIBRATION_PERIOD));
         return events ^ HAL_REG_INIT_EVENT;
 #endif
     }
-    if (events & HAL_TEST_EVENT)
+    if(events & HAL_TEST_EVENT)
     {
-        LogPrintf(DEBUG_ALL,"* ");
+        PRINT("* \n");
         tmos_start_task(halTaskID, HAL_TEST_EVENT, MS1_TO_SYSTEM_TIME(1000));
         return events ^ HAL_TEST_EVENT;
     }
@@ -224,8 +225,7 @@ void HAL_Init()
     HAL_KeyInit();
 #endif
 #if(defined BLE_CALIBRATION_ENABLE) && (BLE_CALIBRATION_ENABLE == TRUE)
-    tmos_start_task(halTaskID, HAL_REG_INIT_EVENT,
-                    MS1_TO_SYSTEM_TIME(BLE_CALIBRATION_PERIOD)); // 添加校准任务，单次校准耗时小于10ms
+    tmos_start_task(halTaskID, HAL_REG_INIT_EVENT, MS1_TO_SYSTEM_TIME(BLE_CALIBRATION_PERIOD)); // 添加校准任务，单次校准耗时小于10ms
 #endif
     //  tmos_start_task( halTaskID, HAL_TEST_EVENT, 1600 );    // 添加一个测试任务
 }
@@ -248,7 +248,7 @@ uint16_t HAL_GetInterTempValue(void)
     config = R8_ADC_CFG;
     ADC_InterTSSampInit();
     R8_ADC_CONVERT |= RB_ADC_START;
-    while (R8_ADC_CONVERT & RB_ADC_START);
+    while(R8_ADC_CONVERT & RB_ADC_START);
     adc_data = R16_ADC_DATA;
     R8_TEM_SENSOR = sensor;
     R8_ADC_CHANNEL = channel;

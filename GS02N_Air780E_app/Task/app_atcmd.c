@@ -162,6 +162,11 @@ static void doAtdebugCmd(uint8_t *buf, uint16_t len)
     {
 		sysinfo.debugflag = 0;
     }
+    else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"WIFI"))
+    {
+        moduleGetWifiScan();
+
+    }
     else
     {
         if (item.item_data[0][0] >= '0' && item.item_data[0][0] <= '9')

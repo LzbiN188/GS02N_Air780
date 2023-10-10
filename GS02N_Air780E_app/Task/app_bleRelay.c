@@ -197,6 +197,7 @@ static void bleDiscDetector(void)
     char debug[20];
     if (sysparam.bleAutoDisc == 0)
     {
+    	tick = 0;
         return;
     }
     for (ind = 0; ind < BLE_CONNECT_LIST_SIZE; ind++)
